@@ -1,18 +1,27 @@
-export cwbasis,cwstate,zerophoton,onephoton,twophoton
+export cwbasis,CWState,ZeroPhoton,OnePhoton,TwoPhoton
 
-import Base:+,-,/,*,zero,deepcopy
+import Base:+,-,/,*,zero,copy
 using QuantumOptics
 
   
-
+#Basis of the CWState. Will contain more information in future
 struct cwbasis
     times
     N_cutoff::Int
 end
 
+
 abstract type WaveGuideState end
 
-mutable struct cwstate
+"""
+Structure containing the whole state of the CW
+
+data contains list of state 
+length(data) = basis.N_cutoff
+
+
+"""
+mutable struct CWState
     basis::cwbasis
     data::Vector{WaveGuideState}
     diff::Vector{WaveGuideState}
@@ -21,41 +30,41 @@ mutable struct cwstate
     timeindex::Int
 end
 
-function mul!(state::cwstate,a::ComplexF64)
+function mul!(state::CWState,a::ComplexF64)
     for i in 1:length(state.data)
         mul!(state.data[i],a,state.timeindex)
     end
 end
 
-function mul_diff!(state::cwstate,a::ComplexF64)
+function mul_diff!(state::CWState,a::ComplexF64)
     for i in 1:length(state.diff)
         mul!(state.diff[i],a,state.timeindex)
     end    
 end
 
-mul_diff!(state::cwstate,a::Number) = mul_diff!(state,complex(float(a)))
+mul_diff!(state::CWState,a::Number) = mul_diff!(state,complex(float(a)))
 
-mul!(a::ComplexF64,state::cwstate) = mul!(state::cwstate,a::ComplexF64)
-mul!(a::Number,state::cwstate) = mul!(state,complex(float(a)))
-mul!(state::cwstate,a::Number) = mul!(state,complex(float(a)))
+mul!(a::ComplexF64,state::CWState) = mul!(state::CWState,a::ComplexF64)
+mul!(a::Number,state::CWState) = mul!(state,complex(float(a)))
+mul!(state::CWState,a::Number) = mul!(state,complex(float(a)))
 
-function +(state1::cwstate,state2::cwstate)
+function +(state1::CWState,state2::CWState)
     if state1.timeindex!=state2.timeindex
-        print("Warning:Not same timeindex in +(cwstate,cwstate)")
+        print("Warning:Not same timeindex in +(CWState,CWState)")
     end
     for i in 1:length(state1.data)
         add!(state1.data[i],state2.data[i],state1.timeindex)
     end
 end
 
-function deepcopy(state::cwstate)
-    cwstate(state.basis,deepcopy(state.data),deepcopy(state.diff),deepcopy(state.tmp_data),deepcopy(state.tmp_diff),state.timeindex)
+function copy(state::CWState)
+    CWState(state.basis,copy(state.data),copy(state.diff),copy(state.tmp_data),copy(state.tmp_diff),state.timeindex)
 end
 
-function deepcopy(statedata::Vector{WaveGuideState})
+function copy(statedata::Vector{WaveGuideState})
     out = Array{WaveGuideState}(undef,length(statedata))
     for i in 1:length(statedata)
-        out[i] = deepcopy(statedata[i])
+        out[i] = copy(statedata[i])
     end
     return out
 end
@@ -63,66 +72,66 @@ end
 
 function zero(b::cwbasis)
     if b.N_cutoff == 0
-        cwstate(b,[zerophoton(complex(0.0))],[zerophoton(complex(0.0))],zeros(ComplexF64,1),1,1)
+        CWState(b,[ZeroPhoton(complex(0.0))],[ZeroPhoton(complex(0.0))],zeros(ComplexF64,1),1,1)
     elseif b.N_cutoff == 1
-        cwstate(b,
-        [zerophoton(complex(0.0)),onephoton(complex(0.0),zeros(ComplexF64,length(b.times)))],
-        [zerophoton(complex(0.0)),onephoton(complex(0.0),zeros(ComplexF64,length(b.times)))],
+        CWState(b,
+        [ZeroPhoton(complex(0.0)),OnePhoton(complex(0.0),zeros(ComplexF64,length(b.times)))],
+        [ZeroPhoton(complex(0.0)),OnePhoton(complex(0.0),zeros(ComplexF64,length(b.times)))],
         zeros(ComplexF64,2+length(b.times)),
         zeros(ComplexF64,2+length(b.times)),
         1)
     elseif b.N_cutoff == 2
-        cwstate(b,
-        [zerophoton(complex(0.0)),onephoton(complex(0.0),zeros(ComplexF64,length(b.times))),twophoton(complex(0.0),zeros(ComplexF64,length(b.times)),zeros(ComplexF64,(length(b.times),length(b.times))))],
-        [zerophoton(complex(0.0)),onephoton(complex(0.0),zeros(ComplexF64,length(b.times))),twophoton(complex(0.0),zeros(ComplexF64,length(b.times)),zeros(ComplexF64,(length(b.times),length(b.times))))],
+        CWState(b,
+        [ZeroPhoton(complex(0.0)),OnePhoton(complex(0.0),zeros(ComplexF64,length(b.times))),TwoPhoton(complex(0.0),zeros(ComplexF64,length(b.times)),zeros(ComplexF64,(length(b.times),length(b.times))))],
+        [ZeroPhoton(complex(0.0)),OnePhoton(complex(0.0),zeros(ComplexF64,length(b.times))),TwoPhoton(complex(0.0),zeros(ComplexF64,length(b.times)),zeros(ComplexF64,(length(b.times),length(b.times))))],
         zeros(ComplexF64,3+3*length(b.times)),
         zeros(ComplexF64,3+3*length(b.times)),
         1) 
     end
 end
 
-function zero(state::cwstate)
+function zero(state::CWState)
     zero(state.basis)
 end
 
 
 #Structures containing 0,1 or 2 photons in the cavity waveguide state
-mutable struct zerophoton <:WaveGuideState
+mutable struct ZeroPhoton <:WaveGuideState
     ξ0::ComplexF64
 end
 
-mutable struct onephoton <:WaveGuideState
+mutable struct OnePhoton <:WaveGuideState
     ξ10::ComplexF64
     ξ01::Vector{ComplexF64}
 end
 
-mutable struct twophoton <:WaveGuideState
+mutable struct TwoPhoton <:WaveGuideState
     ξ20::ComplexF64
     ξ11::Vector{ComplexF64}
     ξ02::Matrix{ComplexF64}
 end
 
-function deepcopy(state::zerophoton)
-    return zerophoton(state.ξ0)
+function copy(state::ZeroPhoton)
+    return ZeroPhoton(state.ξ0)
 end
 
-function deepcopy(state::onephoton)
-    return onephoton(state.ξ10,deepcopy(state.ξ01))
+function copy(state::OnePhoton)
+    return OnePhoton(state.ξ10,copy(state.ξ01))
 end
 
-function deepcopy(state::twophoton)
-    return twophoton(state.ξ20,deepcopy(state.ξ11),deepcopy(state.ξ02))
+function copy(state::TwoPhoton)
+    return TwoPhoton(state.ξ20,copy(state.ξ11),copy(state.ξ02))
 end
 
-function add!(state1::zerophoton,state2::zerophoton,timeindex::Int)
+function add!(state1::ZeroPhoton,state2::ZeroPhoton,timeindex::Int)
     state1.ξ0 = state1.ξ0 + state2.ξ0
 end
 
-function add!(state1::onephoton,state2::onephoton,timeindex::Int)
+function add!(state1::OnePhoton,state2::OnePhoton,timeindex::Int)
     state1.ξ10 = state1.ξ10 + state2.ξ10
-    state1.ξ01[timeindex] = state1.ξ01[timeindex] + state2.ξ01[timeindex]
+    state1.ξ01 = state1.ξ01 + state2.ξ01
 end
-function add!(state1::twophoton,state2::twophoton,timeindex::Int)
+function add!(state1::TwoPhoton,state2::TwoPhoton,timeindex::Int)
     state1.ξ20 = state1.ξ20 + state2.ξ20
     state1.ξ11 = state1.ξ11 .+ state2.ξ11
     for j in 1:timeindex
@@ -133,15 +142,15 @@ function add!(state1::twophoton,state2::twophoton,timeindex::Int)
     end
 end
 
-function zero_diff!(state1::zerophoton,timeindex::Int)
+function zero_diff!(state1::ZeroPhoton,timeindex::Int)
     state1.ξ0 = 0
 end
 
-function zero_diff!(state1::onephoton,timeindex::Int)
+function zero_diff!(state1::OnePhoton,timeindex::Int)
     state1.ξ10  = 0
-    state1.ξ01[timeindex] = 0
+    state1.ξ01 .= 0
 end
-function zero_diff!(state1::twophoton,timeindex::Int)
+function zero_diff!(state1::TwoPhoton,timeindex::Int)
     state1.ξ20 = 0
     state1.ξ11[1:end] .= 0
     for j in 1:timeindex
@@ -155,18 +164,18 @@ end
 
 
 
-function set_equal!(state1::zerophoton,state2::zerophoton,timeindex::Int)
+function set_equal!(state1::ZeroPhoton,state2::ZeroPhoton,timeindex::Int)
     state1.ξ0 = state2.ξ0
 end
 
-function set_equal!(state1::onephoton,state2::onephoton,timeindex::Int)
+function set_equal!(state1::OnePhoton,state2::OnePhoton,timeindex::Int)
     state1.ξ10 = state2.ξ10
-    state1.ξ01[timeindex] = state2.ξ01[timeindex]
+    state1.ξ01[1:end] = state2.ξ01[1:end]
 end
 
-function set_equal!(state1::twophoton,state2::twophoton,timeindex::Int)
+function set_equal!(state1::TwoPhoton,state2::TwoPhoton,timeindex::Int)
     state1.ξ20 = state2.ξ20
-    state1.ξ11 = state2.ξ11
+    state1.ξ11[1:end] = state2.ξ11[1:end]
     for j in 1:timeindex
         state1.ξ02[timeindex,j] = state2.ξ02[timeindex,j]
     end
@@ -175,16 +184,16 @@ function set_equal!(state1::twophoton,state2::twophoton,timeindex::Int)
     end
 end
 
-function set_zero!(state1::zerophoton,timeindex::Int)
+function set_zero!(state1::ZeroPhoton,timeindex::Int)
     state1.ξ0 = 0
 end
 
-function set_zero!(state1::onephoton,timeindex::Int)
+function set_zero!(state1::OnePhoton,timeindex::Int)
     state1.ξ10 = 0
     state1.ξ01[timeindex] = 0
 end
 
-function set_zero!(state1::twophoton,timeindex::Int)
+function set_zero!(state1::TwoPhoton,timeindex::Int)
     state1.ξ20 = 0
     state1.ξ11 .= 0
     for j in 1:timeindex
@@ -195,16 +204,16 @@ function set_zero!(state1::twophoton,timeindex::Int)
     end
 end
 
-function mul!(state1::zerophoton,a::ComplexF64,timeindex::Int)
+function mul!(state1::ZeroPhoton,a::ComplexF64,timeindex::Int)
     state1.ξ0 = state1.ξ0*a
 end
 
-function mul!(state1::onephoton,a::ComplexF64,timeindex::Int)
+function mul!(state1::OnePhoton,a::ComplexF64,timeindex::Int)
     state1.ξ10 = a*state1.ξ10
     state1.ξ01[timeindex] = state1.ξ01[timeindex]*a
 end
 
-function mul!(state1::twophoton,a::ComplexF64,timeindex::Int)
+function mul!(state1::TwoPhoton,a::ComplexF64,timeindex::Int)
     state1.ξ20 = state1.ξ20*a
     state1.ξ11 = state1.ξ11 .* a
     for j in 1:timeindex
@@ -218,15 +227,15 @@ end
 
 
 
-function adw!(state::zerophoton,diff::zerophoton,timeindex::Int;g=1)
+function adw!(state::ZeroPhoton,diff::ZeroPhoton,timeindex::Int;g=1)
     "NOTHING"
 end
 
-function adw!(state::onephoton,diff::onephoton,timeindex;g=1)
+function adw!(state::OnePhoton,diff::OnePhoton,timeindex;g=1)
     diff.ξ10 = diff.ξ10 + complex(g*state.ξ01[timeindex])
 end
 
-function adw!(state::twophoton,diff::twophoton,timeindex::Int;g=1)
+function adw!(state::TwoPhoton,diff::TwoPhoton,timeindex::Int;g=1)
     diff.ξ20 = diff.ξ20 + sqrt(2)*complex(g*state.ξ11[timeindex])
     for j in 1:timeindex-1
         diff.ξ11[j] =diff.ξ11[j] + complex(g*state.ξ02[timeindex,j])
@@ -237,15 +246,15 @@ function adw!(state::twophoton,diff::twophoton,timeindex::Int;g=1)
     diff.ξ11[timeindex] =diff.ξ11[timeindex]+complex(sqrt(2)*g*state.ξ02[timeindex,timeindex])
 end
 
-function wda!(state::zerophoton,diff::zerophoton,timeindex::Int;g=1)
+function wda!(state::ZeroPhoton,diff::ZeroPhoton,timeindex::Int;g=1)
     "NOTHING"
 end
 
-function wda!(state::onephoton,diff::onephoton,timeindex::Int;g=1)
+function wda!(state::OnePhoton,diff::OnePhoton,timeindex::Int;g=1)
     diff.ξ01[timeindex] = diff.ξ01[timeindex] + complex(g*state.ξ10)
 end
 
-function wda!(state::twophoton,diff::twophoton,timeindex::Int;g=1)
+function wda!(state::TwoPhoton,diff::TwoPhoton,timeindex::Int;g=1)
     diff.ξ11[timeindex] = diff.ξ11[timeindex] + sqrt(2)*complex(g*state.ξ20)
     for j in 1:timeindex-1
         diff.ξ02[timeindex,j] = diff.ξ02[timeindex,j]+complex(g*state.ξ11[j])
@@ -257,69 +266,69 @@ function wda!(state::twophoton,diff::twophoton,timeindex::Int;g=1)
 end
 
 
-function annihilation!(state::twophoton,diff::onephoton,timeindex::Int;g=1)
-    diff.ξ01[timeindex] = diff.ξ01[timeindex] + complex(g*state.ξ11[timeindex]) 
-    diff.ξ10 = diff.ξ10 + complex(sqrt(2)*g*state.ξ20) 
+function annihilation!(state::TwoPhoton,diff::OnePhoton,timeindex::Int;g=1)
+    diff.ξ10 = diff.ξ10 + complex(sqrt(2)*g*state.ξ20)
+    diff.ξ01 = diff.ξ01 + complex(g*state.ξ11)  
 end
 
 
-function annihilation!(state::onephoton,diff::zerophoton,timeindex::Int;g=1)
+function annihilation!(state::OnePhoton,diff::ZeroPhoton,timeindex::Int;g=1)
     diff.ξ0 = diff.ξ0 + complex(g*state.ξ10) 
 end
 
-function creation!(state::onephoton,diff::twophoton,timeindex::Int;g=1)
+function creation!(state::OnePhoton,diff::TwoPhoton,timeindex::Int;g=1)
     diff.ξ20 = diff.ξ20 + complex(sqrt(2)*g*state.ξ10)
-    diff.ξ11[timeindex] = diff.ξ11[timeindex] + complex(sqrt(2)*g*state.ξ01[timeindex])
+    diff.ξ11 = diff.ξ11 + complex(g*state.ξ01)
 end
 
-function creation!(state::zerophoton,diff::onephoton,timeindex::Int;g=1)
-    diff.ξ10 = diff.ξ10 + complex(sqrt(2)*g*state.ξ0)
+function creation!(state::ZeroPhoton,diff::OnePhoton,timeindex::Int;g=1)
+    diff.ξ10 = diff.ξ10 + complex(g*state.ξ0)
 end
 
-function number!(state::zerophoton,diff::zerophoton,timeindex::Int;g=1)
+function number!(state::ZeroPhoton,diff::ZeroPhoton,timeindex::Int;g=1)
     "nothing"
 end
 
-function number!(state::onephoton,diff::onephoton,timeindex::Int;g=1)
+function number!(state::OnePhoton,diff::OnePhoton,timeindex::Int;g=1)
     diff.ξ10 = diff.ξ10 + state.ξ10*complex(g) 
 end
-function number!(state::twophoton,diff::twophoton,timeindex::Int;g=1)
-    diff.ξ20 = diff.ξ20 + sqrt(2)*state.ξ20*complex(g)
+function number!(state::TwoPhoton,diff::TwoPhoton,timeindex::Int;g=1)
+    diff.ξ20 = diff.ξ20 + 2*state.ξ20*complex(g)
     diff.ξ11 = diff.ξ11 .+ (state.ξ11 .* complex(g))
 end
 
-function annihilation!(state::cwstate;g=1)
+function annihilation!(state::CWState;g=1)
     for i in 1:length(state.data)-1
         annihilation!(state.data[i+1],state.diff[i],state.timeindex,g=g)
     end
 end
 
-function creation!(state::cwstate;g=1)
+function creation!(state::CWState;g=1)
     for i in 1:length(state.data)-1
         creation!(state.data[i],state.diff[i+1],state.timeindex,g=g)
     end
 end
 
-function wda!(state::cwstate;g=1)
+function wda!(state::CWState;g=1)
     for i in 1:length(state.data)
         wda!(state.data[i],state.diff[i],state.timeindex,g=g)
     end
 end
 
-function adw!(state::cwstate;g=1)
+function adw!(state::CWState;g=1)
     for i in 1:length(state.data)
         adw!(state.data[i],state.diff[i],state.timeindex,g=g)
     end
 end
 
-function number!(state::cwstate;g=1)
+function number!(state::CWState;g=1)
     for i in 1:length(state.data)
         number!(state.data[i],state.diff[i],state.timeindex,g=g)
     end
 end
 
 
-function add_diff!(state1::cwstate,state2::cwstate)
+function add_diff!(state1::CWState,state2::CWState)
     if state1.timeindex != state2.timeindex
         print("Carefull, timeindeces not same")
     end
@@ -328,33 +337,33 @@ function add_diff!(state1::cwstate,state2::cwstate)
     end
 end
 
-function zero_diff!(state::cwstate)
+function zero_diff!(state::CWState)
     for i in 1:length(state.data)
         zero_diff!(state.diff[i],state.timeindex)
     end
 end
 
-function add_diff!(state1::cwstate)
+function add_diff!(state1::CWState)
     for i in 1:length(state1.data)
         add!(state1.data[i],state1.diff[i],state1.timeindex)
     end
 end
 
-function set_equal!(diff::cwstate,state1::cwstate)
+function set_equal!(diff::CWState,state1::CWState)
     for i in 1:length(state1.data)
         set_equal!(diff.data[i],state1.data[i],diff.timeindex)
     end
     diff.timeindex = state1.timeindex 
 end
 
-function set_equal_diff!(state::cwstate)
+function set_equal_diff!(state::CWState)
     for i in 1:length(state.data)
         set_equal!(state.data[i],state.diff[i],state.timeindex)
         zero_diff!(state.diff[i],state.timeindex)
     end
 end
 
-function save_state!(state::cwstate)
+function save_state!(state::CWState)
     if state.basis.N_cutoff == 0
         state.tmp_data[1] = state.data[1].ξ0
     elseif state.basis.N_cutoff == 1
@@ -374,7 +383,7 @@ function save_state!(state::cwstate)
 end
 
 
-function load_state!(state::cwstate)
+function load_state!(state::CWState)
     if state.basis.N_cutoff == 0
         state.data[1].ξ0 = state.tmp_data[1]
     elseif state.basis.N_cutoff == 1
@@ -394,7 +403,7 @@ function load_state!(state::cwstate)
 end
 
 
-function save_diff!(state::cwstate)
+function save_diff!(state::CWState)
     if state.basis.N_cutoff == 0
         state.tmp_diff[1] = state.diff[1].ξ0
     elseif state.basis.N_cutoff == 1
@@ -414,7 +423,7 @@ function save_diff!(state::cwstate)
 end
 
 
-function load_diff!(state::cwstate)
+function load_diff!(state::CWState)
     if state.basis.N_cutoff == 0
         state.diff[1].ξ0 = state.tmp_diff[1] + state.diff[1].ξ0
     elseif state.basis.N_cutoff == 1

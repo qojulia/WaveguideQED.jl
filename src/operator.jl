@@ -1,5 +1,6 @@
 
-import Base:+,-,/,*,zero
+
+import Base:+,-,/,*,zero,copy
 
 export annihilation,creation,adw,wda,number,CWOperator,CWLazySum,CWLazyProduct,CWSingleOperator,AdW,WdA,Creation,Annihilation,ParticleNumber
 
@@ -17,6 +18,9 @@ mutable struct Annihilation <: CWOperator
     factor::ComplexF64
 end
 mutable struct ParticleNumber <: CWOperator
+    factor::ComplexF64
+end
+mutable struct Identity <:CWOperator
     factor::ComplexF64
 end
 
@@ -43,7 +47,8 @@ mul!(state::CWState,operator::WdA) = wda!(state;g=operator.factor)
 mul!(state::CWState,operator::Creation) = creation!(state;g=operator.factor) 
 mul!(state::CWState,operator::Annihilation) = annihilation!(state;g=operator.factor) 
 mul!(state::CWState,operator::ParticleNumber) = number!(state;g=operator.factor) 
-
+#mul!(state::CWState,operator::Identiy) = identity!(state;g=operator.factor)
+mul!(state::CWState,operator::Identity) = "Do nothing"
 
 """
 function *(operator::CWSingleOperator,state::CWState) 
@@ -78,6 +83,16 @@ function +(operator1::CWLazySum,operator2::CWOperator)
     return cpy
 end
 +(operator1::CWOperator,operator2::CWLazySum) = +(operator2,operator1)
+
+function +(operator1::CWLazySum,operator2::CWLazySum)
+    cpy1 = copy(operator1)
+    for i in 1:length(operator2.operators) 
+        cpy1.operators[i] = cpy1.factor*cpy1.operators[i] 
+        push!(cpy1.operators,operator2.factor*operator2.operators[i])
+    end
+    cpy1.factor = 1
+    return cpy1
+end
 
 function -(operator1::CWOperator,operator2::CWOperator) 
     cpy = copy(operator2)
@@ -171,15 +186,53 @@ function mul!(state::CWState,operator::CWLazyProduct)
     save_diff!(state)
     zero_diff!(state)
     O = operator.factor*operator.operators[end]
-    mul!(state::CWState,O)
+    mul!(state,O)
     set_equal_diff!(state)
     for O in operator.operators[end-1:-1:2]
-        mul!(state::CWState,O)
+        mul!(state,O)
         set_equal_diff!(state)
     end
-    mul!(state::CWState,operator.operators[1])
+    mul!(state,operator.operators[1])
     load_diff!(state)
     load_state!(state)
+end
+
+
+
+mutable struct CWLazyTensor <: CWOperator
+    cw_operator::CWOperator
+    qo_opeartor::Operator
+end
+
+function lazytensor(op1::T,op2::Operator) where T<:CWOperator
+    return CWLazyTensor(op1,op2)
+end
+
+function lazytensor(op1::CWLazyProduct,op2::Operator)
+    cpy = copy(op1)
+    for (i,O) in enumerate(cpy.operators)
+        cpy.operators[i] = lazytensor(O,op2)
+    end
+    return cpy
+end
+
+function lazytensor(op1::CWLazySum,op2::Operator)
+    cpy = copy(op1)
+    for (i,O) in enumerate(cpy.operators)
+        cpy.operators[i] = lazytensor(O,op2)
+    end
+    return cpy
+end
+
+⊗(a::CWOperator,b::Operator) = lazytensor(a,b)
+⊗(a::Operator,b::CWOperator) = lazytensor(b,a)
+
+
+function mul!(state::CWTensorState,operator::CWLazyTensor)
+    state.ketbuffer = operator.qo_opeartor*state.ket
+    for i in 1:length(state.cwstates)
+        mul!(state.cwstates[i],operator.cw_operator)
+    end
 end
 
 function annihilation(b::cwbasis)

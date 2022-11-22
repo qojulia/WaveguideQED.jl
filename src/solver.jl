@@ -37,7 +37,8 @@ function timestep!(state::CWState,k1::CWState,k2::CWState,k3::CWState,k4::CWStat
     zero_diff!(k4)
 
     #Update k1,k2,k3, and k4 to match output state for next time step
-    state.timeindex = timeindex+1
+    timeindex_update!(state)
+    #state.timeindex = timeindex+1
     set_equal!(k1,state)
     set_equal!(k2,state)
     set_equal!(k3,state)

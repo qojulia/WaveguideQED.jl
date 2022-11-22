@@ -204,6 +204,8 @@ function set_zero!(state1::TwoPhoton,timeindex::Int)
     end
 end
 
+
+
 function mul!(state1::ZeroPhoton,a::ComplexF64,timeindex::Int)
     state1.ξ0 = state1.ξ0*a
 end
@@ -363,6 +365,10 @@ function set_equal_diff!(state::CWState)
     end
 end
 
+function timeindex_update!(state::CWState)
+    state.timeindex = state.timeindex+1
+end
+
 function save_state!(state::CWState)
     if state.basis.N_cutoff == 0
         state.tmp_data[1] = state.data[1].ξ0
@@ -441,4 +447,5 @@ function load_diff!(state::CWState)
         state.diff[3].ξ02[state.timeindex+1:end,state.timeindex] = state.tmp_diff[4+2N+state.timeindex:end] + state.diff[3].ξ02[state.timeindex+1:end,state.timeindex]
     end
 end
+
 

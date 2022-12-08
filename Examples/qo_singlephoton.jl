@@ -35,8 +35,8 @@ for i in 1:length(param.times)
 end
 
 function get_hamiltonian(time,psi)
-    timeindex = Int(floor(time/dt))+1
-    return H_list[timeindex]
+    #timeindex = Int(
+    return H_list[ceil(Int,time/dt)]
 end
 
 #Define input single photon state

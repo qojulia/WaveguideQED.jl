@@ -24,7 +24,7 @@ w = get_woper(bw,2,nsteps,1)
 wda =  a ⊗ dagger(w)
 adw = ad ⊗ w
 H = param.δ*n + (im*sqrt(param.γ/dt))*(adw-wda)
-const H_list = Array{typeof(H)}(undef,length(param.times))
+H_list = Array{typeof(H)}(undef,length(param.times))
 for i in 1:length(param.times)
     w = get_woper(bw,2,nsteps,i)    
     wda =  a ⊗ dagger(w)
@@ -33,10 +33,10 @@ for i in 1:length(param.times)
 end
 
 function get_hamiltonian(time,psi)
-    timeindex = Int(floor(time/dt))+1
+    #timeindex = Int(floor(time/dt))+1
     #print("time:$time \n")
     #print("timeindex:$timeindex \n")
-    return H_list[timeindex]
+    return H_list[ceil(Int,time/dt)]
 end
 
 #Define input twophoton state
@@ -51,9 +51,8 @@ tmp = view_twophoton(ψ_cw.data,nsteps)
 #tmp .= 10
 tmp .= ξvec
 
-ψ0 = fockstate(bc,0) ⊗  ψ_cw 
-tout, ψ = timeevolution.schroedinger_dynamic(param.times, ψ0, get_hamiltonian)
-
+psi = fockstate(bc,0) ⊗  ψ_cw
+tout, ψ = timeevolution.schroedinger_dynamic(param.times, psi, get_hamiltonian)
 
 ψplot = ψ[end]
 #ψplot=ψ0

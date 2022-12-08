@@ -11,10 +11,10 @@
 module CavityWaveguide
 
 
-include("cavity_waveguide_object_v2.jl")
-include("TensorState.jl")
-include("operator.jl")
-include("solver.jl")
+include("CavityWaveguideObject.jl")
+#include("TensorState.jl")
+#include("operator.jl")
+#include("solver.jl")
 
 
 end

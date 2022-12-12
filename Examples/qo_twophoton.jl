@@ -25,7 +25,7 @@ nsteps = length(param.times)
 
 #TODO put following function in module CavityWaveguide and make more general for user friendliness
 #Precalculate operators for efficiency
-#Can this be made to except 
+#Can this be made to accept users hamiltonian and calculate for all times?
 function precalculate_hamiltonian(param)
     w = get_woper(bw,2,nsteps,1)
     wd = dagger(w);
@@ -42,6 +42,7 @@ function precalculate_hamiltonian(param)
     return H_list
 end
 
+#Following two function are for performance when using QuantumOptics.jl solver
 function get_hamiltonian(time,psi)
     return H_list[floor(Int,time/dt)+1]
 end
@@ -59,7 +60,7 @@ end
 ξfun(t::Number,σ::Number,t0::Number) = complex(1/(σ*sqrt(2*pi))*exp(-1/2*(t-t0)^2/σ^2))/sqrt(0.2820947917738782)
 ξvec=sqrt(2)*dt*tril(ξfun.(param.times,param.σ,param.t0)*transpose(ξfun.(param.times,param.σ,param.t0)))
 
-#Define input waveguide state
+#Define input waveguide state. Almost pretty?
 ψ_cw = Ket(bw)
 tmp = view_twophoton(ψ_cw.data,nsteps)
 tmp .= ξvec
@@ -67,7 +68,7 @@ tmp .= ξvec
 #Tensor with cavity
 psi = fockstate(bc,0) ⊗ ψ_cw
 
-#Precalc hamiltonian
+#Precalc hamiltonian. 
 H_list = precalculate_hamiltonian(param)
 
 #Solve
@@ -76,7 +77,7 @@ tout, ψ = timeevolution.schroedinger_dynamic(param.times, psi, get_hamiltonian,
 #Extract last vector
 ψplot = ψ[end].data
 
-#TODO: Make the following into function that views specified output
+#TODO: Make the following into function that views specified output in a nice way
 ψplot = ψplot[1:3:end]
 ψ_double = view_twophoton(ψplot,nsteps)
 ψ_single = ψplot[2:nsteps+1] 

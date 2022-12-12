@@ -1,6 +1,6 @@
 using QuantumOptics
 
-export view_twophoton,get_cwbasis,get_woper
+export view_twophoton,get_cwbasis,get_woper,get_wdoper
 
 #FOLLOWING IS COMMENTED SINCE NOT FINISHED
 
@@ -31,26 +31,102 @@ function get_woper(b::Basis,N::Int,nsteps::Int,timeindex::Int)
     else
         out = sparse(fockstate(b,0))
         start = sparse(dagger(fockstate(b,timeindex)))
-        w = tensor(out,start)
-        out = sparse(fockstate(b,timeindex))
-        start = sparse(dagger(fockstate(b,nsteps+(timeindex-1)*nsteps+timeindex)))
-        w = w + sparse(tensor(out,start))
+        w = sparse(tensor(out,start))
+        
         for j in 1:timeindex-1
             out = sparse(fockstate(b,j))
             start = sparse(dagger(fockstate(b,nsteps+timeindex+(j-1)*nsteps)))
             w =w+sparse(tensor(out,start))
+            #w = w + tensor(out,start)
         end
+       
         for j in timeindex+1:nsteps
             out = sparse(fockstate(b,j))
-            start = sparse(dagger(fockstate(b,(timeindex-1)*nsteps+j)))
+            start = sparse(dagger(fockstate(b,nsteps+(timeindex-1)*nsteps+j)))
             w = w+sparse(tensor(out,start))
+            end
+        
+        out = sparse(fockstate(b,timeindex))
+        start = sparse(dagger(fockstate(b,nsteps+(timeindex-1)*nsteps+timeindex)))
+        w = w + sqrt(2)*sparse(tensor(out,start))
+    end
+    return w
+end
+
+function get_wdoper(b::Basis,N::Int,nsteps::Int,timeindex::Int)
+    if N==1
+        out = sparse(fockstate(b,timeindex))
+        start = sparse(dagger(fockstate(b,0)))
+        w = sparse(tensor(out,start))
+    else
+        out = sparse(fockstate(b,timeindex))
+        start = sparse(dagger(fockstate(b,0)))
+        w = sparse(tensor(out,start))
+        
+        for j in 1:timeindex-1
+            out = sparse(fockstate(b,nsteps+timeindex+(j-1)*nsteps))
+            start = sparse(dagger(fockstate(b,j)))
+            w =w+sparse(tensor(out,start))
+            #w = w + tensor(out,start)
         end
+        
+        for j in timeindex+1:nsteps
+            start = sparse(dagger(fockstate(b,j)))
+            out = sparse(fockstate(b,nsteps+(timeindex-1)*nsteps+j))
+            w = w+sparse(tensor(out,start))
+            #w = w + tensor(out,start)
+        end
+        start = sparse(dagger(fockstate(b,timeindex)))
+        out = sparse((fockstate(b,nsteps+(timeindex-1)*nsteps+timeindex)))
+        w = w + sparse(tensor(out,start))
+        #w = w + tensor(out,start)
         
     end
     return w
 end
 
 
+function solve(psi,f,times)
+    dt = times[2] - times[1] 
+    k1 = copy(psi)
+    k2 = copy(psi)
+    k3 = copy(psi)
+    k4 = copy(psi)
+    for i in 1:length(times)
+        timestep!(psi,k1,k2,k3,k4,f,i,dt)
+    end
+    return psi
+end
+
+function timestep!(psi,k1,k2,k3,k4,f,t,dt)
+    H = -im*f(t,psi)
+    QuantumOptics.mul!(k1,H,psi,dt/2,0)
+    #print(k1)
+
+    k2.data .= k2.data+k1.data
+    #print(k2)
+    #print(k1)
+    #QuantumOptics.mul!(k2,H,k2,dt/2,0)
+    k2 = H*k2*dt/2
+
+    k3.data .= k3.data+k2.data
+    #QuantumOptics.mul!(k3,H,k3,dt,0)
+    k3 = H*k3*dt
+
+    k4.data .= k4.data+k3.data
+    #QuantumOptics.mul!(k4,H,k4,dt/6,0)
+    k4 = H*k4*dt/6
+
+    k1 = 1/3*k1
+    k2 = 2/3*k2
+    k3 = 1/3*k3
+    
+    psi.data .= psi.data + k1.data+k2.data+k3.data+k4.data
+    k1.data .= psi.data
+    k2.data .= psi.data
+    k3.data .= psi.data
+    k4.data .= psi.data
+end
 
 
 """

@@ -1,6 +1,6 @@
 name = "CavityWaveguide"
 uuid = "c4555495-0e8d-488d-8e6a-965ecefe9055"
-#authors = ["mabuni1998 <56378038+mabuni1998@users.noreply.github.com> and contributors"]
+authors = ["Matias Bundgaard-Nielsen <mabuni1998@gmail.com>, Mikkel Heuck <mheu@dtu.dk>, and Stefan Krastanov <stefankr@mit.edu>"]
 version = "0.1.0"
 
 [compat]

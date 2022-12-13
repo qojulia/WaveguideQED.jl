@@ -9,14 +9,15 @@ param = parameters()
 param.δ = 0
 param.γ = 1
 param.t0 = 5
-param.x3 = 4
+#param.x3 = 4
 param.times=0.0:0.2:10.0
 dt = param.times[2] - param.times[1]
 tend = param.times[end]
 
 #Create operators for two photons interacting with cavity
 bc = FockBasis(2)
-bw = get_cwbasis(param.times,2)
+bw = WaveguideBasis(2,param.times)
+btotal = tensor(bc,bw)
 a = sparse(destroy(bc))
 ad = dagger(a);
 n = ad*a ⊗ identityoperator(bw)
@@ -25,24 +26,25 @@ nsteps = length(param.times)
 
 #TODO put following function in module CavityWaveguide and make more general for user friendliness
 #Precalculate operators for efficiency
-#Can this be made to accept users hamiltonian and calculate for all times?
+#Can this be made to except 
 function precalculate_hamiltonian(param)
-    w = get_woper(bw,2,nsteps,1)
+    w = destroy(bw)
     wd = dagger(w);
-    wda =  a ⊗ wd
-    adw = ad ⊗ w
-    H = param.δ*n + (im*sqrt(param.γ/dt))*(adw-wda) + param.x3/4*(n*n-n)
+    wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
+    adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
+    H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*(n*n-n))
     H_list = Array{typeof(H)}(undef,length(param.times))
     for i in 1:length(param.times)
-        w = get_woper(bw,2,nsteps,i)
-        wda =  a ⊗ dagger(w)
-        adw = ad ⊗ w
-        H_list[i] = param.δ*n + (im*sqrt(param.γ/dt))*(adw-wda)+ param.x3/4*(n*n-n)
+        bw.timeindex = i
+        w = destroy(bw)
+        wd = dagger(w);
+        wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
+        adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
+        H_list[i] = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*(n*n-n))
     end
     return H_list
 end
 
-#Following two function are for performance when using QuantumOptics.jl solver
 function get_hamiltonian(time,psi)
     return H_list[floor(Int,time/dt)+1]
 end
@@ -55,33 +57,33 @@ function fout(time,psi)
     end
 end
 
+
 #Define input twophoton state shape
 #Can this be done in a nicer way?
-ξfun(t::Number,σ::Number,t0::Number) = complex(1/(σ*sqrt(2*pi))*exp(-1/2*(t-t0)^2/σ^2))/sqrt(0.2820947917738782)
+ξfun(t::Number,σ::Number,t0::Number) = 1/(σ*sqrt(2*pi))*exp(-1/2*(t-t0)^2/σ^2)/sqrt(0.2820947917738782)
 ξvec=sqrt(2)*dt*tril(ξfun.(param.times,param.σ,param.t0)*transpose(ξfun.(param.times,param.σ,param.t0)))
 
-#Define input waveguide state. Almost pretty?
+#Define input waveguide state
 ψ_cw = Ket(bw)
-tmp = view_twophoton(ψ_cw.data,nsteps)
+tmp = view_twophoton(ψ_cw)
 tmp .= ξvec
 
 #Tensor with cavity
 psi = fockstate(bc,0) ⊗ ψ_cw
 
-#Precalc hamiltonian. 
+#Precalc hamiltonian
 H_list = precalculate_hamiltonian(param)
 
 #Solve
 tout, ψ = timeevolution.schroedinger_dynamic(param.times, psi, get_hamiltonian,fout=fout)
 
 #Extract last vector
-ψplot = ψ[end].data
+ψplot = ψ[end]
 
-#TODO: Make the following into function that views specified output in a nice way
-ψplot = ψplot[1:3:end]
-ψ_double = view_twophoton(ψplot,nsteps)
-ψ_single = ψplot[2:nsteps+1] 
+#TODO: Make the following into function that views specified output
+ψ_double = view_twophoton(ψplot)
 ψ_double = ψ_double + ψ_double' - Diagonal(ψ_double)
+ψ_single = view_singlephoton(ψplot)
 
 #Plot result of simulation
 #Make into function to visualize?

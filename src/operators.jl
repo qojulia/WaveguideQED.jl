@@ -21,6 +21,27 @@ Base.:*(b::WaveguideOperator,a::Number)=*(a,b)
 
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
+function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::WaveguideOperator) 
+    btotal = tensor(op1.basis_l,op2.basis_l)
+    LazyTensor(btotal,btotal,[1,2],(op1,op2))
+end
+
+function QuantumOpticsBase.:tensor(op1::WaveguideOperator,op2::AbstractOperator) 
+    btotal = tensor(op1.basis_l,op2.basis_l)
+    LazyTensor(btotal,btotal,[1,2],(op1,op2))
+end
+
+"""
+function Base.:+(op1::LazyTensor{B1,B2},op2::LazyTensor{B1,B2}) where {B1,B2}
+    LazySum(op1,op2)
+end
+
+function Base.:+(op1::LazySum{B1,B2},op2::LazyTensor{B1,B2}) where {B1,B2}
+    out = copy(op1)
+    push!(out.operators,op2)
+    push!(out.factors,1)    
+end
+"""
 
 function QuantumOpticsBase.:destroy(basis::WaveguideBasis{1})
     return WaveguideDestroy{1}(basis,basis,1)
@@ -49,7 +70,6 @@ end
 
 
 function QuantumOpticsBase.:mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis, F,I,T<:Tuple{Vararg{AbstractOperator}}}
-    
     b_data = Base.ReshapedArray(b.data, QuantumOpticsBase._comp_size(basis(b)), ())
     result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
 
@@ -110,6 +130,7 @@ function waveguide_mul!(result,a::WaveguideCreate{1},b,alpha,beta)
     result[1+a.basis_l.timeindex] = beta*result[1+a.basis_l.timeindex] + alpha*b[1]
 end
 
+#Create 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideCreate{2},b,alpha,beta)
     result[1+a.basis_l.timeindex] = beta*result[1+a.basis_l.timeindex] + alpha*b[1]
     two_photon_output = reshape(view(result,2+a.basis_l.nsteps:1+a.basis_l.nsteps+a.basis_l.nsteps^2),(a.basis_l.nsteps,a.basis_l.nsteps))

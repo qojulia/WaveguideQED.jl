@@ -9,8 +9,8 @@ param = parameters()
 param.δ = 0
 param.γ = 1
 param.t0 = 5
-param.x3 = 4
-param.times=0.0:0.1:10.0
+param.x3 = 0
+param.times=0.0:0.2:10.0
 dt = param.times[2] - param.times[1]
 tend = param.times[end]
 
@@ -26,8 +26,8 @@ dt = param.times[2]-param.times[1]
 nsteps = length(param.times)
 w = destroy(bw)
 wd = create(bw);
-wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
-adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
+wda = a ⊗ wd
+adw = ad ⊗ w
 H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*n*n,-param.x3/4*n)
 
 #Define input twophoton state shape
@@ -58,7 +58,8 @@ xgrid = repeat(param.times',length(param.times),1)
 ygrid = repeat(param.times,1,length(param.times))
 ax.contourf(xgrid,ygrid,ψ_double.*conj(ψ_double),100)
 ax.set_aspect("equal", "box")
-ax.set_ylabel(L"$\xi$")
+ax.set_ylabel("time [1/γ]")
+ax.set_xlabel("time [1/γ]")
 ax.set_title("δ = $(param.δ)")   
 plt.tight_layout()
-plt.savefig("plots/two_photon_contour.pdf")
+plt.savefig(pwd()*"/CavityWaveguide/Examples/two_photon_contour.jpg")

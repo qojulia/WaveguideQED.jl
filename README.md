@@ -76,5 +76,4 @@ julia> plt.tight_layout()
 ```
 
 Giving the following plot:
-
-![alt text](https://github.com/mabuni1998/CavityWaveguide/tree/main/Examples/two_photon_contour.jpg?raw=true)
+![alt text](./Examples/two_photon_contour.jpg?raw=true)

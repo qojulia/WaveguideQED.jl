@@ -3,7 +3,7 @@ using CavityWaveguide
 using LinearAlgebra
 using PyPlot
 pygui(true)
-includet("singlecavity_simulations.jl")
+include("singlecavity_simulations.jl")
 #Parameter structure imported from singlecavity_simulations (bit overkill for now, but can prove usefull)
 param = parameters()
 param.δ = 0
@@ -19,43 +19,20 @@ bc = FockBasis(1)
 bw = WaveguideBasis(1,param.times)
 btotal = tensor(bc,bw)
 a = sparse(destroy(bc))
-ad = dagger(a);
+ad = sparse(create(bc));
+n = ad*a ⊗ identityoperator(bw)
+dt = param.times[2]-param.times[1]
+
+nsteps = length(param.times)
+
 n = ad*a ⊗ identityoperator(bw)
 dt = param.times[2]-param.times[1]
 nsteps = length(param.times)
-
-#TODO put following function in module CavityWaveguide and make more general for user friendliness
-#Precalculate operators for efficiency
-#Can this be made to except 
-function precalculate_hamiltonian(param)
-    w = destroy(bw)
-    wd = dagger(w);
-    wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
-    adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
-    H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*(n*n-n))
-    H_list = Array{typeof(H)}(undef,length(param.times))
-    for i in 1:length(param.times)
-        bw.timeindex = i
-        w = destroy(bw)
-        wd = dagger(w);
-        wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
-        adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
-        H_list[i] = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*(n*n-n))
-    end
-    return H_list
-end
-
-function get_hamiltonian(time,psi)
-    return H_list[floor(Int,time/dt)+1]
-end
-
-function fout(time,psi)
-    if time == tend
-        return psi
-    else
-        return 0
-    end
-end
+w = destroy(bw)
+wd = create(bw);
+wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
+adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
+H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*n*n,-param.x3/4*n)
 
 
 #Define input twophoton state shape
@@ -66,11 +43,10 @@ end
 ψ_cw = Ket(bw)
 tmp = view_singlephoton(ψ_cw)
 tmp .= ξvec
-ψ0 = fockstate(bc,0) ⊗  ψ_cw 
+psi = fockstate(bc,0) ⊗  ψ_cw 
 
-H_list = precalculate_hamiltonian(param)
-
-tout, ψ = timeevolution.schroedinger_dynamic(param.times, ψ0, get_hamiltonian,fout=fout)
+#Solve
+ψ = waveguide_evolution(param.times, psi, H)
 
 #REFERENCE SOLUTION
 solve_differentialeq(param,ξfun)
@@ -78,8 +54,7 @@ sol1 = solve_differentialeq(param,ξfun)
 ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
 
 #Plot single photon waveguide state 
-ψplot = ψ[end]
-ψ_single = view_singlephoton(ψplot)/sqrt(dt)
+ψ_single = view_singlephoton(ψ)/sqrt(dt)
 
 fig,ax = subplots(1,2,figsize=(9,4.5))
 ax[1].plot(param.times,real.(ψ_single))

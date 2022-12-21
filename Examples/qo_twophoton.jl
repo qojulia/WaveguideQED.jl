@@ -6,11 +6,14 @@ pygui(true)
 include("singlecavity_simulations.jl")
 #Parameter structure imported from singlecavity_simulations (bit overkill for now, but can prove usefull)
 param = parameters()
+
+#Set detuning:
 param.δ = 0
-param.γ = 1
-param.t0 = 5
+#Set non linearity:
 param.x3 = 0
-param.times=0.0:0.2:10.0
+
+#Set simulation time
+param.times = times = 0.0:0.2:10.0
 dt = param.times[2] - param.times[1]
 tend = param.times[end]
 
@@ -20,10 +23,7 @@ bw = WaveguideBasis(2,param.times)
 btotal = tensor(bc,bw)
 a = sparse(destroy(bc))
 ad = sparse(create(bc));
-
 n = ad*a ⊗ identityoperator(bw)
-dt = param.times[2]-param.times[1]
-nsteps = length(param.times)
 w = destroy(bw)
 wd = create(bw);
 wda = a ⊗ wd
@@ -62,4 +62,4 @@ ax.set_ylabel("time [1/γ]")
 ax.set_xlabel("time [1/γ]")
 ax.set_title("δ = $(param.δ)")   
 plt.tight_layout()
-plt.savefig(pwd()*"/CavityWaveguide/Examples/two_photon_contour.jpg")
+plt.savefig(pwd()*"/Examples/two_photon_contour.jpg")

@@ -6,11 +6,12 @@ pygui(true)
 include("singlecavity_simulations.jl")
 #Parameter structure imported from singlecavity_simulations (bit overkill for now, but can prove usefull)
 param = parameters()
+
+#Set detuning:
 param.δ = 0
-param.γ = 1
-param.t0 = 5
-#param.x3 = 4
-param.times=0.0:0.2:20.0
+#Set non linearity:
+param.x3 = 0
+
 dt = param.times[2] - param.times[1]
 tend = param.times[end]
 
@@ -21,17 +22,10 @@ btotal = tensor(bc,bw)
 a = sparse(destroy(bc))
 ad = sparse(create(bc));
 n = ad*a ⊗ identityoperator(bw)
-dt = param.times[2]-param.times[1]
-
-nsteps = length(param.times)
-
-n = ad*a ⊗ identityoperator(bw)
-dt = param.times[2]-param.times[1]
-nsteps = length(param.times)
 w = destroy(bw)
 wd = create(bw);
-wda = LazyTensor(btotal,btotal,[1,2],(a,wd))
-adw = LazyTensor(btotal,btotal,[1,2],(ad,w))
+wda = a ⊗ wd
+adw = ad ⊗ w
 H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*n*n,-param.x3/4*n)
 
 
@@ -56,14 +50,20 @@ ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
 #Plot single photon waveguide state 
 ψ_single = view_singlephoton(ψ)/sqrt(dt)
 
-fig,ax = subplots(1,2,figsize=(9,4.5))
-ax[1].plot(param.times,real.(ψ_single))
-ax[1].plot(sol1.t,real(ref_sol))
-ax[2].plot(param.times,imag.(ψ_single))
-ax[2].plot(sol1.t,imag(ref_sol))
+fig,ax = subplots(2,1,figsize=(9,9))
+ax[1].plot(param.times,real.(ψ_single),"ro",label="CavityWaveguide.jl",fillstyle="none")
+ax[2].plot(sol1.t,imag.(ref_sol),"b-")
+ax[1].plot(sol1.t,real.(ref_sol),"r-",label="Reference sol.")
+ax[2].plot(param.times,imag.(ψ_single),"bo",fillstyle="none")
 
-ax[1].set_ylabel(L"$\xi$")
-ax[1].set_title("δ = $(param.δ)")   
+ax[1].set_xlabel("time [1/γ]")
+ax[2].set_xlabel("time [1/γ]")
+
+ax[1].set_ylabel(L"$\xi_{out}^{(1)}$")
+ax[2].set_ylabel(L"$\xi_{out}^{(1)}$")
+ax[1].legend()
+
+ax[1].set_title("Real part with δ = $(param.δ)")   
+ax[2].set_title("Imag. part with δ = $(param.δ)")   
 
 plt.tight_layout()
-plt.savefig("plots/one_photon_contour.pdf")

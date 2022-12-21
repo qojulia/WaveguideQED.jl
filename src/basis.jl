@@ -22,8 +22,9 @@ function QuantumOpticsBase.:fockstate(::Type{T}, b::WaveguideBasis, n::Integer) 
 end
 
 
-#ToDo implement view which can show other than groundstate (|0,1_i,1_j>)
-#ToDo current implementation only works if WaveguideBasis is last basis.
+#TODO: Implement view which can show other than groundstate (|0,1_i,1_j>)
+#TODO: Current implementation only works if WaveguideBasis is last basis.
+#TODO: Use indexing used in mul! function defined in operators.jl
 function view_twophoton(ψ::Ket)
     indeces = tr_indeces(ψ.basis) 
     viewed_data = view(ψ.data,indeces[1])

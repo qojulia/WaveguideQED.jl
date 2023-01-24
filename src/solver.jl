@@ -10,11 +10,11 @@ end
 
 #Call solver from QuantumOptics.jl by defining functions for extraction and updating Hamiltonian.
 function waveguide_evolution(times,psi,H;fout=nothing)
-    bw = get_waveguide_basis(H.basis_l)
+    basis = get_waveguide_basis(psi.basis)
     dt = times[2] - times[1]
     tend = times[end]
     function get_hamiltonian(time,psi)
-        bw.timeindex=floor(Int,time/dt)+1
+        basis.timeindex=floor(Int,time/dt)+1
         return H
     end
     function eval_last_element(time,psi)

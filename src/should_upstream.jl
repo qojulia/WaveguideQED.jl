@@ -1,42 +1,48 @@
+
+function QuantumOpticsBase.:+(a::LazyTensor{B1,B2},b::LazyTensor{B1,B2}) where {B1,B2}
+    LazySum(a,b)
+end
+
+function QuantumOpticsBase.:-(a::LazyTensor{B1,B2},b::LazyTensor{B1,B2}) where {B1,B2}
+    LazySum([1,-1],[a,b])
+end
+
+function QuantumOpticsBase.:+(a::LazyTensor{B1,B2},b::Operator{B1,B2}) where {B1,B2}
+    LazySum(a) + b
+end
+function QuantumOpticsBase.:+(a::Operator{B1,B2},b::LazyTensor{B1,B2}) where {B1,B2}
+    +(b,a)
+end
 #Commented out as this needs furtherwork
 """
-function Base.:+(op1::LazyTensor{B1,B2},op2::LazyTensor{B1,B2}) where {B1,B2}
-    LazySum(op1,op2)
+
+function Base.:+(a::LazySum{B1,B2},b::LazyTensor{B1,B2}) where {B1,B2}
+    LazySum([a.factors; 1], (a.operators..., b))    
 end
 
-
-function Base.:-(op1::LazyTensor{B1,B2},op2::LazyTensor{B1,B2}) where {B1,B2}
-    LazySum([1,-1],(op1,op2))
+function Base.:+(a::LazyTensor{B1,B2},b::LazySum{B1,B2}) where {B1,B2}
+    +(b,a)   
 end
 
-function Base.:+(op1::LazySum{B1,B2},op2::LazyTensor{B1,B2}) where {B1,B2}
-    op1+LazySum(op2)    
+function Base.:-(a::LazySum{B1,B2},b::LazyTensor{B1,B2}) where {B1,B2}
+    LazySum([a.factors; -1], (a.operators..., b))   
 end
 
-function Base.:+(op1::LazyTensor{B1,B2},op2::LazySum{B1,B2}) where {B1,B2}
-    +(op2,op1)   
+function Base.:-(a::LazyTensor{B1,B2},b::LazySum{B1,B2}) where {B1,B2}
+    LazySum([1; b.factors...], (a, b.operaterors...))
 end
 
-function Base.:-(op1::LazySum{B1,B2},op2::LazyTensor{B1,B2}) where {B1,B2}
-    op1-LazySum(op2)   
+function QuantumOpticsBase.:+(a::LazySum{B1,B2},b::Operator{B1,B2}) where {B1,B2}
+    LazySum([a.factors; 1], (a.operators..., b))      
 end
 
-function Base.:-(op1::LazyTensor{B1,B2},op2::LazySum{B1,B2}) where {B1,B2}
-    LazySum(op1)-op2
+QuantumOpticsBase.:+(a::Operator,b::LazySum) = +(b,a)
+
+function QuantumOpticsBase.:-(a::LazySum{B1,B2},b::Operator{B1,B2}) where {B1,B2}
+    LazySum([a.factors; -1], (a.operators..., b))       
 end
 
-function Base.:+(op1::LazySum{B1,B2},op2::Operator) where {B1,B2}
-    op1+LazySum(op2)      
+function QuantumOpticsBase.:-(a::Operator,b::LazySum{B1,B2}) where {B1,B2}
+    LazySum([1; -b.factors...], (a, b.operaterors...))       
 end
-
-Base.:+(op1::Operator,op2::LazySum) = +(op2,op1)
-
-function Base.:-(op1::LazySum{B1,B2},op2::Operator) where {B1,B2}
-    op1-LazySum(op2)       
-end
-
-function Base.:-(op1::Operator,op2::LazySum{B1,B2}) where {B1,B2}
-    LazySum(op1)-op2       
-end
-
 """

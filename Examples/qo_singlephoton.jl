@@ -2,6 +2,7 @@ using QuantumOptics
 using CavityWaveguide
 using LinearAlgebra
 using PyPlot
+pygui(false)
 pygui(true)
 include("singlecavity_simulations.jl")
 #Parameter structure imported from singlecavity_simulations (bit overkill for now, but can prove usefull)
@@ -11,6 +12,8 @@ param = parameters()
 param.δ = 0
 #Set non linearity:
 param.x3 = 0
+
+param.times = 0:0.1:20
 
 dt = param.times[2] - param.times[1]
 tend = param.times[end]
@@ -26,17 +29,15 @@ w = destroy(bw)
 wd = create(bw);
 wda = a ⊗ wd
 adw = ad ⊗ w
-H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*n*n,-param.x3/4*n)
+H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
 
 
 #Define input twophoton state shape
-ξfun(t::Number,σ::Number,t0::Number) = complex(1/(σ*sqrt(2*pi))*exp(-1/2*(t-t0)^2/σ^2))/sqrt(0.2820947917738782)
-ξvec=sqrt(dt)*ξfun.(param.times,param.σ,param.t0)
-
+ξfun(t,σ,t0) = complex(1/(σ*sqrt(2*pi))*exp(-2*log(2)*(t-t0)^2/σ^2))/sqrt(0.2820947917738782)
+ξvec = ξfun.(param.times,param.σ,param.t0)
 #Define initial state
-ψ_cw = Ket(bw)
-tmp = view_singlephoton(ψ_cw)
-tmp .= ξvec
+#ψ_cw = onephoton(bw,ξfun,param.times,param.σ,param.t0)
+ψ_cw = onephoton(bw,ξvec)
 psi = fockstate(bc,0) ⊗  ψ_cw 
 
 #Solve
@@ -48,22 +49,49 @@ sol1 = solve_differentialeq(param,ξfun)
 ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
 
 #Plot single photon waveguide state 
-ψ_single = view_singlephoton(ψ)/sqrt(dt)
+ψ_single = view_onephoton(ψ)/sqrt(dt)
 
-fig,ax = subplots(2,1,figsize=(9,9))
-ax[1].plot(param.times,real.(ψ_single),"ro",label="CavityWaveguide.jl",fillstyle="none")
-ax[2].plot(sol1.t,imag.(ref_sol),"b-")
-ax[1].plot(sol1.t,real.(ref_sol),"r-",label="Reference sol.")
-ax[2].plot(param.times,imag.(ψ_single),"bo",fillstyle="none")
+fig,ax = subplots(1,1,figsize=(9,4.5))
+ax.plot(param.times,abs.(ξvec).^2,"g-",label="Input pulse")
 
-ax[1].set_xlabel("time [1/γ]")
-ax[2].set_xlabel("time [1/γ]")
+ax.plot(param.times,abs.(ψ_single).^2,"ro",label="δ = 0",fillstyle="none")
+#ax[2].plot(sol1.t,abs.(ref_sol)^2,"b-")
+ax.plot(sol1.t,abs.(ref_sol).^2,"r-")
 
-ax[1].set_ylabel(L"$\xi_{out}^{(1)}$")
-ax[2].set_ylabel(L"$\xi_{out}^{(1)}$")
-ax[1].legend()
+param.δ = 2
+H = LazySum(param.δ*n,im*sqrt(param.γ/dt)*adw,-im*sqrt(param.γ/dt)*wda,param.x3/4*n*n,-param.x3/4*n)
 
-ax[1].set_title("Real part with δ = $(param.δ)")   
-ax[2].set_title("Imag. part with δ = $(param.δ)")   
+#Define initial state
+ψ_cw = onephoton(bw,ξvec)
+psi = fockstate(bc,0) ⊗  ψ_cw 
+
+#Solve
+ψ = waveguide_evolution(param.times, psi, H)
+
+#REFERENCE SOLUTION
+solve_differentialeq(param,ξfun)
+sol1 = solve_differentialeq(param,ξfun)
+ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
+
+#Plot single photon waveguide state 
+ψ_single = view_onephoton(ψ)/sqrt(dt)
+
+
+
+ax.plot(param.times,abs.(ψ_single).^2,"bo",label="δ = 2",fillstyle="none")
+#ax[2].plot(sol1.t,abs.(ref_sol)^2,"b-")
+ax.plot(sol1.t,abs.(ref_sol).^2,"b-")
+
+
+#ax[2].plot(param.times,imag.(ψ_single),"bo",fillstyle="none")
+
+ax.set_xlabel("time [1/γ]")
+#ax[2].set_xlabel("time [1/γ]")
+
+ax.set_ylabel(L"$\xi_{out}^{(1)}$")
+#ax[2].set_ylabel(L"$\xi_{out}^{(1)}$")
+ax.legend()
+
+#ax[2].set_title("Imag. part with δ = $(param.δ)")   
 
 plt.tight_layout()

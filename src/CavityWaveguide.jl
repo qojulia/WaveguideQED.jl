@@ -1,7 +1,8 @@
 module CavityWaveguide
 
 using QuantumOptics
-export view_twophoton,get_cwbasis,get_woper,get_wdoper,WaveguideBasis,view_singlephoton,WaveguideOperator, waveguide_evolution
+using LinearAlgebra
+export view_twophoton,get_cwbasis,get_woper,get_wdoper,WaveguideBasis,view_onephoton,WaveguideOperator, waveguide_evolution,onephoton,twophoton
 
 include("should_upstream.jl")
 include("basis.jl")

@@ -48,7 +48,7 @@ function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 #Methods for tensorproducts between QuantumOptics.jl operators. This is done by forming a LazyTensor.
 #TODO: Update method to allow for three or more hilbert spaces.
 function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::WaveguideOperator) 
-    btotal = tensor(op1.basis_l,op2.basis_l)
+    btotal = tensor(op1.basis_l,op2.basis_r)
     LazyTensor(btotal,btotal,[1,2],(op1,op2))
 end
 
@@ -84,6 +84,21 @@ function QuantumOpticsBase.:dagger(op::WaveguideDestroy)
 end
 
 
+function get_timeindex(basis::WaveguideBasis)
+    basis.timeindex
+end
+
+function get_timeindex(basis::Basis)
+    0
+end
+
+function get_timeindex(basis::CompositeBasis)
+    for b in basis.bases
+        if get_timeindex(b) != 0
+            return get_timeindex(b)
+        end
+    end
+end
 
 #Mul! function for CavityWaveguide LazyTensor. 
 #TODO: Makes a call to _tp_sum_matmul! which leads to huge allocation. Can be solved by:
@@ -98,7 +113,6 @@ function QuantumOpticsBase.:mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b:
     QuantumOpticsBase._tp_sum_matmul!(result_data, tp_ops, iso_ops, b_data, alpha * a.factor, beta)
     result
 end
-
 
 #Called from _tp_sum_matmul!
 #Makes sure operator works on correct part of tensor.
@@ -134,37 +148,50 @@ end
 
 #Destroy 1 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{1},b,alpha,beta)
-    result[1] = beta*result[1] + alpha*b[a.basis_l.timeindex+1]
+    for i in eachindex(result)
+        result[i] = beta * result[i]
+    end
+    result[1] = result[1] + alpha*b[a.basis_l.timeindex+1]
 end
 
 #Destroy 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{2},b,alpha,beta)
-    result[1] = beta*result[1] + alpha*b[a.basis_l.timeindex+1]
+    for i in eachindex(result)
+        result[i] = beta * result[i]
+    end
+    timeindex = a.basis_l.timeindex
+    result[1] = result[1] + alpha*b[a.basis_l.timeindex+1]
     two_photon_input = reshape(view(b,2+a.basis_l.nsteps:1+a.basis_l.nsteps+a.basis_l.nsteps^2),(a.basis_l.nsteps,a.basis_l.nsteps))
-    for j in 1:a.basis_l.timeindex-1
-        result[j+1] = beta*result[j+1] + alpha*two_photon_input[a.basis_l.timeindex,j]
+    for j in 1:timeindex-1
+        result[j+1] = result[j+1] + alpha*two_photon_input[timeindex,j]
     end
-    for j in a.basis_l.timeindex+1:a.basis_l.nsteps
-        result[j+1] =beta*result[j+1]+alpha*two_photon_input[j,a.basis_l.timeindex]
+    for j in timeindex+1:a.basis_l.nsteps
+        result[j+1] =result[j+1]+alpha*two_photon_input[j,timeindex]
     end
-    result[a.basis_l.timeindex+1] =beta*result[a.basis_l.timeindex]+sqrt(2)*alpha*two_photon_input[a.basis_l.timeindex,a.basis_l.timeindex]
+    result[timeindex+1] =result[timeindex]+sqrt(2)*alpha*two_photon_input[timeindex,timeindex]
 end
 
 #Create 1 waveguide photon 
 function waveguide_mul!(result,a::WaveguideCreate{1},b,alpha,beta)
-    result[1+a.basis_l.timeindex] = beta*result[1+a.basis_l.timeindex] + alpha*b[1]
+    for i in eachindex(result)
+        result[i] = beta * result[i]
+    end
+    idx = 1+a.basis_l.timeindex
+    result[idx] = result[idx] + alpha*b[1]
 end
 
 #Create 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideCreate{2},b,alpha,beta)
-    result[1+a.basis_l.timeindex] = beta*result[1+a.basis_l.timeindex] + alpha*b[1]
+    for i in eachindex(result)
+        result[i] = beta * result[i]
+    end
+    result[1+a.basis_l.timeindex] = result[1+a.basis_l.timeindex] + alpha*b[1]
     two_photon_output = reshape(view(result,2+a.basis_l.nsteps:1+a.basis_l.nsteps+a.basis_l.nsteps^2),(a.basis_l.nsteps,a.basis_l.nsteps))
     for j in 1:a.basis_l.timeindex-1
-        two_photon_output[a.basis_l.timeindex,j] = beta*two_photon_output[a.basis_l.timeindex,j]+alpha*b[j+1]
+        two_photon_output[a.basis_l.timeindex,j] = two_photon_output[a.basis_l.timeindex,j]+alpha*b[j+1]
     end
     for j in a.basis_l.timeindex+1:a.basis_l.nsteps
-        two_photon_output[j,a.basis_l.timeindex] = beta*two_photon_output[j,a.basis_l.timeindex] + alpha*b[j+1]
+        two_photon_output[j,a.basis_l.timeindex] = two_photon_output[j,a.basis_l.timeindex] + alpha*b[j+1]
     end
-    two_photon_output[a.basis_l.timeindex,a.basis_l.timeindex] = beta*two_photon_output[a.basis_l.timeindex,a.basis_l.timeindex] + sqrt(2)*alpha*b[a.basis_l.timeindex+1]
+    two_photon_output[a.basis_l.timeindex,a.basis_l.timeindex] = two_photon_output[a.basis_l.timeindex,a.basis_l.timeindex] + sqrt(2)*alpha*b[a.basis_l.timeindex+1]
 end
-

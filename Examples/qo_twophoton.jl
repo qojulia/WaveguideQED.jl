@@ -2,6 +2,7 @@ using QuantumOptics
 using CavityWaveguide
 using LinearAlgebra
 using PyPlot
+pygui(false)
 pygui(true)
 include("singlecavity_simulations.jl")
 #Parameter structure imported from singlecavity_simulations (bit overkill for now, but can prove usefull)
@@ -27,8 +28,10 @@ ad = sparse(create(bc));
 n = ad*a ⊗ identityoperator(bw)
 w = destroy(bw)
 wd = create(bw);
-wda = a ⊗ wd
-adw = ad ⊗ w
+#wda = a ⊗ wd
+#adw = ad ⊗ w
+wda = emission(bc,bw)
+adw = absorption(bc,bw)
 H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
 
 #Define input twophoton state shape

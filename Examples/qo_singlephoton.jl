@@ -25,8 +25,10 @@ ad = create(bc);
 n = ad*a ⊗ identityoperator(bw)
 w = destroy(bw)
 wd = create(bw);
-wda = a ⊗ wd
-adw = ad ⊗ w
+#wda = a ⊗ wd
+#adw = ad ⊗ w
+wda = emission(bc,bw)
+adw = absorption(bc,bw)
 H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
 
 

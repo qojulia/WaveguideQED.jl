@@ -50,13 +50,6 @@ function twophoton_index(j,nsteps,timeindex)
     1+nsteps+(j-1)*nsteps-((j-2)*(j-1))÷2+timeindex-j+1
 end
 
-#Function for creating "fockstate" or basically a very long vector for our basis.
-# Namechange will happen in future, but for now kept for compatibility
-function QuantumOpticsBase.:fockstate(::Type{T}, b::WaveguideBasis, n::Integer) where T
-    @assert b.offset <= n <= b.N
-    basisstate(T, b, n+1-b.offset)
-end
-
 function onephoton(b::WaveguideBasis,ξ)
     state = Ket(b)
     view = view_onephoton(state)
@@ -104,7 +97,7 @@ function get_waveguide_location(b::WaveguideBasis)
 end
 
 function get_waveguide_location(b::CompositeBasis)
-    return findall(x->typeof(x)<:WaveguideBasis,b.bases)
+    return findall(x->typeof(x)<:WaveguideBasis,b.bases)[1]
 end
 
 function view_waveguide(ψ::Ket)

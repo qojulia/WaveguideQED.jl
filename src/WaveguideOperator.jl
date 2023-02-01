@@ -44,7 +44,6 @@ Base.:*(b::WaveguideOperator,a::Number)=*(a,b)
 
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
-
 #Methods for tensorproducts between QuantumOptics.jl operators. This is done by forming a LazyTensor.
 #TODO: Update method to allow for three or more hilbert spaces.
 function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::WaveguideOperator) 
@@ -53,7 +52,7 @@ function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::WaveguideOperator)
 end
 
 function QuantumOpticsBase.:tensor(op1::WaveguideOperator,op2::AbstractOperator) 
-    btotal = tensor(op1.basis_l,op2.basis_l)
+    btotal = tensor(op1.basis_l,op2.basis_r)
     LazyTensor(btotal,btotal,[1,2],(op1,op2))
 end
 
@@ -109,6 +108,7 @@ function QuantumOpticsBase.:_tp_matmul!(result, a::WaveguideOperator, loc::Integ
     QuantumOpticsBase._tp_matmul_mid!(result, a, loc, b, α, β)
 end
 
+
 #Called from _tp_matmul! and _tp_matmul_mid!
 #Calls waveguide_mul! on correct view of whole subsets of the state.
 function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray, a::WaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
@@ -143,13 +143,13 @@ function QuantumOpticsBase._tp_sum_get_tmp(op::WaveguideOperator, loc::Integer, 
     QuantumOpticsBase._tp_matmul_get_tmp(S, shp, sym)
 end
 
-function apply_last_op!(result,a,br,α,β)
+function apply_last_op!(result,a::WaveguideOperator,br,α,β)
     for i in axes(br,1)
         waveguide_mul!(view(result,i,:), a, view(br,i,:), α, β)
     end
 end
 
-function apply_first_op!(result,a,br,α,β)
+function apply_first_op!(result,a::WaveguideOperator,br,α,β)
     for i in axes(br,2)
         waveguide_mul!(view(result,:,i), a, view(br,:,i), α, β)
     end

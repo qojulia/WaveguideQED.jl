@@ -84,22 +84,6 @@ function QuantumOpticsBase.:dagger(op::WaveguideDestroy)
 end
 
 
-function get_timeindex(basis::WaveguideBasis)
-    basis.timeindex
-end
-
-function get_timeindex(basis::Basis)
-    0
-end
-
-function get_timeindex(basis::CompositeBasis)
-    for b in basis.bases
-        if get_timeindex(b) != 0
-            return get_timeindex(b)
-        end
-    end
-end
-
 #Mul! function for CavityWaveguide LazyTensor. 
 #TODO: Makes a call to _tp_sum_matmul! which leads to huge allocation. Can be solved by:
 #https://github.com/qojulia/QuantumOptics.jl/issues/333
@@ -127,71 +111,103 @@ end
 
 #Called from _tp_matmul! and _tp_matmul_mid!
 #Calls waveguide_mul! on correct view of whole subsets of the state.
-function QuantumOpticsBase.:_tp_matmul_first!(result, a::WaveguideOperator, b, α::Number, β::Number)
-    br = reshape(b, size(b, 1), :)
-    result_r = reshape(result, size(a, 1), size(br, 2))
-    for i in 1:size(br,2)
-        waveguide_mul!(view(result_r,:,i), a, view(br,:,i), α, β)
+function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray, a::WaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
+    d_first = size(b, 1)
+    d_rest = length(b)÷d_first
+    bp = b.parent
+    rp = result.parent
+    @uviews bp rp begin  # avoid allocations on reshape
+        br = reshape(bp, (d_first, d_rest))
+        result_r = reshape(rp, (size(a, 1), d_rest))
+        apply_first_op!(result_r,a,br,α,β)
     end
     result
 end
 
 #Same as _tp_matmul_first! But indexed in another way.
-function QuantumOpticsBase.:_tp_matmul_last!(result, a::WaveguideOperator, b, α::Number, β::Number)
-    br = reshape(b, :, size(b, ndims(b)))
-    result_r = reshape(result, (size(br, 1), size(a, 1)))
-    for i in 1:size(br,1)
-        waveguide_mul!(view(result_r,i,:), a, view(br,i,:), α, β)
+function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray, a::WaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
+    d_last = size(b, ndims(b))
+    d_rest = length(b)÷d_last
+    bp = b.parent
+    rp = result.parent
+    @uviews bp rp begin  # avoid allocations on reshape
+        br = reshape(bp, (d_rest, d_last))
+        result_r = reshape(rp, (d_rest, size(a, 1)))
+        apply_last_op!(result_r,a,br,α,β)
     end
     result
 end
 
+function QuantumOpticsBase._tp_sum_get_tmp(op::WaveguideOperator, loc::Integer, arr::AbstractArray{S,N}, sym) where {S,N}
+    shp = ntuple(i -> i == loc ? size(op,1) : size(arr,i), N)
+    QuantumOpticsBase._tp_matmul_get_tmp(S, shp, sym)
+end
+
+function apply_last_op!(result,a,br,α,β)
+    for i in axes(br,1)
+        waveguide_mul!(view(result,i,:), a, view(br,i,:), α, β)
+    end
+end
+
+function apply_first_op!(result,a,br,α,β)
+    for i in axes(br,2)
+        waveguide_mul!(view(result,:,i), a, view(br,:,i), α, β)
+    end
+end
+
 #Destroy 1 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{1},b,alpha,beta)
-    for i in eachindex(result)
-        result[i] = beta * result[i]
-    end
-    result[1] = result[1] + alpha*b[a.basis_l.timeindex+1]
+    rmul!(result,beta)
+    add_zerophoton_onephoton!(result,b,alpha,a.basis_l.timeindex)
+    return
 end
 
 #Destroy 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{2},b,alpha,beta)
-    for i in eachindex(result)
-        result[i] = beta * result[i]
-    end
+    rmul!(result,beta)
     timeindex = a.basis_l.timeindex
-    result[1] = result[1] + alpha*b[a.basis_l.timeindex+1]
-    two_photon_input = reshape(view(b,2+a.basis_l.nsteps:1+a.basis_l.nsteps+a.basis_l.nsteps^2),(a.basis_l.nsteps,a.basis_l.nsteps))
-    for j in 1:timeindex-1
-        result[j+1] = result[j+1] + alpha*two_photon_input[timeindex,j]
-    end
-    for j in timeindex+1:a.basis_l.nsteps
-        result[j+1] =result[j+1]+alpha*two_photon_input[j,timeindex]
-    end
-    result[timeindex+1] =result[timeindex]+sqrt(2)*alpha*two_photon_input[timeindex,timeindex]
+    nsteps = a.basis_l.nsteps
+    add_zerophoton_onephoton!(result,b,alpha,timeindex)
+    twophotonview = TwophotonView(b,timeindex,nsteps)
+    add_onephoton_twophoton!(result,twophotonview,alpha,nsteps)
+    return
 end
+
 
 #Create 1 waveguide photon 
 function waveguide_mul!(result,a::WaveguideCreate{1},b,alpha,beta)
-    for i in eachindex(result)
-        result[i] = beta * result[i]
-    end
-    idx = 1+a.basis_l.timeindex
-    result[idx] = result[idx] + alpha*b[1]
+    rmul!(result,beta)
+    add_onephoton_zerophoton!(result,b,alpha,a.basis_l.timeindex)
+    return
 end
 
 #Create 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideCreate{2},b,alpha,beta)
-    for i in eachindex(result)
-        result[i] = beta * result[i]
+    rmul!(result,beta)
+    timeindex = a.basis_l.timeindex
+    nsteps = a.basis_l.nsteps
+    add_onephoton_zerophoton!(result,b,alpha,timeindex)
+    view = TwophotonView(result,timeindex,nsteps)
+    add_twophoton_onephoton!(view,b,alpha)
+    return
+end
+
+function add_zerophoton_onephoton!(a,b,alpha,timeindex::Int)
+    a[1] += alpha*b[timeindex+1]
+end
+
+function add_onephoton_zerophoton!(a,b,alpha,timeindex::Int)
+    a[1+timeindex] += alpha*b[1]
+end
+
+function add_twophoton_onephoton!(a,b,alpha)
+    @simd for j in eachindex(a)
+        @inbounds a[j] += alpha*b[j+1]
     end
-    result[1+a.basis_l.timeindex] = result[1+a.basis_l.timeindex] + alpha*b[1]
-    two_photon_output = reshape(view(result,2+a.basis_l.nsteps:1+a.basis_l.nsteps+a.basis_l.nsteps^2),(a.basis_l.nsteps,a.basis_l.nsteps))
-    for j in 1:a.basis_l.timeindex-1
-        two_photon_output[a.basis_l.timeindex,j] = two_photon_output[a.basis_l.timeindex,j]+alpha*b[j+1]
+end
+
+function add_onephoton_twophoton!(a,b,alpha,nsteps::Int)
+    @simd for j in 1:nsteps
+        @inbounds a[j+1] += alpha*b[j]
     end
-    for j in a.basis_l.timeindex+1:a.basis_l.nsteps
-        two_photon_output[j,a.basis_l.timeindex] = two_photon_output[j,a.basis_l.timeindex] + alpha*b[j+1]
-    end
-    two_photon_output[a.basis_l.timeindex,a.basis_l.timeindex] = two_photon_output[a.basis_l.timeindex,a.basis_l.timeindex] + sqrt(2)*alpha*b[a.basis_l.timeindex+1]
 end

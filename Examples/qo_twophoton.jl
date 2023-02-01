@@ -1,7 +1,6 @@
 using QuantumOptics
 using CavityWaveguide
 using LinearAlgebra
-
 using PyPlot
 pygui(true)
 include("singlecavity_simulations.jl")
@@ -12,13 +11,12 @@ param = parameters()
 param.δ = 0
 #Set non linearity:
 param.x3 = 0
-#
+#Set width of pulse
 param.σ = 1
 
 #Set simulation time
-param.times = times = 0.0:0.2:10.0
+param.times = 0.0:0.1:10.0
 dt = param.times[2] - param.times[1]
-tend = param.times[end]
 
 #Create operators for two photons interacting with cavity
 bc = FockBasis(2)
@@ -34,25 +32,14 @@ adw = ad ⊗ w
 H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
 
 #Define input twophoton state shape
-#Can this be done in a nicer way?
-ξfun(t1,t2,σ,t0) = 1/(σ*sqrt(2*pi))*exp(-2*log(2)*(t1-t0)^2/σ^2)/sqrt(0.2820947917738782)*1/(σ*sqrt(2*pi))*exp(-2*log(2)*(t2-t0)^2/σ^2)/sqrt(0.2820947917738782)
-ξvec=(ξfun.(param.times,param.σ,param.t0)*transpose(ξfun.(param.times,param.σ,param.t0)))
+ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
 
-#Define input waveguide state
-#ψ_cw = twophoton(bw,ξfun,param.times,param.σ,param.t0)
-ψ_cw = twophoton(bw,ξvec)
-
-
-#Tensor with cavity
+ψ_cw = twophoton(bw,ξfun,param.times,param.σ,param.σ,param.t0)
 psi = fockstate(bc,0) ⊗ ψ_cw
-#Solve
+
 ψ = waveguide_evolution(param.times, psi, H)
 
-#TODO: Make the following into function that views specified output
 ψ_double = view_twophoton(ψ)
-ψ_double = ψ_double + ψ_double' - Diagonal(ψ_double)
-ψ_single = view_onephoton(ψ)
-
 #Plot result of simulation
 #Make into function to visualize?
 fig,ax = subplots(1,1,figsize=(4.5,4.5))

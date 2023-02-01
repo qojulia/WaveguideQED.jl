@@ -1,6 +1,7 @@
 using CavityWaveguide
 using Test
+using QuantumOptics
 
-@testset "CavityWaveguide.jl" begin
-    # Write your tests here.
-end
+include("test_operators.jl")
+include("test_singlecavity.jl")
+ 

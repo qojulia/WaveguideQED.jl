@@ -96,45 +96,47 @@ end
 
 
 function QuantumOpticsBase.:mul!(result::Ket{B1}, a::CavityWaveguideOperator, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
-    b_data = Base.ReshapedArray(b.data, QuantumOpticsBase._comp_size(basis(b)), ())
-    result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
-    QuantumOpticsBase._tp_matmul!(result_data,a,b_data,alpha,beta)
-end
-
-
-function QuantumOpticsBase.:_tp_matmul!(result, a::CavityWaveguideOperator, b, α::Number, β::Number)
     if a.loc[1] == 1
-        return matmul_first!(result, a, b, α, β)
-    elseif a.loc[1] == ndims(b)
-        return matmul_last!(result, a, b, α, β)
+        return matmul_first!(result.data, a, b.data, alpha, beta)
+    elseif a.loc[1] == length(b.basis.shape)
+        return matmul_last!(result.data, a, b.data, alpha, beta)
     end
     error("Waveguide operators in CavityWaveguide operators has to be first or last")
 end
-    
+
+
+function QuantumOpticsBase.:mul!(result::Bra{B1}, a::Bra{B2}, b::CavityWaveguideOperator, alpha, beta) where {B1<:Basis,B2<:Basis}
+    if b.loc[1] == 1
+        return matmul_first!(result.data, b, a.data, alpha, beta)
+    elseif b.loc[1] == length(a.basis.shape)
+        return matmul_last!(result.data, b, a.data, alpha, beta)
+    end
+    error("Waveguide operators in CavityWaveguide operators has to be first or last")
+end
+
+   
 #Called from _tp_matmul!
 #Calls CavityWaveguide operator  on correct view of subsets of the state.
-function matmul_first!(result::Base.ReshapedArray, a::CavityWaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
-    d_first = size(b, 1)*size(b,2)
+function matmul_first!(result, a::CavityWaveguideOperator, b, α::Number, β::Number)
+    basis_shape = QuantumOpticsBase._comp_size(a.basis_l)
+    d_first = basis_shape[1]*basis_shape[2]
     d_rest = length(b)÷d_first
-    bp = b.parent
-    rp = result.parent
-    @uviews bp rp begin  # avoid allocations on reshape (NOT SURE IF WORKING)
-        br = reshape(bp, (d_first, d_rest))
-        result_r = reshape(rp, (d_first, d_rest))
+    @uviews result b begin  # avoid allocations on reshape (NOT SURE IF WORKING)
+        br = reshape(b, (d_first, d_rest))
+        result_r = reshape(result, (d_first, d_rest))
         apply_first_op!(result_r,a,br,α,β)
     end
     result
 end
 
 #Same as _tp_matmul_first! But indexed in another way.
-function matmul_last!(result::Base.ReshapedArray, a::CavityWaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
-    d_last = size(b, ndims(b)-1)*size(b, ndims(b))
+function matmul_last!(result, a::CavityWaveguideOperator, b, α::Number, β::Number)
+    basis_shape = QuantumOpticsBase._comp_size(a.basis_l)
+    d_last = basis_shape[end]*basis_shape[end-1]
     d_rest = length(b)÷d_last
-    bp = b.parent
-    rp = result.parent
-    @uviews bp rp begin  # avoid allocations on reshape (NOT SURE IF WORKING)
-        br = reshape(bp, (d_rest, d_last))
-        result_r = reshape(rp, (d_rest, d_last))
+    @uviews result b begin  # avoid allocations on reshape (NOT SURE IF WORKING)
+        br = reshape(b, (d_rest, d_last))
+        result_r = reshape(result, (d_rest, d_last))
         apply_last_op!(result_r,a,br,α,β)
     end
     result

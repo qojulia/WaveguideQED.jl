@@ -28,8 +28,6 @@ ad = sparse(create(bc));
 n = ad*a ⊗ identityoperator(bw)
 w = destroy(bw)
 wd = create(bw);
-#wda = a ⊗ wd
-#adw = ad ⊗ w
 wda = emission(bc,bw)
 adw = absorption(bc,bw)
 H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
@@ -43,8 +41,7 @@ psi = fockstate(bc,0) ⊗ ψ_cw
 ψ = waveguide_evolution(param.times, psi, H)
 
 ψ_double = view_twophoton(ψ)
-#Plot result of simulation
-#Make into function to visualize?
+
 fig,ax = subplots(1,1,figsize=(4.5,4.5))
 xgrid = repeat(param.times',length(param.times),1)
 ygrid = repeat(param.times,1,length(param.times))

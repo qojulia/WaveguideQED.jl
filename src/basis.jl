@@ -15,41 +15,6 @@ mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     end
 end
 
-struct TwophotonView{T}
-    data::T
-    timeindex::Int
-    nsteps::Int
-end
-
-function Base.getindex(x::TwophotonView,i::Int)
-    if i<x.timeindex
-        x.data[twophoton_index(i,x.nsteps,x.timeindex)]
-    #XXX Double Check!
-    elseif i == x.timeindex
-        sqrt(2)*x.data[twophoton_index(x.timeindex,x.nsteps,x.timeindex)]
-    else
-        x.data[twophoton_index(x.timeindex,x.nsteps,i)]
-    end
-end
-
-
-Base.eachindex(x::TwophotonView) = 1:x.nsteps
-
-function Base.setindex!(x::TwophotonView,input,i::Int)
-    if i<x.timeindex
-        x.data[twophoton_index(i,x.nsteps,x.timeindex)] = input
-    #XXX Double Check!
-    elseif i == x.timeindex
-        x.data[twophoton_index(x.timeindex,x.nsteps,x.timeindex)]  = sqrt(2)*input
-    else
-        x.data[twophoton_index(x.timeindex,x.nsteps,i)] = input
-    end
-end
-
-function twophoton_index(j,nsteps,timeindex)
-    1+nsteps+(j-1)*nsteps-((j-2)*(j-1))÷2+timeindex-j+1
-end
-
 function onephoton(b::WaveguideBasis,ξ)
     state = Ket(b)
     view = view_onephoton(state)
@@ -69,10 +34,10 @@ end
 function twophoton(b::WaveguideBasis,ξ::Matrix)
     state = Ket(b)
     nsteps = get_nsteps(b)
-    viewed_data = view(state.data,2+nsteps:Int(1+nsteps+nsteps*(nsteps+1)/2))
+    viewed_data = TwophotonView(state.data,nsteps)
     for i in 1:nsteps
         for j in i:nsteps
-            viewed_data[(i-1)*nsteps-((i-2)*(i-1))÷2+j-i+1] = ξ[i,j]
+            viewed_data[i,j] = ξ[i,j]
         end
     end
     normalize!(state)
@@ -82,10 +47,10 @@ end
 function twophoton(b::WaveguideBasis,ξ::Function,times,args...)
     state = Ket(b)
     nsteps = get_nsteps(b)
-    viewed_data = view(state.data,2+nsteps:Int(1+nsteps+nsteps*(nsteps+1)/2))
+    viewed_data = TwophotonView(state.data,nsteps)
     for i in 1:nsteps
         for j in i:nsteps
-            viewed_data[(i-1)*nsteps-Int((i-2)*(i-1)/2)+j-i+1] = ξ(times[i],times[j],args...)
+            viewed_data[i,j] = ξ(times[i],times[j],args...)
         end
     end
     normalize!(state)
@@ -133,14 +98,7 @@ end
 function view_twophoton(ψ::Ket,index)
     viewed_data = view_waveguide(ψ::Ket,index)
     nsteps = get_nsteps(ψ.basis)
-    viewed_data = view(viewed_data,2+nsteps:Int(1+nsteps+nsteps*(nsteps+1)/2))
-    output = zeros(ComplexF64,(nsteps,nsteps))
-    for i in 1:nsteps
-        for j in i:nsteps
-            output[j,i] = viewed_data[(i-1)*nsteps-Int((i-2)*(i-1)/2)+j-i+1]
-        end
-    end
-    output = output + output' - Diagonal(output)
+    TwophotonView(viewed_data,nsteps)
 end
 
 

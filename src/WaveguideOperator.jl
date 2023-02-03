@@ -97,6 +97,17 @@ function QuantumOpticsBase.:mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b:
     result
 end
 
+function QuantumOpticsBase.:mul!(result::Bra{B1}, a::Bra{B2}, b::LazyTensor{B1,B2,F,I,T}, alpha, beta) where {B1<:Basis,B2<:Basis, F,I,T<:Tuple{Vararg{AbstractOperator}}}
+    a_data = Base.ReshapedArray(a.data, QuantumOpticsBase._comp_size(basis(a)), ())
+    result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
+
+    tp_ops = (tuple(( (isa(op,DataOperator) ? op.data : op) for op in b.operators)...), b.indices)
+    iso_ops = QuantumOpticsBase._explicit_isometries(b.indices, b.basis_l, b.basis_r)
+
+    QuantumOpticsBase._tp_sum_matmul!(result_data, tp_ops, iso_ops, a_data, alpha * b.factor, beta)
+    result
+end
+
 #Called from _tp_sum_matmul!
 #Makes sure operator works on correct part of tensor.
 function QuantumOpticsBase.:_tp_matmul!(result, a::WaveguideOperator, loc::Integer, b, α::Number, β::Number)
@@ -168,7 +179,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{2},b,alpha,beta)
     timeindex = a.basis_l.timeindex
     nsteps = a.basis_l.nsteps
     add_zerophoton_onephoton!(result,b,alpha,timeindex)
-    twophotonview = TwophotonView(b,timeindex,nsteps)
+    twophotonview = TwophotonTimestepView(b,timeindex,nsteps)
     add_onephoton_twophoton!(result,twophotonview,alpha,nsteps)
     return
 end
@@ -187,7 +198,7 @@ function waveguide_mul!(result,a::WaveguideCreate{2},b,alpha,beta)
     timeindex = a.basis_l.timeindex
     nsteps = a.basis_l.nsteps
     add_onephoton_zerophoton!(result,b,alpha,timeindex)
-    view = TwophotonView(result,timeindex,nsteps)
+    view = TwophotonTimestepView(result,timeindex,nsteps)
     add_twophoton_onephoton!(view,b,alpha)
     return
 end

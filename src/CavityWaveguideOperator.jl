@@ -68,28 +68,6 @@ function emission(b1::FockBasis,b2::WaveguideBasis{T}) where T
 end
 
 
-#Constructors from a Cavity and Waveguide basis
-function absorption(b1::OneTimeBasis,b2::FockBasis)
-    btotal = tensor(b1,b2)
-    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b1),[1,2])
-end
-
-function emission(b1::OneTimeBasis,b2::FockBasis)
-    btotal = tensor(b1,b2)
-    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b1),[1,2])
-end
-
-function absorption(b1::FockBasis,b2::OneTimeBasis)
-    btotal = tensor(b1,b2)
-    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b2),[2,1])
-end
-
-function emission(b1::FockBasis,b2::OneTimeBasis)
-    btotal = tensor(b1,b2)
-    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b2),[2,1])
-end
-
-
 function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::T) where {T<:CavityWaveguideAbsorption}
     btotal = tensor(op1.basis_l,op2.basis_r)
     if isequal(op1,identityoperator(basis(op1)))

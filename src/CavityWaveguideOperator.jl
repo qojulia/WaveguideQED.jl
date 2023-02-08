@@ -1,3 +1,8 @@
+"""
+    CavityWaveguideOperator{BL,BR} <: AbstractOperator{BL,BR}
+
+Abstract type used for operators on [`WaveguideBasis`](@ref) states
+"""
 abstract type  CavityWaveguideOperator{BL,BR} <: AbstractOperator{BL,BR} end
 
 

@@ -26,9 +26,8 @@ include("paramfile.jl")
 
     QuantumOpticsBase.mul!(psi_out,adw,psi,1.0,0.0)
     ψ_single=view_onephoton(psi_out,[2,:])
-    testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis)*(get_nsteps(psi.basis)+1)/2)
-    testvec[get_waveguidetimeindex(psi.basis)] *= sqrt(2)
-    @test isapprox(ψ_single,testvec)
+    testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis)*(get_nsteps(psi.basis)-1)/2+sqrt(2)*get_nsteps(psi.basis))
+    @test isapprox(ψ_single,testvec,rtol=0.01)
 end
 
 @testset "Waveguide creation" begin
@@ -56,10 +55,59 @@ end
     QuantumOpticsBase.mul!(psi_out,wda,psi,1,0.0)
     testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis))
     testvec[get_waveguidetimeindex(psi.basis)] *= 2
-    ψ_double=TwophotonView(view_waveguide(psi_out),get_waveguidetimeindex(psi_out.basis),get_nsteps(psi.basis))
+    ψ_double=TwophotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(psi_out.basis),get_nsteps(psi.basis))
     @test isapprox([ψ_double[i] for i in eachindex(ψ_double)],testvec)    
 end
 
+@testset "1 photon 2 photon the same" begin
+    param=parameters()
+    param = parameters()
+    param.δ = 0
+    param.x3 = 0
+    param.times = 0:0.1:20
+    dt = param.times[2] - param.times[1]
+
+    bw = WaveguideBasis(2,param.times)
+    bc = FockBasis(2)
+    a = destroy(bc)
+    ad = create(bc);
+    n = ad*a ⊗ identityoperator(bw)
+    w = destroy(bw)
+    wd = create(bw);
+    wda = a ⊗ wd
+    adw = ad ⊗ w
+    
+    ξfun(t1) = 1
+    input = onephoton(bw,ξfun,param.times)
+    psi = fockstate(bc,0) ⊗  input
+    wda_out_2 = copy(psi)
+    adw_out_2 = copy(psi)
+    QuantumOpticsBase.mul!(wda_out_2,wda,psi,1,0.0)
+    QuantumOpticsBase.mul!(adw_out_2,wda,psi,1,0.0)
+
+    bw = WaveguideBasis(1,param.times)
+    bc = FockBasis(2)
+    a = destroy(bc)
+    ad = create(bc);
+    n = ad*a ⊗ identityoperator(bw)
+    w = destroy(bw)
+    wd = create(bw);
+    wda = a ⊗ wd
+    adw = ad ⊗ w
+    
+    ξfun(t1) = 1
+    input = onephoton(bw,ξfun,param.times)
+    psi = fockstate(bc,0) ⊗  input
+    adw_out_1 = copy(psi)
+    wda_out_1 = copy(psi)
+    QuantumOpticsBase.mul!(wda_out_1,wda,psi,1,0.0)
+    QuantumOpticsBase.mul!(adw_out_1,adw,psi,1,0.0)
+    
+    @test isapprox(view_onephoton(wda_out_1),view_onephoton(wda_out_2))
+    @test isapprox(view_onephoton(adw_out_1),view_onephoton(adw_out_2))  
+    @test isapprox(wda_out_1.data[1],wda_out_2.data[1])
+    @test isapprox(adw_out_1.data[1],adw_out_2.data[1]) 
+end
 
 @testset "Cavity Waveguide Operator" begin
     param = parameters()

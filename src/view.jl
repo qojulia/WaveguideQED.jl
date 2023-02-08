@@ -43,25 +43,25 @@ Base.size(x::TwophotonView) = (x.nsteps,x.nsteps)
 
 function Base.getindex(x::TwophotonView,i::Int,j::Int)
     if i<j
-        x.data[twophoton_index(i,x.nsteps,j)]
+        1/sqrt(2)*x.data[twophoton_index(i,x.nsteps,j)]
     #XXX Double Check!
     elseif i == j
-        sqrt(2)*x.data[twophoton_index(i,x.nsteps,j)]
+        x.data[twophoton_index(i,x.nsteps,j)]
     else
-        x.data[twophoton_index(j,x.nsteps,i)]
+        1/sqrt(2)*x.data[twophoton_index(j,x.nsteps,i)]
     end
 end
 
 
 function Base.setindex!(x::TwophotonView,input,i::Int,j::Int)
     if i<j
-        x.data[twophoton_index(i,x.nsteps,j)] = input
+        x.data[twophoton_index(i,x.nsteps,j)] = sqrt(2)*input
     #XXX Double Check!
     elseif i == j
-        x.data[twophoton_index(i,x.nsteps,j)] = 1/sqrt(2)*input
+        x.data[twophoton_index(i,x.nsteps,j)] = input
     else
         println("i>j")
-        x.data[twophoton_index(j,x.nsteps,i)] = input
+        x.data[twophoton_index(j,x.nsteps,i)] = sqrt(2)*input
     end
 end
 

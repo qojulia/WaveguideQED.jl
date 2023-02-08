@@ -1,7 +1,7 @@
 #Used to extract WaveguideBasis to change index in get_hamiltonian()
 function get_waveguide_basis(basis::CompositeBasis)
     for b in basis.bases
-        if isa(b,WaveguideBasis)
+        if isa(b,WaveguideBasis) || isa(b,OneTimeBasis)
             return b
         end
     end
@@ -14,7 +14,7 @@ function waveguide_evolution(times,psi,H;fout=nothing)
     dt = times[2] - times[1]
     tend = times[end]
     function get_hamiltonian(time,psi)
-        basis.timeindex=floor(Int,time/dt)+1
+        basis.timeindex= round(Int,time/dt) +1
         return H
     end
     function eval_last_element(time,psi)
@@ -25,10 +25,17 @@ function waveguide_evolution(times,psi,H;fout=nothing)
         end
     end
     if fout === nothing
-        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=eval_last_element)
+        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=eval_last_element,dtmax=(times[2]-times[1])/2)
         return ψ[end]
     else
-        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=fout)
-        return ψ
+        function feval(time,psi)
+            if time == tend
+                return (psi,fout(time,psi)...)
+            else
+                return (0,fout(time,psi)...)
+            end
+        end
+        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=feval,dtmax=(times[2]-times[1])/2)
+        return (ψ[end][1], [[ψ[i][j] for i in 1:length(times)] for j in 2:length(ψ[1])]...)
     end
 end

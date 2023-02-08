@@ -23,10 +23,7 @@ bw = WaveguideBasis(1,param.times)
 a = destroy(bc)
 ad = create(bc);
 n = ad*a ⊗ identityoperator(bw)
-w = destroy(bw)
-wd = create(bw);
-#wda = a ⊗ wd
-#adw = ad ⊗ w
+#$w†a and a†w efficient implementation$
 wda = emission(bc,bw)
 adw = absorption(bc,bw)
 H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)

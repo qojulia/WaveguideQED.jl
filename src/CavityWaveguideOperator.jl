@@ -6,7 +6,7 @@ mutable struct CavityWaveguideAbsorption{B1,B2} <: CavityWaveguideOperator{B1,B2
     basis_l::B1
     basis_r::B2
     factor::ComplexF64
-    op::WaveguideOperator
+    op::AbstractOperator
     loc
 end
 
@@ -15,8 +15,22 @@ mutable struct CavityWaveguideEmission{B1,B2} <: CavityWaveguideOperator{B1,B2}
     basis_l::B1
     basis_r::B2
     factor::ComplexF64
-    op::WaveguideOperator
+    op::AbstractOperator
     loc
+end
+
+function Base.:copy(x::CavityWaveguideEmission)
+    CavityWaveguideEmission(x.basis_l,x.basis_r,x.factor,x.op,x.loc)
+end
+
+function Base.:copy(x::CavityWaveguideAbsorption)
+    CavityWaveguideAbsorption(x.basis_l,x.basis_r,x.factor,x.op,x.loc)
+end
+
+#Method for multiplying, which updates factor in the operator.
+function Base.:*(a::Number,b::CavityWaveguideOperator)
+    out = copy(b)
+    out.factor=out.factor*a
 end
 
 Base.:*(b::CavityWaveguideOperator,a::Number)=*(a,b)
@@ -49,6 +63,28 @@ function absorption(b1::FockBasis,b2::WaveguideBasis{T}) where T
 end
 
 function emission(b1::FockBasis,b2::WaveguideBasis{T}) where T
+    btotal = tensor(b1,b2)
+    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b2),[2,1])
+end
+
+
+#Constructors from a Cavity and Waveguide basis
+function absorption(b1::OneTimeBasis,b2::FockBasis)
+    btotal = tensor(b1,b2)
+    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b1),[1,2])
+end
+
+function emission(b1::OneTimeBasis,b2::FockBasis)
+    btotal = tensor(b1,b2)
+    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b1),[1,2])
+end
+
+function absorption(b1::FockBasis,b2::OneTimeBasis)
+    btotal = tensor(b1,b2)
+    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b2),[2,1])
+end
+
+function emission(b1::FockBasis,b2::OneTimeBasis)
     btotal = tensor(b1,b2)
     return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b2),[2,1])
 end

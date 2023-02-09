@@ -8,7 +8,7 @@ Define a waveguide basis, containing a two photon wavepacket for a time interval
 
 
 ```jldoctest
-julia> times = 0:0.2:20
+julia> times = 0:0.1:20
 julia> bw =  WaveguideBasis(2,times)
 ```
 Define waveguide creation and annihilation operators from this basis:

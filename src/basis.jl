@@ -22,6 +22,17 @@ mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     end
 end
 
+"""
+    zerophoton(bw::WaveguideBasis)
+
+Create a waveguide vacuum state |0⟩
+"""
+function zerophoton(b::WaveguideBasis)
+    state = Ket(b)
+    state.data[1] = 1
+    return state
+end
+
 
 """
     onephoton(b::WaveguideBasis,ξ::Function,times,args...,norm=True)
@@ -176,7 +187,7 @@ function get_waveguide_location(basis::WaveguideBasis)
     return 1
 end
 function get_waveguide_location(basis::CompositeBasis)
-    return findall(x->typeof(x)<:WaveguideBasis,b.bases)[1]
+    return findall(x->typeof(x)<:WaveguideBasis,basis.bases)[1]
 end
 
 
@@ -185,7 +196,7 @@ end
     get_nsteps(basis::Basis)
     get_nsteps(basis::CompositeBasis)
 
-Return nsteps of [`WaveguideBasis`](@ref) given either a [`WaveguideBasis`](@ref) or a [`CompositeBasis`](@ref) containing a [`WaveguideBasis`](@ref)
+Return nsteps of [`WaveguideBasis`](@ref) given either a [`WaveguideBasis`](@ref) or a `CompositeBasis` containing a [`WaveguideBasis`](@ref)
 
 """
 function get_nsteps(basis::WaveguideBasis)
@@ -208,7 +219,7 @@ end
     get_waveguidetimeindex(basis::Basis)
     get_waveguidetimeindex(basis::CompositeBasis)
 
-Return timeindex of [`WaveguideBasis`](@ref) given either a [`WaveguideBasis`](@ref) or a [`CompositeBasis`](@ref) containing a [`WaveguideBasis`](@ref)
+Return timeindex of [`WaveguideBasis`](@ref) given either a [`WaveguideBasis`](@ref) or a `CompositeBasis` containing a [`WaveguideBasis`](@ref)
 
 """
 function get_waveguidetimeindex(basis::WaveguideBasis)
@@ -223,4 +234,20 @@ function get_waveguidetimeindex(basis::CompositeBasis)
             return get_waveguidetimeindex(b)
         end
     end
+end
+
+
+"""
+    get_waveguide_basis(basis::CompositeBasis)
+    
+Returns [`WaveguideBasis`](@ref) from `CompositeBasis.bases`
+
+"""
+function get_waveguide_basis(basis::CompositeBasis)
+    for b in basis.bases
+        if isa(b,WaveguideBasis)
+            return b
+        end
+    end
+    error("No waveguide operator used. Use timeevolution.schroedinger from QuantumOptics.jl instead")
 end

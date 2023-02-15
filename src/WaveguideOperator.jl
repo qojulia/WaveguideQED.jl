@@ -116,6 +116,20 @@ end
 
 
 """
+    identityoperator(a::WaveguideOperator)
+
+Return identityoperator(a.basis_l).
+QUESTION: (does basis_l or basis_r matter?)
+"""
+function QuantumOptics.identityoperator(a::WaveguideOperator)
+    identityoperator(a.basis_l)
+end
+function QuantumOptics.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:WaveguideOperator}
+    @assert b1==b2
+    identityoperator(b1)
+end
+
+"""
     mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta)
     mul!(result::Bra{B1}, a::Bra{B2}, b::LazyTensor{B1,B2,F,I,T}, alpha, beta)
 

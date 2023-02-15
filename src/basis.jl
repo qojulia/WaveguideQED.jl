@@ -22,6 +22,8 @@ mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     end
 end
 
+==(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.timeindex==b2.timeindex && b1.dt==b2.dt)
+
 """
     zerophoton(bw::WaveguideBasis)
 
@@ -244,10 +246,5 @@ Returns [`WaveguideBasis`](@ref) from `CompositeBasis.bases`
 
 """
 function get_waveguide_basis(basis::CompositeBasis)
-    for b in basis.bases
-        if isa(b,WaveguideBasis)
-            return b
-        end
-    end
-    error("No waveguide operator used. Use timeevolution.schroedinger from QuantumOptics.jl instead")
+    basis.bases[findall(x->typeof(x)<:WaveguideBasis,basis.bases)]
 end

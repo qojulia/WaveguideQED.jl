@@ -21,19 +21,22 @@ function waveguide_evolution(times,psi,H;fout=nothing)
     function get_hamiltonian(time,psi)
         #index = findlast(times .<= time)
         #basis.timeindex = index
-        basis.timeindex = round(Int,time/dt,RoundUp)+1
+        [b.timeindex = round(Int,time/dt,RoundUp)+1 for b in basis]
+        #basis.timeindex = round(Int,time/dt,RoundUp)+1
         return H
     end
     function eval_last_element(time,psi)
         if time == tend
             return psi
         else
-            return 0
+            return psi
         end
     end
     if fout === nothing
         tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=eval_last_element)
+        #tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian)
         return ψ[end]
+        #return ψ
     else
         function feval(time,psi)
             if time == tend
@@ -44,6 +47,7 @@ function waveguide_evolution(times,psi,H;fout=nothing)
         end
         tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=feval)
         return (ψ[end][1], [[ψ[i][j] for i in 1:length(times)] for j in 2:length(ψ[1])]...)
+        #return ([[ψ[i][j] for i in 1:length(times)] for j in 1:length(ψ[1])]...,)
     end
 end
 #,alg=RK4(),dt=(times[2]-times[1])/2,adaptive=false

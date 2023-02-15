@@ -3,6 +3,8 @@ push!(LOAD_PATH,"../src/")
 using Documenter
 using DocumenterCitations
 using CavityWaveguide
+using QuantumOptics
+using LinearAlgebra
 
 DocMeta.setdocmeta!(CavityWaveguide, :DocTestSetup, :(using CavityWaveguide); recursive=true)
 
@@ -14,7 +16,7 @@ doctest = false,
 clean = true,
 sitename = "CavityWaveguide.jl",
 format = Documenter.HTML(),
-modules = [CavityWaveguide],
+modules = [CavityWaveguide,QuantumOptics,QuantumOpticsBase,LinearAlgebra],
 authors = "Matias Bundgaard-Nielsen",
 pages = [
 "CavityWaveguide.jl" => "index.md",

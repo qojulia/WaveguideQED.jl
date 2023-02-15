@@ -15,5 +15,4 @@ include("WaveguideOperator.jl")
 include("CavityWaveguideOperator.jl")
 include("solver.jl")
 include("should_upstream.jl")
-#,destroy,create,mul!,dagger,tensor
 end

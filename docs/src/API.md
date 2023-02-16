@@ -15,3 +15,27 @@
 Modules = [CavityWaveguide]
 Private = false
 ```
+
+```@docs
+CavityWaveguide.mul!
+```
+
+```@docs
+CavityWaveguide.create
+```
+
+```@docs
+CavityWaveguide.destroy
+```
+
+```@docs
+CavityWaveguide.dagger
+```
+
+```@docs
+CavityWaveguide.tensor
+```
+
+```@docs
+CavityWaveguide.identityoperator
+```

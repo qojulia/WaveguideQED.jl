@@ -15,6 +15,7 @@ UnsafeArrays = "c4a57d5a-5b31-53a6-b365-19f8c011fbd6"
 
 [compat]
 Interpolations = "0.14"
+Parameters = "0.12"
 julia = "1"
 
 [extras]

@@ -95,7 +95,6 @@ end
     wda = a ⊗ wd
     adw = ad ⊗ w
     
-    ξfun(t1) = 1
     input = onephoton(bw,ξfun,param.times)
     psi = fockstate(bc,0) ⊗  input
     adw_out_1 = copy(psi)

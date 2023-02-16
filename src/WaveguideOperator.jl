@@ -54,66 +54,80 @@ Base.:*(b::WaveguideOperator,a::Number)=*(a,b)
 
 
 """
-    QuantumOpticsBase.:destroy(basis::WaveguideBasis{1})
-    QuantumOpticsBase.:destroy(basis::WaveguideBasis{2})
+    destroy(basis::WaveguideBasis{1})
+    destroy(basis::WaveguideBasis{2})
 
 Annihilation operator for [`WaveguideBasis`](@ref) for either one or two photons. 
 
 """
-function QuantumOpticsBase.:destroy(basis::WaveguideBasis{1})
+function destroy(basis::WaveguideBasis{1})
     return WaveguideDestroy{1}(basis,basis,1)
 end
-function QuantumOpticsBase.:destroy(basis::WaveguideBasis{2})
+function destroy(basis::WaveguideBasis{2})
     return WaveguideDestroy{2}(basis,basis,1)
 end
 
 """
-    QuantumOpticsBase.:create(basis::WaveguideBasis{1})
-    QuantumOpticsBase.:create(basis::WaveguideBasis{2})
+    create(basis::WaveguideBasis{1})
+    create(basis::WaveguideBasis{2})
 
 Creation operator for [`WaveguideBasis`](@ref) for either one or two photons. 
 
 """
-function QuantumOpticsBase.:create(basis::WaveguideBasis{1})
+function create(basis::WaveguideBasis{1})
     return WaveguideCreate{1}(basis,basis,1)
 end
-function QuantumOpticsBase.:create(basis::WaveguideBasis{2})
+function create(basis::WaveguideBasis{2})
     return WaveguideCreate{2}(basis,basis,1)
 end
 
 """
-    QuantumOpticsBase.:dagger(basis::WaveguideBasis{1})
-    QuantumOpticsBase.:dagger(basis::WaveguideBasis{2})
+    dagger(basis::WaveguideBasis{1})
+    dagger(basis::WaveguideBasis{2})
 
 Dagger opration on Waveguide operator. 
 
 """
-function QuantumOpticsBase.:dagger(op::WaveguideCreate)
+function dagger(op::WaveguideCreate)
     @assert op.basis_l == op.basis_r
     destroy(op.basis_l) 
 end
-function QuantumOpticsBase.:dagger(op::WaveguideDestroy)
+function dagger(op::WaveguideDestroy)
     @assert op.basis_l == op.basis_r
     create(op.basis_l) 
 end
 
 
 """
-    QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::WaveguideOperator)
-    QuantumOpticsBase.:tensor(op1::WaveguideOperator,op2::AbstractOperator)
+    tensor(op1::AbstractOperator,op2::WaveguideOperator)
+    tensor(op1::WaveguideOperator,op2::AbstractOperator)
 
 Methods for tensorproducts between QuantumOptics.jl operator and [`WaveguideOperator`](@ref). This is done by forming a LazyTensor.
 """
 #TODO: Update method to allow for three or more hilbert spaces.
-function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::WaveguideOperator) 
+function tensor(op1::AbstractOperator,op2::WaveguideOperator) 
     btotal = tensor(op1.basis_l,op2.basis_r)
     LazyTensor(btotal,btotal,[1,2],(op1,op2))
 end
-function QuantumOpticsBase.:tensor(op1::WaveguideOperator,op2::AbstractOperator) 
+function tensor(op1::WaveguideOperator,op2::AbstractOperator) 
     btotal = tensor(op1.basis_l,op2.basis_r)
     LazyTensor(btotal,btotal,[1,2],(op1,op2))
 end
 
+
+"""
+    identityoperator(a::WaveguideOperator)
+
+Return identityoperator(a.basis_l).
+QUESTION: (does basis_l or basis_r matter?)
+"""
+function QuantumOptics.identityoperator(a::WaveguideOperator)
+    identityoperator(a.basis_l)
+end
+function QuantumOptics.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:WaveguideOperator}
+    @assert b1==b2
+    identityoperator(b1)
+end
 
 """
     mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta)

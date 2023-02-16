@@ -52,3 +52,40 @@ function waveguide_evolution(times,psi,H;fout=nothing)
 end
 #,alg=RK4(),dt=(times[2]-times[1])/2,adaptive=false
     
+"""
+    waveguide_montecarlo(times,psi,H,J;fout=nothing)
+"""
+function waveguide_montecarlo(times,psi,H,J;fout=nothing)
+    basis = get_waveguide_basis(psi.basis)
+    basis_detect = get_waveguide_basis(J[1].basis_l)
+    dt = times[2] - times[1]
+    tend = times[end]
+    Jdagger = dagger.(J)
+    function get_hamiltonian(time,psi)
+        [b.timeindex = round(Int,time/dt,RoundUp)+1 for b in basis]
+        [b.timeindex = max(round(Int,time/dt,RoundUp),1) for b in basis_detect]
+        return (H,J,Jdagger)
+    end
+    function eval_last_element(time,psi)
+        if time == tend
+            return psi
+        else
+            return psi
+        end
+    end
+    if fout === nothing
+        tout, ψ = timeevolution.mcwf_dynamic(times, psi, get_hamiltonian,fout=eval_last_element)
+        return ψ[end]
+    else
+        function feval(time,psi)
+            if time == tend
+                return (psi,fout(time,psi)...)
+            else
+                return (0,fout(time,psi)...)
+            end
+        end
+        tout, ψ = timeevolution.mcwf_dynamic(times, psi, get_hamiltonian,fout=feval)
+        return (ψ[end][1], [[ψ[i][j] for i in 1:length(times)] for j in 2:length(ψ[1])]...)
+        #return ([[ψ[i][j] for i in 1:length(times)] for j in 1:length(ψ[1])]...,)
+    end
+end

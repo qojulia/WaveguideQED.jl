@@ -22,7 +22,7 @@ mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     end
 end
 
-==(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.timeindex==b2.timeindex && b1.dt==b2.dt)
+Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.timeindex==b2.timeindex && b1.dt==b2.dt)
 
 """
     zerophoton(bw::WaveguideBasis)

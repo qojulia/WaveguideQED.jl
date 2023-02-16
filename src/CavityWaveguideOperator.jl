@@ -98,14 +98,14 @@ function QuantumOptics.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {
 end
 
 """
-    QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::CavityWaveguideAbsorption)
-    QuantumOpticsBase.:tensor(op1::CavityWaveguideAbsorption,op2::AbstractOperator)
-    QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::CavityWaveguideEmission)
-    QuantumOpticsBase.:tensor(op1::CavityWaveguideEmission,op2::AbstractOperator)
+    tensor(op1::AbstractOperator,op2::CavityWaveguideAbsorption)
+    tensor(op1::CavityWaveguideAbsorption,op2::AbstractOperator)
+    tensor(op1::AbstractOperator,op2::CavityWaveguideEmission)
+    tensor(op1::CavityWaveguideEmission,op2::AbstractOperator)
 
 Methods for tensorproducts between QuantumOptics.jl operators and [`CavityWaveguideOperator`](@ref).
 """
-function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::CavityWaveguideAbsorption)
+function tensor(op1::AbstractOperator,op2::CavityWaveguideAbsorption)
     btotal = tensor(op1.basis_l,op2.basis_r)
     if isequal(op1,identityoperator(basis(op1)))
         CavityWaveguideAbsorption(btotal,btotal,op2.factor,op2.op,op2.loc .+length(basis(op1).shape))
@@ -114,7 +114,7 @@ function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::CavityWaveguideAbs
         LazyTensor(btotal,btotal,[1,op2.loc[1]+1,op2.loc[2]+1][sorted_idx],(op1,op2.op,get_cavity_operator(op2))[sorted_idx])
     end
 end
-function QuantumOpticsBase.:tensor(op1::CavityWaveguideAbsorption,op2::AbstractOperator)
+function tensor(op1::CavityWaveguideAbsorption,op2::AbstractOperator)
     btotal = tensor(op1.basis_l,op2.basis_r)
     if isequal(op2,identityoperator(basis(op2)))
         CavityWaveguideAbsorption(btotal,btotal,op1.factor,op1.op,op1.loc)
@@ -123,7 +123,7 @@ function QuantumOpticsBase.:tensor(op1::CavityWaveguideAbsorption,op2::AbstractO
         LazyTensor(btotal,btotal,[op1.loc[1]+1,op1.loc[2]+1,length(btotal.shape)][sorted_idx],(op1.op,get_cavity_operator(op1),op2)[sorted_idx])
     end
 end
-function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::T) where {T<:CavityWaveguideEmission}
+function tensor(op1::AbstractOperator,op2::T) where {T<:CavityWaveguideEmission}
     btotal = tensor(op1.basis_l,op2.basis_r)
     if isequal(op1,identityoperator(basis(op1)))
         CavityWaveguideEmission(btotal,btotal,op2.factor,op2.op,op2.loc .+length(basis(op1).shape))
@@ -132,7 +132,7 @@ function QuantumOpticsBase.:tensor(op1::AbstractOperator,op2::T) where {T<:Cavit
         LazyTensor(btotal,btotal,[1,op2.loc[1]+1,op2.loc[2]+1][sorted_idx],(op1,op2.op,get_cavity_operator(op2))[sorted_idx])
     end
 end
-function QuantumOpticsBase.:tensor(op1::T,op2::AbstractOperator) where {T<:CavityWaveguideEmission}
+function tensor(op1::T,op2::AbstractOperator) where {T<:CavityWaveguideEmission}
     btotal = tensor(op1.basis_l,op2.basis_r)
     if isequal(op2,identityoperator(basis(op2)))
         CavityWaveguideEmission(btotal,btotal,op1.factor,op1.op,op1.loc)
@@ -143,13 +143,13 @@ function QuantumOpticsBase.:tensor(op1::T,op2::AbstractOperator) where {T<:Cavit
 end
 
 """
-    QuantumOpticsBase.:mul!(result::Ket{B1}, a::CavityWaveguideOperator, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
-    QuantumOpticsBase.:mul!(result::Bra{B1}, a::Bra{B2}, b::CavityWaveguideOperator, alpha, beta) where {B1<:Basis,B2<:Basis}
+    mul!(result::Ket{B1}, a::CavityWaveguideOperator, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
+    mul!(result::Bra{B1}, a::Bra{B2}, b::CavityWaveguideOperator, alpha, beta) where {B1<:Basis,B2<:Basis}
 
 Fast in-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a [`CavityWaveguideOperator`](@ref).
 Routine only works if [`WaveguideBasis`] is the first or last basis in Hilbertspace. 
 """
-function QuantumOpticsBase.:mul!(result::Ket{B1}, a::CavityWaveguideOperator, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
+function mul!(result::Ket{B1}, a::CavityWaveguideOperator, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     if a.loc[1] == 1
         return matmul_first!(result.data, a, b.data, alpha, beta)
     elseif a.loc[1] == length(b.basis.shape)
@@ -157,7 +157,7 @@ function QuantumOpticsBase.:mul!(result::Ket{B1}, a::CavityWaveguideOperator, b:
     end
     error("Waveguide operators in CavityWaveguide operators has to be first or last")
 end
-function QuantumOpticsBase.:mul!(result::Bra{B1}, a::Bra{B2}, b::CavityWaveguideOperator, alpha, beta) where {B1<:Basis,B2<:Basis}
+function mul!(result::Bra{B1}, a::Bra{B2}, b::CavityWaveguideOperator, alpha, beta) where {B1<:Basis,B2<:Basis}
     if b.loc[1] == 1
         return matmul_first!(result.data, b, a.data, alpha, beta)
     elseif b.loc[1] == length(a.basis.shape)

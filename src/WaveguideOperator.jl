@@ -14,6 +14,7 @@ mutable struct WaveguideDestroy{N} <: WaveguideOperator
     basis_l::Basis
     basis_r::Basis
     factor::ComplexF64
+    timeindex::Int
 end
 
 """
@@ -26,22 +27,23 @@ mutable struct WaveguideCreate{N} <:WaveguideOperator
     basis_l::Basis
     basis_r::Basis
     factor::ComplexF64
+    timeindex::Int
 end
 
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
 #Methods for copying waveguide operators
 function Base.:copy(x::WaveguideDestroy{1})
-    WaveguideDestroy{1}(x.basis_l,x.basis_r,x.factor)
+    WaveguideDestroy{1}(x.basis_l,x.basis_r,x.factor,1)
 end
 function Base.:copy(x::WaveguideDestroy{2})
-    WaveguideDestroy{2}(x.basis_l,x.basis_r,x.factor)
+    WaveguideDestroy{2}(x.basis_l,x.basis_r,x.factor,1)
 end
 function Base.:copy(x::WaveguideCreate{1})
-    WaveguideCreate{1}(x.basis_l,x.basis_r,x.factor)
+    WaveguideCreate{1}(x.basis_l,x.basis_r,x.factor,1)
 end
 function Base.:copy(x::WaveguideCreate{2})
-    WaveguideCreate{2}(x.basis_l,x.basis_r,x.factor)
+    WaveguideCreate{2}(x.basis_l,x.basis_r,x.factor,1)
 end
 
 
@@ -49,9 +51,14 @@ end
 function Base.:*(a::Number,b::WaveguideOperator)
     out = copy(b)
     out.factor=out.factor*a
+    return out
 end
 Base.:*(b::WaveguideOperator,a::Number)=*(a,b)
-
+function Base.:/(a::WaveguideOperator,b::Number)
+    out = copy(a)
+    out.factor=out.factor/b
+    return out
+end
 
 """
     destroy(basis::WaveguideBasis{1})
@@ -61,10 +68,10 @@ Annihilation operator for [`WaveguideBasis`](@ref) for either one or two photons
 
 """
 function destroy(basis::WaveguideBasis{1})
-    return WaveguideDestroy{1}(basis,basis,1)
+    return WaveguideDestroy{1}(basis,basis,1,1)
 end
 function destroy(basis::WaveguideBasis{2})
-    return WaveguideDestroy{2}(basis,basis,1)
+    return WaveguideDestroy{2}(basis,basis,1,1)
 end
 
 """
@@ -75,10 +82,10 @@ Creation operator for [`WaveguideBasis`](@ref) for either one or two photons.
 
 """
 function create(basis::WaveguideBasis{1})
-    return WaveguideCreate{1}(basis,basis,1)
+    return WaveguideCreate{1}(basis,basis,1,1)
 end
 function create(basis::WaveguideBasis{2})
-    return WaveguideCreate{2}(basis,basis,1)
+    return WaveguideCreate{2}(basis,basis,1,1)
 end
 
 """
@@ -90,11 +97,15 @@ Dagger opration on Waveguide operator.
 """
 function dagger(op::WaveguideCreate)
     @assert op.basis_l == op.basis_r
-    destroy(op.basis_l) 
+    out = destroy(op.basis_l)
+    out.factor = op.factor
+    out 
 end
 function dagger(op::WaveguideDestroy)
     @assert op.basis_l == op.basis_r
-    create(op.basis_l) 
+    out = create(op.basis_l)
+    out.factor = op.factor
+    out
 end
 
 
@@ -220,17 +231,17 @@ end
 #Destroy 1 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{1},b,alpha,beta)
     rmul!(result,beta)
-    add_zerophoton_onephoton!(result,b,alpha,a.basis_l.timeindex)
+    add_zerophoton_onephoton!(result,b,alpha*a.factor,a.timeindex)
     return
 end
 #Destroy 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{2},b,alpha,beta)
     rmul!(result,beta)
-    timeindex = a.basis_l.timeindex
+    timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
-    add_zerophoton_onephoton!(result,b,alpha,timeindex)
+    add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex)
     twophotonview = TwophotonTimestepView(b,timeindex,nsteps)
-    add_onephoton_twophoton!(result,twophotonview,alpha,nsteps)
+    add_onephoton_twophoton!(result,twophotonview,alpha*a.factor,nsteps)
     return
 end
 
@@ -238,18 +249,18 @@ end
 #Create 1 waveguide photon 
 function waveguide_mul!(result,a::WaveguideCreate{1},b,alpha,beta)
     rmul!(result,beta)
-    add_onephoton_zerophoton!(result,b,alpha,a.basis_l.timeindex)
+    add_onephoton_zerophoton!(result,b,alpha*a.factor,a.timeindex)
     return
 end
 
 #Create 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideCreate{2},b,alpha,beta)
     rmul!(result,beta)
-    timeindex = a.basis_l.timeindex
+    timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
-    add_onephoton_zerophoton!(result,b,alpha,timeindex)
+    add_onephoton_zerophoton!(result,b,alpha*a.factor,timeindex)
     view = TwophotonTimestepView(result,timeindex,nsteps)
-    add_twophoton_onephoton!(view,b,alpha)
+    add_twophoton_onephoton!(view,b,alpha*a.factor)
     return
 end
 
@@ -271,4 +282,84 @@ function add_onephoton_twophoton!(a,b,alpha,nsteps::Int)
     @simd for j in 1:nsteps
         @inbounds a[j+1] += alpha*b[j]
     end
+end
+
+
+"""
+    get_waveguide_operators(basis::CompositeBasis)
+    
+Returns [`WaveguideOperator`](@ref) from `QuantumOptics.LazySum`
+
+"""
+function get_waveguide_operators(op::LazySum)
+    out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op.operators]...]
+    out = collect(Iterators.flatten(out))
+    out[findall(x->typeof(x)<:WaveguideOperator,out)]
+end
+
+"""
+    get_waveguide_operators(basis::CompositeBasis)
+    
+Returns [`WaveguideOperator`](@ref) from `QuantumOptics.LazySum`
+
+"""
+function get_waveguide_operators(op::LazyProduct)
+    out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op.operators]...]
+    out = collect(Iterators.flatten(out))
+    out[findall(x->typeof(x)<:WaveguideOperator,out)]
+end
+
+"""
+    get_waveguide_operators(basis::CompositeBasis)
+    
+Returns [`WaveguideOperator`](@ref) from `QuantumOptics.LazySum`
+
+"""
+function get_waveguide_operators(op::LazyTensor)
+    out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op.operators]...]
+    out = collect(Iterators.flatten(out))
+    out[findall(x->typeof(x)<:WaveguideOperator,out)]
+end
+
+function get_waveguide_operators(op::WaveguideOperator)
+    [op]
+end
+
+function get_waveguide_operators(op)
+    []
+end
+
+function get_waveguide_operators(op::Tuple)
+    out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op]...]
+    out = collect(Iterators.flatten(out))
+    out[findall(x->typeof(x)<:WaveguideOperator,out)]
+end
+
+function get_waveguide_operators(op::Array)
+    out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op]...]
+    out = collect(Iterators.flatten(out))
+    out[findall(x->typeof(x)<:WaveguideOperator,out)]
+end
+
+function get_waveguidetimeindex(op)
+    ops = get_waveguide_operators(op)
+    timeindex = ops[1].timeindex
+    for a in ops[2:end]
+        @assert a.timeindex == timeindex
+    end
+    return timeindex
+end
+function get_waveguidetimeindex(op::WaveguideOperator)
+    op.timeindex
+end
+
+function set_waveguidetimeindex!(op::Vector{T},timeindex) where T<:WaveguideOperator
+    [set_waveguidetimeindex!(O,timeindex) for O in op]
+end
+function set_waveguidetimeindex!(op,timeindex)
+    ops = get_waveguide_operators(op)
+    [set_waveguidetimeindex!(op,timeindex) for op in ops]
+end
+function set_waveguidetimeindex!(op::WaveguideOperator,timeindex)
+    op.timeindex = timeindex
 end

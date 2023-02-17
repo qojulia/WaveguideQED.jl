@@ -54,8 +54,8 @@ end
     psi_out = copy(psi)
     QuantumOpticsBase.mul!(psi_out,wda,psi,1,0.0)
     testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis))
-    testvec[get_waveguidetimeindex(psi.basis)] *= 2
-    ψ_double=TwophotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(psi_out.basis),get_nsteps(psi.basis))
+    testvec[get_waveguidetimeindex(wda)] *= 2
+    ψ_double=TwophotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(wda),get_nsteps(psi.basis))
     @test isapprox([ψ_double[i] for i in eachindex(ψ_double)],testvec)    
 end
 
@@ -155,7 +155,7 @@ end
     out_f_adw = copy(psi_f)
 
 
-    psi_l.basis.bases[end].timeindex = 100
+    set_waveguidetimeindex!([wda_l,wda_f,adw_l,adw_f],100)
 
     mul!(out_l_emission,wda_l,psi_l,1.0,0.0)
     mul!(out_f_emission,wda_f,psi_f,1.0,0.0)
@@ -171,6 +171,7 @@ end
     adw_f = w ⊗ ad ⊗ identityoperator(be)
     H_f = param.δ*n_f+im*sqrt(param.γ/dt)*(adw_f-wda_f)+param.x3/4*n_f*n_f-param.x3/4*n_f
 
+    set_waveguidetimeindex!([wda_l,wda_f,adw_l,adw_f],100)
 
     mul!(out_l_wda,wda_l,psi_l,1.0,0.0)
     mul!(out_f_wda,wda_f,psi_f,1.0,0.0)

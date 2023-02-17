@@ -11,18 +11,17 @@ mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     N::Int
     offset::Int
     nsteps::Int
-    timeindex::Int
     dt::Float64
     function WaveguideBasis(N,times)
         dim = 0
         for i in 1:N
             dim = dim + length(times)^i - (length(times)^i-length(times))/2
         end
-        new{N}([dim+1], dim, 0,length(times),1,times[2]-times[1])
+        new{N}([dim+1], dim, 0,length(times),times[2]-times[1])
     end
 end
 
-Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.timeindex==b2.timeindex && b1.dt==b2.dt)
+Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.dt==b2.dt)
 
 """
     zerophoton(bw::WaveguideBasis)
@@ -248,3 +247,5 @@ Returns [`WaveguideBasis`](@ref) from `CompositeBasis.bases`
 function get_waveguide_basis(basis::CompositeBasis)
     basis.bases[findall(x->typeof(x)<:WaveguideBasis,basis.bases)]
 end
+
+

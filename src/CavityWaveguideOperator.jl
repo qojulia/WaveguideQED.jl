@@ -242,3 +242,9 @@ function waveguide_mul_first!(result, a::CavityWaveguideEmission, b, alpha::Numb
     rmul!(view(result_data,:,size(b_data,2)),beta)
 end
 
+function get_waveguide_operators(op::CavityWaveguideOperator)
+    [op.op]
+end
+function set_waveguidetimeindex!(op::CavityWaveguideOperator,timeindex)
+    op.op.timeindex = timeindex
+end

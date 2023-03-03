@@ -1,5 +1,5 @@
 using LinearAlgebra
-include("paramfile.jl")
+include("helper_functions.jl")
 
 @testset "Waveguide annihilation" begin
     param=parameters()

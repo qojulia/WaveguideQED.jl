@@ -34,6 +34,11 @@ function zerophoton(b::WaveguideBasis)
     return state
 end
 
+function Noccupation(b::WaveguideBasis,i)
+    state = Ket(b)
+    state.data[i] = 1
+    return state
+end
 
 """
     onephoton(b::WaveguideBasis,ξ::Function,times,args...,norm=True)
@@ -173,6 +178,31 @@ function view_twophoton(ψ::Ket,index)
     viewed_data = view_waveguide(ψ::Ket,index)
     nsteps = get_nsteps(ψ.basis)
     TwophotonView(viewed_data,nsteps)
+end
+
+
+"""
+    Base.empty!(psi::Ket)
+"""
+function Base.empty!(psi::Ket)
+    op = isa(psi.basis.bases[1],WaveguideBasis) ? empty(psi.basis.bases[1]) : identityoperator(psi.basis.bases[1]) 
+    for b in psi.basis.bases[2:end]
+        op = op ⊗ (isa(b,WaveguideBasis) ? empty(b) : identityoperator(b))
+    end
+    mul!(psi,op,psi,1,0)
+end
+
+"""
+    Base.empty(psi::Ket)
+"""
+function Base.empty(psi::Ket)
+    op = isa(psi.basis.bases[1],WaveguideBasis) ? empty(psi.basis.bases[1]) : identityoperator(psi.basis.bases[1]) 
+    for b in psi.basis.bases[2:end]
+        op = op ⊗ (isa(b,WaveguideBasis) ? empty(b) : identityoperator(b))
+    end
+    out = Ket(psi.basis,zero(psi.data))
+    mul!(out,op,psi,1,0)
+    out
 end
 
 

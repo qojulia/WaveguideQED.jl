@@ -1,6 +1,6 @@
 # CavityWaveguide.jl
 
-A julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). Package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where basises and operators from CavityWaveguide.jl can be used together with operators and basises from QuantumOpics.jl. See also /Examples for a single and twophoton pulse interacting with a cavity with a Kerr-non linearity. 
+A julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). Package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where basises and operators from CavityWaveguide.jl can be used together with operators and basises from QuantumOpics.jl. See <a href="https://mabuni1998.github.io/CavityWaveguide/dev/API/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> for documentation. See also /Examples for a single and twophoton pulse interacting with a cavity with a Kerr-non linearity. 
 
 ### Example of usage:
 

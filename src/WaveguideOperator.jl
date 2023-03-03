@@ -1,7 +1,7 @@
 """
 Abstract class for WaveguideOperators. Used to dispatch special mul! function.
 """
-abstract type WaveguideOperator <: AbstractOperator{Basis,Basis} end
+abstract type WaveguideOperator{B1,B2} <: AbstractOperator{B1,B2} end
 
 
 """
@@ -10,9 +10,9 @@ abstract type WaveguideOperator <: AbstractOperator{Basis,Basis} end
 Operator structure for dispatching annihilation operation on Waveguide state.
 N is used to dispatch one or two photon routine. 
 """
-mutable struct WaveguideDestroy{N} <: WaveguideOperator
-    basis_l::Basis
-    basis_r::Basis
+mutable struct WaveguideDestroy{B1,B2,N} <: WaveguideOperator{B1,B2}
+    basis_l::B1
+    basis_r::B2
     factor::ComplexF64
     timeindex::Int
 end
@@ -23,29 +23,29 @@ end
 Operator structure for dispatching creation operation on Waveguide state.
 N is used to dispatch one or two photon routine. 
 """
-mutable struct WaveguideCreate{N} <:WaveguideOperator
-    basis_l::Basis
-    basis_r::Basis
+mutable struct WaveguideCreate{B1,B2,N} <:WaveguideOperator{B1,B2}
+    basis_l::B1
+    basis_r::B2
     factor::ComplexF64
     timeindex::Int
 end
 
+
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
 #Methods for copying waveguide operators
-function Base.:copy(x::WaveguideDestroy{1})
-    WaveguideDestroy{1}(x.basis_l,x.basis_r,x.factor,1)
+function Base.:copy(x::WaveguideDestroy{B,B,1}) where {B}
+    WaveguideDestroy{B,B,1}(x.basis_l,x.basis_r,x.factor,1)
 end
-function Base.:copy(x::WaveguideDestroy{2})
-    WaveguideDestroy{2}(x.basis_l,x.basis_r,x.factor,1)
+function Base.:copy(x::WaveguideDestroy{B,B,2}) where {B}
+    WaveguideDestroy{B,B,2}(x.basis_l,x.basis_r,x.factor,1)
 end
-function Base.:copy(x::WaveguideCreate{1})
-    WaveguideCreate{1}(x.basis_l,x.basis_r,x.factor,1)
+function Base.:copy(x::WaveguideCreate{B,B,1}) where {B}
+    WaveguideCreate{B,B,1}(x.basis_l,x.basis_r,x.factor,1)
 end
-function Base.:copy(x::WaveguideCreate{2})
-    WaveguideCreate{2}(x.basis_l,x.basis_r,x.factor,1)
+function Base.:copy(x::WaveguideCreate{B,B,2}) where {B}
+    WaveguideCreate{B,B,2}(x.basis_l,x.basis_r,x.factor,1)
 end
-
 
 #Arithmetic operations for multiplying, which updates factor in the operator.
 function Base.:*(a::Number,b::WaveguideOperator)
@@ -59,6 +59,7 @@ function Base.:/(a::WaveguideOperator,b::Number)
     out.factor=out.factor/b
     return out
 end
+Base.:-(a::WaveguideOperator) = *(-1,a)
 
 """
     destroy(basis::WaveguideBasis{1})
@@ -68,10 +69,12 @@ Annihilation operator for [`WaveguideBasis`](@ref) for either one or two photons
 
 """
 function destroy(basis::WaveguideBasis{1})
-    return WaveguideDestroy{1}(basis,basis,1,1)
+    B = typeof(basis)
+    return WaveguideDestroy{B,B,1}(basis,basis,1,1)
 end
 function destroy(basis::WaveguideBasis{2})
-    return WaveguideDestroy{2}(basis,basis,1,1)
+    B = typeof(basis)
+    return WaveguideDestroy{B,B,2}(basis,basis,1,1)
 end
 
 """
@@ -82,11 +85,27 @@ Creation operator for [`WaveguideBasis`](@ref) for either one or two photons.
 
 """
 function create(basis::WaveguideBasis{1})
-    return WaveguideCreate{1}(basis,basis,1,1)
+    B = typeof(basis)
+    return WaveguideCreate{B,B,1}(basis,basis,1,1)
 end
 function create(basis::WaveguideBasis{2})
-    return WaveguideCreate{2}(basis,basis,1,1)
+    B = typeof(basis)
+    return WaveguideCreate{B,B,2}(basis,basis,1,1)
 end
+
+"""
+    empty(basis:WaveguideBasis{1})
+    empty(basis:WaveguideBasis{2})
+
+Empty operator for [`WaveguideBasis`](@ref) for either one or two photons.
+"""
+function projector(basis::WaveguideBasis{1})
+    return WaveguideProject{1}(basis,basis,1,1)
+end
+function projector(basis::WaveguideBasis{2})
+    return WaveguideProject{2}(basis,basis,1,1)
+end
+
 
 """
     dagger(basis::WaveguideBasis{1})
@@ -99,12 +118,14 @@ function dagger(op::WaveguideCreate)
     @assert op.basis_l == op.basis_r
     out = destroy(op.basis_l)
     out.factor = op.factor
+    out.timeindex = op.timeindex
     out 
 end
 function dagger(op::WaveguideDestroy)
     @assert op.basis_l == op.basis_r
     out = create(op.basis_l)
     out.factor = op.factor
+    out.timeindex = op.timeindex
     out
 end
 
@@ -116,16 +137,13 @@ end
 Methods for tensorproducts between QuantumOptics.jl operator and [`WaveguideOperator`](@ref). This is done by forming a LazyTensor.
 """
 #TODO: Update method to allow for three or more hilbert spaces.
-function tensor(op1::AbstractOperator,op2::WaveguideOperator) 
-    btotal = tensor(op1.basis_l,op2.basis_r)
-    LazyTensor(btotal,btotal,[1,2],(op1,op2))
+function tensor(a::DataOperator,b::WaveguideOperator) 
+    LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
 end
-function tensor(op1::WaveguideOperator,op2::AbstractOperator) 
-    btotal = tensor(op1.basis_l,op2.basis_r)
-    LazyTensor(btotal,btotal,[1,2],(op1,op2))
+function tensor(a::WaveguideOperator,b::DataOperator) 
+    LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
 end
-
-
+ 
 """
     identityoperator(a::WaveguideOperator)
 
@@ -227,15 +245,18 @@ function QuantumOpticsBase._tp_sum_get_tmp(op::WaveguideOperator, loc::Integer, 
 end
 
 
+function mul!(result::Ket{B},a::WaveguideOperator{B,B},input::Ket{B},alpha,beta) where {B}
+    waveguide_mul!(result.data,a,input.data,alpha,beta)
+end
 
 #Destroy 1 waveguide photon
-function waveguide_mul!(result,a::WaveguideDestroy{1},b,alpha,beta)
+function waveguide_mul!(result,a::WaveguideDestroy{B,B,1},b,alpha,beta) where {B}
     rmul!(result,beta)
     add_zerophoton_onephoton!(result,b,alpha*a.factor,a.timeindex)
     return
 end
 #Destroy 2 waveguide photon
-function waveguide_mul!(result,a::WaveguideDestroy{2},b,alpha,beta)
+function waveguide_mul!(result,a::WaveguideDestroy{B,B,2},b,alpha,beta) where {B}
     rmul!(result,beta)
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
@@ -247,14 +268,13 @@ end
 
 
 #Create 1 waveguide photon 
-function waveguide_mul!(result,a::WaveguideCreate{1},b,alpha,beta)
+function waveguide_mul!(result,a::WaveguideCreate{B,B,1},b,alpha,beta) where {B}
     rmul!(result,beta)
     add_onephoton_zerophoton!(result,b,alpha*a.factor,a.timeindex)
     return
 end
-
 #Create 2 waveguide photon
-function waveguide_mul!(result,a::WaveguideCreate{2},b,alpha,beta)
+function waveguide_mul!(result,a::WaveguideCreate{B,B,2},b,alpha,beta) where {B}
     rmul!(result,beta)
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
@@ -286,9 +306,14 @@ end
 
 
 """
-    get_waveguide_operators(basis::CompositeBasis)
+    get_waveguide_operators(basis::LazySum)
+    get_waveguide_operators(basis::LazyProduct)
+    get_waveguide_operators(basis::LazyTensor)
+    get_waveguide_operators(basis::Tuple)
+    get_waveguide_operators(basis::Array)
+    get_waveguide_operators(basis::WaveguideOperator)
     
-Returns [`WaveguideOperator`](@ref) from `QuantumOptics.LazySum`
+Returns all [`WaveguideOperator`](@ref) in LazyOperator or from a list of operators. If no [`WaveguideOperator`](@ref) is found, and empty array is returned.
 
 """
 function get_waveguide_operators(op::LazySum)
@@ -296,51 +321,38 @@ function get_waveguide_operators(op::LazySum)
     out = collect(Iterators.flatten(out))
     out[findall(x->typeof(x)<:WaveguideOperator,out)]
 end
-
-"""
-    get_waveguide_operators(basis::CompositeBasis)
-    
-Returns [`WaveguideOperator`](@ref) from `QuantumOptics.LazySum`
-
-"""
 function get_waveguide_operators(op::LazyProduct)
     out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op.operators]...]
     out = collect(Iterators.flatten(out))
     out[findall(x->typeof(x)<:WaveguideOperator,out)]
 end
-
-"""
-    get_waveguide_operators(basis::CompositeBasis)
-    
-Returns [`WaveguideOperator`](@ref) from `QuantumOptics.LazySum`
-
-"""
 function get_waveguide_operators(op::LazyTensor)
     out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op.operators]...]
     out = collect(Iterators.flatten(out))
     out[findall(x->typeof(x)<:WaveguideOperator,out)]
 end
-
-function get_waveguide_operators(op::WaveguideOperator)
-    [op]
-end
-
-function get_waveguide_operators(op)
-    []
-end
-
 function get_waveguide_operators(op::Tuple)
     out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op]...]
     out = collect(Iterators.flatten(out))
     out[findall(x->typeof(x)<:WaveguideOperator,out)]
 end
-
 function get_waveguide_operators(op::Array)
     out = [[if !isnothing(get_waveguide_operators(O)) get_waveguide_operators(O) end for O in op]...]
     out = collect(Iterators.flatten(out))
     out[findall(x->typeof(x)<:WaveguideOperator,out)]
 end
+function get_waveguide_operators(op::WaveguideOperator)
+    [op]
+end
+function get_waveguide_operators(op)
+    []
+end
 
+"""
+    get_waveguidetimeindex(op)
+
+Return timeindex of operator or list of operators containing [`WaveguideOperator`](@ref) and assert that all timeindeces are the same. 
+"""
 function get_waveguidetimeindex(op)
     ops = get_waveguide_operators(op)
     timeindex = ops[1].timeindex
@@ -353,13 +365,50 @@ function get_waveguidetimeindex(op::WaveguideOperator)
     op.timeindex
 end
 
-function set_waveguidetimeindex!(op::Vector{T},timeindex) where T<:WaveguideOperator
-    [set_waveguidetimeindex!(O,timeindex) for O in op]
+
+"""
+    set_waveguidetimeindex!(op,index)
+
+Set timeindex of all [`WaveguideOperator`](@ref) in operator or list of operators to index
+"""
+function set_waveguidetimeindex!(op::Vector{T},index) where T<:WaveguideOperator
+    for O in op
+        set_waveguidetimeindex!(O,index)
+    end
 end
-function set_waveguidetimeindex!(op,timeindex)
-    ops = get_waveguide_operators(op)
-    [set_waveguidetimeindex!(op,timeindex) for op in ops]
+function set_waveguidetimeindex!(op::WaveguideOperator,index)
+    op.timeindex = index
 end
-function set_waveguidetimeindex!(op::WaveguideOperator,timeindex)
-    op.timeindex = timeindex
+function set_waveguidetimeindex!(op::LazyProduct,index)
+    for x in op.operators
+        set_waveguidetimeindex!(x,index)
+    end
+end
+function set_waveguidetimeindex!(op::LazySum,index)
+    for x in op.operators
+        set_waveguidetimeindex!(x,index)
+    end
+end
+function set_waveguidetimeindex!(op::LazyTensor,index)
+    for x in op.operators
+        set_waveguidetimeindex!(x,index)
+    end
+end
+function set_waveguidetimeindex!(op::Tuple,index)
+    for x in op
+        set_waveguidetimeindex!(x,index)
+    end
+end
+function set_waveguidetimeindex!(op::Array,index)
+    for x in op
+        set_waveguidetimeindex!(x,index)
+    end
+end
+function set_waveguidetimeindex!(args...)
+    for i in 1:length(args)-1
+        set_waveguidetimeindex!(args[i],args[end])
+    end
+end
+function set_waveguidetimeindex!(op,index)
+
 end

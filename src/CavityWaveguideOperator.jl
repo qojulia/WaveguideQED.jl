@@ -195,13 +195,13 @@ end
 
 
 function apply_last_op!(result,a::CavityWaveguideOperator,br,α,β)
-    for i in axes(br,1)
+    @simd for i in axes(br,1)
         waveguide_mul_last!(view(result,i,:), a, view(br,i,:), α, β)
     end
 end
 
 function apply_first_op!(result,a::CavityWaveguideOperator,br,α,β)
-    for i in axes(br,2)
+    @simd for i in axes(br,2)
         waveguide_mul_first!(view(result,:,i), a, view(br,:,i), α, β)
     end
 end
@@ -209,7 +209,7 @@ end
 function waveguide_mul_last!(result, a::CavityWaveguideAbsorption, b, alpha::Number, beta::Number)
     b_data = reshape(b, :, length(basis(a).bases[end]))
     result_data = reshape(result,  :, length(basis(a).bases[end]))
-    for i in 2:size(b_data,1)
+    @simd for i in 2:size(b_data,1)
         waveguide_mul!(view(result_data,i,:),a.op,view(b_data,i-1,:),sqrt(i-1)*alpha*a.factor,beta)
     end
     rmul!(view(result_data,1,:),beta)
@@ -218,7 +218,7 @@ end
 function waveguide_mul_first!(result, a::CavityWaveguideAbsorption, b, alpha::Number, beta::Number)
     b_data = reshape(b, length(basis(a).bases[1]),:)
     result_data = reshape(result,length(basis(a).bases[1]),:)
-    for i in 2:size(b_data,2)
+    @simd for i in 2:size(b_data,2)
         waveguide_mul!(view(result_data,:,i),a.op,view(b_data,:,i-1),sqrt(i-1)*alpha*a.factor,beta)
     end
     rmul!(view(result_data,:,1),beta)

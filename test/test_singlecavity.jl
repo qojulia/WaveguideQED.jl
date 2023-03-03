@@ -1,4 +1,4 @@
-include("paramfile.jl")
+include("helper_functions.jl")
 
 @testset "Singlephoton with cavity" begin
     #Set parameters

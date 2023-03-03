@@ -18,7 +18,7 @@ modules = [CavityWaveguide],
 authors = "Matias Bundgaard-Nielsen",
 pages = [
 "CavityWaveguide.jl" => "index.md",
-"Beamsplitter" => "detection_example.md"
+"Beamsplitter" => "detection_example.md",
 "API" => "API.md",
 "References" => "references.md",
 ]

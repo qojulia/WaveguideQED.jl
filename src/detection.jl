@@ -185,7 +185,6 @@ function detect_single_click(ψ,detector::Detector)
     end
     total_detect
 end
-
 function detect_single_click!(p_time,detected_state::LazyTensorKet{B},ψ::LazyTensorKet{B},detector::Detector{B},projection::LazyTensorKet{B};timeindex = 1,factor=1) where {B}
     waveguide_operators=get_waveguide_operators(detector)
     timesteps = min([w.basis_l.nsteps for w in waveguide_operators]...) 
@@ -260,6 +259,7 @@ function mul_internal(p1,p2)
 end
 
 
+
 function _two_time_total_probability(p_time,timesteps)
     out = 0
     @simd for i in 1:timesteps
@@ -270,6 +270,23 @@ function _two_time_total_probability(p_time,timesteps)
     out
 end
 
+"""
+    detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection) where {B}   
+    detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B}) where B
+
+Calculate probability of observing 'projection' after beamsplitter operation and two subsequent detection events defined in 'detector1' and 'detector2' on the state 'ψ'.
+
+#Arguments
+* 'ψ' can be either ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) and is the state on which the beamsplitter and detection is applied
+* 'detector1' defines the first beamsplitter and subsequent detection operation. See ['Detector'](@ref) for more details on how to define.
+* 'detector2' defines the second beamsplitter and subsequent detection operation. See ['Detector'](@ref) for more details on how to define.
+* 'projection' if given is a ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) which projects onto the state after the measurement.  If no projection is given, instead the total probability of having the detector click is given by applying all possible combinations of projections using ['get_all_projectors'](@ref).
+
+#Returns
+
+If 'projection' is given: Returns probability of having 'detector1' and 'detector2' click and being in state defined by 'projection'
+If 'projection' is not given: Returns the total probability of having 'detector1' and 'detector2' click by applying all possibile projections with zerophotons in the waveguide using ['get_all_projectors'](@ref).
+"""
 function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection) where {B}
     waveguide_operators=[get_waveguide_operators(detector1)...,get_waveguide_operators(detector2)...]
     timesteps = min([w.basis_l.nsteps for w in waveguide_operators]...) 
@@ -335,31 +352,3 @@ function detect_double_click!(p_time,a_measured::LazyTensorKet{B},tmp::LazyTenso
     end
     p_time
 end
-
-
-
-#=
-        for j in 1:timesteps
-            set_waveguidetimeindex!([wa_j,wb_j],j)
-            mul!(wa_i_wa_j.kets[1],LazyProduct(wa,wa_j),ψ.kets[1],1,0)
-            mul!(wb_i_wb_j.kets[2],LazyProduct(wb,wb_j),ψ.kets[2],1,0)
-            
-            mul!(wa_i_wb_j.kets[1],wa,ψ.kets[1],1,0)
-            mul!(wa_i_wb_j.kets[2],wb_j,ψ.kets[2],1,0)
-            
-            mul!(wb_i_wa_j.kets[1],wa_j,ψ.kets[1],1,0)
-            mul!(wb_i_wa_j.kets[2],wb,ψ.kets[2],1,0)
-            
-            proj_a_wa_i_wa_j,proj_b_wa_i_wa_j = projection*wa_i_wa_j
-            proj_a_wb_i_wb_j,proj_b_wb_i_wb_j = projection*wb_i_wb_j
-            proj_a_wa_i_wb_j,proj_b_wa_i_wb_j = projection*wa_i_wb_j
-            proj_a_wb_i_wa_j,proj_b_wb_i_wa_j = projection*wb_i_wa_j
-            println("Double click due to two photons in wa: $proj_a_wa_i_wa_j")
-            println("Double click due to two photons in wb: $proj_a_wb_i_wb_j")
-
-            p_time[i,j] += factor*(proj_a_wa_i_wa_j*proj_b_wa_i_wa_j 
-                                  +proj_a_wb_i_wb_j*proj_b_wb_i_wb_j
-                                  +proj_a_wa_i_wb_j*proj_b_wa_i_wb_j
-                                  +proj_a_wb_i_wa_j*proj_b_wb_i_wa_j)
-        end
-=#

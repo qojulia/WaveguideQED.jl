@@ -1,9 +1,11 @@
 # CavityWaveguide.jl
+<a href="https://mabuni1998.github.io/CavityWaveguide/dev/API/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> 
+<a href="https://codecov.io/gh/mabuni1998/CavityWaveguide"><img src="https://img.shields.io/codecov/c/gh/mabuni1998/CavityWaveguide?label=codecov" alt="Test coverage from codecov"></a>
 
-A julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). Package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where basises and operators from CavityWaveguide.jl can be used together with operators and basises from QuantumOpics.jl. See <a href="https://mabuni1998.github.io/CavityWaveguide/dev/API/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> for documentation. See also /Examples for a single and twophoton pulse interacting with a cavity with a Kerr-non linearity. 
+
+A julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). Package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where basises and operators from CavityWaveguide.jl can be used together with operators and basises from QuantumOpics.jl. 
 
 ### Example of usage:
-
 Define a waveguide basis, containing a two photon wavepacket for a time interval 0 to 20 with 0.2 timesteps:
 
 

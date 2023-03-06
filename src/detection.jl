@@ -117,7 +117,7 @@ get_tmp(x::LazySumKet) = copy(x.kets[1])
 """
     Detector(wa,wb)
 
-Detector operation defined by giving waveguide annihilation operator 'wa' and 'wb' from two subsystems. 'wa' acts on the first subsystem of a ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) and 'wb' on the second.
+Detector operation defined by giving waveguide annihilation operator `wa` and `wb` from two subsystems. `wa` acts on the first subsystem of a [`LazyTensorKet`](@ref) or [`LazySumKet`](@ref) and `wb` on the second.
 """
 mutable struct Detector{B}
     basis::B
@@ -148,17 +148,19 @@ end
     detect_single_click(ψ,detector::Detector,projection)
     detect_single_click(ψ,detector::Detector)
 
-Calculate probability of observing 'projection' after beamsplitter operation and subsequent detection event defined in 'detector' on the state 'ψ'.
+Calculate probability of observing `projection` after beamsplitter operation and subsequent detection event defined in `detector` on the state `ψ`.
 
 #Arguments
-* 'ψ' can be either ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) and is the state on which the beamsplitter and detection is applied
-* 'detector' defines the beamsplitter and subsequent detection operation. See ['Detector'](@ref) for more details on how to define.
-* 'projection' if given is a ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) which projects onto the state after the measurement.  If no projection is given, instead the total probability of having the detector click is given by applying all possible combinations of projections using ['get_all_projectors'](@ref).
+* `ψ` can be either [`LazyTensorKet`](@ref) or [`LazySumKet`](@ref) and is the state on which the beamsplitter and detection is applied
+* `detector` defines the beamsplitter and subsequent detection operation. See [`Detector`](@ref) for more details on how to define.
+* `projection` if given is a [`LazyTensorKet`](@ref) or [`LazySumKet`](@ref) which projects onto the state after the measurement.  If no projection is given, instead the total probability of having the detector click is given by applying all possible combinations of projections using [`get_all_projectors`](@ref).
 
 #Returns
 
-If 'projection' is given returns probability of having detector click and being in state defined by 'projection'
-If 'projection' is not given returns the total probability of having a the detector click (only a single click, for double clicks use ['detect_double_click'](@ref)) by applying all possibile projections with zerophotons in the waveguide using ['get_all_projectors'](@ref).
+If `projection` is given returns probability of having detector click and being in state defined by `projection`
+If `projection` is not given returns the total probability of having a the detector click (only a single click, for double clicks use [`detect_double_click`](@ref)) by applying all possibile projections with zerophotons in the waveguide using [`get_all_projectors`](@ref).
+
+See [Beamsplitter](https://mabuni1998.github.io/CavityWaveguide/dev/detection_example/) for an example on how to use.
 """
 function detect_single_click(ψ,detector::Detector,projection)
     waveguide_operators=get_waveguide_operators(detector)
@@ -274,27 +276,34 @@ end
     detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection) where {B}   
     detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B}) where B
 
-Calculate probability of observing 'projection' after beamsplitter operation and two subsequent detection events defined in 'detector1' and 'detector2' on the state 'ψ'.
+Calculate probability of observing `projection` after beamsplitter operation and two subsequent detection events defined in `detector1` and `detector2` on the state `ψ`.
 
 #Arguments
-* 'ψ' can be either ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) and is the state on which the beamsplitter and detection is applied
-* 'detector1' defines the first beamsplitter and subsequent detection operation. See ['Detector'](@ref) for more details on how to define.
-* 'detector2' defines the second beamsplitter and subsequent detection operation. See ['Detector'](@ref) for more details on how to define.
-* 'projection' if given is a ['LazyTensorKet'](@ref) or ['LazySumKet'](@ref) which projects onto the state after the measurement.  If no projection is given, instead the total probability of having the detector click is given by applying all possible combinations of projections using ['get_all_projectors'](@ref).
+* `ψ` can be either [`LazyTensorKet`](@ref) or [`LazySumKet`](@ref) and is the state on which the beamsplitter and detection is applied
+* `detector1` defines the first beamsplitter and subsequent detection operation. See [`Detector`](@ref) for more details on how to define.
+* `detector2` defines the second beamsplitter and subsequent detection operation. See [`Detector`](@ref) for more details on how to define.
+* `projection` if given is a [`LazyTensorKet`](@ref) or [`LazySumKet`](@ref) which projects onto the state after the measurement.  If no projection is given, instead the total probability of having the detector click is given by applying all possible combinations of projections using [`get_all_projectors`](@ref).
 
 #Returns
 
-If 'projection' is given: Returns probability of having 'detector1' and 'detector2' click and being in state defined by 'projection'
-If 'projection' is not given: Returns the total probability of having 'detector1' and 'detector2' click by applying all possibile projections with zerophotons in the waveguide using ['get_all_projectors'](@ref).
+If `projection` is given: Returns probability of having `detector1` and `detector2` click and being in state defined by `projection`
+If `projection` is not given: Returns the total probability of having `detector1` and `detector2` click by applying all possibile projections with zerophotons in the waveguide using [`get_all_projectors`](@ref).
+
+See [Beamsplitter](https://mabuni1998.github.io/CavityWaveguide/dev/detection_example/) for an example on how to use. 
+
 """
-function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection) where {B}
+function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection;dist=false) where {B}
     waveguide_operators=[get_waveguide_operators(detector1)...,get_waveguide_operators(detector2)...]
     timesteps = min([w.basis_l.nsteps for w in waveguide_operators]...) 
     p_time = zeros(ComplexF64,(timesteps,timesteps))
     a_measured  = get_tmp(ψ)
     tmp  = get_tmp(ψ)
     detect_double_click!(p_time,a_measured,tmp,ψ,detector1,detector2,projection)
-    _two_time_total_probability(p_time,timesteps)
+    if dist
+        p_time,_two_time_total_probability(p_time,timesteps)
+    else
+        _two_time_total_probability(p_time,timesteps)
+    end
 end
 function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B}) where B
     p1s = get_all_projectors(detector1.operators[1].basis_l)

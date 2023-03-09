@@ -18,7 +18,8 @@ modules = [CavityWaveguide],
 authors = "Matias Bundgaard-Nielsen",
 pages = [
 "CavityWaveguide.jl" => "index.md",
-"Beamsplitter" => "detection_example.md",
+"Toturials" => ["Continous Fock States" => "continous_fockstates.md"],
+"Examples" => ["Beamsplitter" => "detection_example.md"],
 "API" => "API.md",
 "References" => "references.md",
 ]

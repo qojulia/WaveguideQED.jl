@@ -222,7 +222,7 @@ end
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
     mul!(tmp,wda_R,psi,1,0)
     psi_view = view_waveguide(tmp,[1,:])
-    two = InputOutputTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1));
+    two = InputOutputTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),:input);
     @test isapprox(two,testvec)
     mul!(tmp,adw_R,tmp,1,0)
     one = OnePhotonView(tmp,[2,:],type=:input)
@@ -259,7 +259,7 @@ end
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
     mul!(tmp,wda_L,psi,1,0)
     psi_view = view_waveguide(tmp,[1,:])
-    two = InputOutputTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1));
+    two = InputOutputTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),:output);
     @test isapprox(two,testvec)
     mul!(tmp,adw_L,tmp,1,0)
     one = OnePhotonView(tmp,[2,:],type=:output)

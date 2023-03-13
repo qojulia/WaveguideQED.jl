@@ -44,7 +44,7 @@ sol1 = solve_differentialeq(param,ξfun)
 ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
 
 #Plot single photon waveguide state 
-ψ_single = view_onephoton(ψ)/sqrt(dt)
+ψ_single = OnePhotonView(ψ)/sqrt(dt)
 
 fig,ax = subplots(1,1,figsize=(9,4.5))
 ax.plot(param.times,abs.(ξvec).^2,"g-",label="Input pulse")

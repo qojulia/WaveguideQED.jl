@@ -5,7 +5,7 @@
 Plots the twophoton state in the given ax. If state is a `Ket` [`view_twophoton`](@ref) is called to extract twophotonstate. 
 Returns ax.contour object.
 """
-function plot_twophoton!(ax,twophotonstate::TwophotonView,times)
+function plot_twophoton!(ax,twophotonstate::TwoPhotonView,times)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
     cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)
@@ -16,7 +16,7 @@ function plot_twophoton!(ax,twophotonstate::TwophotonView,times)
     cnt1
 end
 function plot_twophoton!(ax,state::Ket,times)
-    twophotonstate = view_twophoton(state)
+    twophotonstate = TwoPhotonView(state)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
     cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)

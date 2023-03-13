@@ -11,17 +11,16 @@ mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     N::Int
     offset::Int
     nsteps::Int
-    dt::Float64
     function WaveguideBasis(N,times)
         dim = 0
         for i in 1:N
-            dim = dim + length(times)^i - (length(times)^i-length(times))/2
+            dim = dim + length(times)^i - (length(times)^i-length(times))÷2
         end
-        new{N}([dim+1], dim, 0,length(times),times[2]-times[1])
+        new{N}([dim+1], dim, 0,length(times))
     end
 end
 
-Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.dt==b2.dt)
+Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps)
 
 """
     zerophoton(bw::WaveguideBasis)
@@ -52,7 +51,7 @@ If `norm==true` the state is normalized through `normalize!`.
 """
 function onephoton(b::WaveguideBasis,ξ::Function,times,args...; norm=true)
     state = Ket(b)
-    view = view_onephoton(state)
+    view = OnePhotonView(state)
     view .= ξ.(times,args...)
     if norm
         normalize!(state)
@@ -61,7 +60,7 @@ function onephoton(b::WaveguideBasis,ξ::Function,times,args...; norm=true)
 end
 function onephoton(b::WaveguideBasis,ξvec;norm=true)
     state = Ket(b)
-    view = view_onephoton(state)
+    view = OnePhotonView(state)
     view .= ξvec
     if norm
         normalize!(state)
@@ -81,7 +80,7 @@ Create a twophoton wavepacket of the form ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0
 function twophoton(b::WaveguideBasis,ξ::Function,times,args...;norm=true)
     state = Ket(b)
     nsteps = get_nsteps(b)
-    viewed_data = TwophotonView(state.data,nsteps)
+    viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
     for i in 1:nsteps
         for j in i:nsteps
             viewed_data[i,j] = ξ(times[i],times[j],args...)
@@ -95,7 +94,7 @@ end
 function twophoton(b::WaveguideBasis,ξ::Matrix;norm=true)
     state = Ket(b)
     nsteps = get_nsteps(b)
-    viewed_data = TwophotonView(state.data,nsteps)
+    viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
     for i in 1:nsteps
         for j in i:nsteps
             viewed_data[i,j] = ξ[i,j]
@@ -146,7 +145,7 @@ If no index is provided the ground state is returned. Index should follow same f
 
 TO DO: PERHAPS CHANGE NAME?
 
-"""
+
 function view_onephoton(ψ::Ket)
     viewed_data = view_waveguide(ψ::Ket)
     nsteps = get_nsteps(ψ.basis)
@@ -157,6 +156,7 @@ function view_onephoton(ψ::Ket,index)
     nsteps = get_nsteps(ψ.basis)
     return  view(viewed_data,2:nsteps+1)
 end
+"""
 
 
 """
@@ -168,7 +168,7 @@ If no index is provided the ground state is returned. Index should follow same f
 
 TO DO: PERHAPS CHANGE NAME?
 
-"""
+
 function view_twophoton(ψ::Ket)
     loc = get_waveguide_location(ψ.basis)
     index = Tuple(i==loc[1] ? (:) : 1 for i in 1:length(ψ.basis.shape))
@@ -177,8 +177,9 @@ end
 function view_twophoton(ψ::Ket,index)
     viewed_data = view_waveguide(ψ::Ket,index)
     nsteps = get_nsteps(ψ.basis)
-    TwophotonView(viewed_data,nsteps)
+    TwophotonView(viewed_data,nsteps,nsteps+1)
 end
+"""
 
 
 """
@@ -193,7 +194,7 @@ function get_waveguide_location(basis::WaveguideBasis)
     return 1
 end
 function get_waveguide_location(basis::CompositeBasis)
-    return findall(x->typeof(x)<:WaveguideBasis,basis.bases)[1]
+    return findall(x-> typeof(x)<:WaveguideBasis || typeof(x) <: InputOutputWaveguideBasis ,basis.bases)[1]
 end
 
 

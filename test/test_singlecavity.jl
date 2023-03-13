@@ -34,6 +34,6 @@ include("helper_functions.jl")
     sol1 = solve_differentialeq(param,ξfun)
     ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
 
-    ψ_single = view_onephoton(ψ)/sqrt(dt)
+    ψ_single = OnePhotonView(ψ)/sqrt(dt)
     @test isapprox(ψ_single,ref_sol,rtol=0.05)
 end

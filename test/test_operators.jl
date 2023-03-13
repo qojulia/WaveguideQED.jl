@@ -3,7 +3,6 @@ include("helper_functions.jl")
 
 @testset "Waveguide annihilation" begin
     param=parameters()
-    param = parameters()
     param.δ = 0
     param.x3 = 0
     param.times = 0:0.1:20
@@ -25,7 +24,7 @@ include("helper_functions.jl")
     psi_out = copy(psi)
 
     QuantumOpticsBase.mul!(psi_out,adw,psi,1.0,0.0)
-    ψ_single=view_onephoton(psi_out,[2,:])
+    ψ_single=OnePhotonView(psi_out,[2,:])
     testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis)*(get_nsteps(psi.basis)-1)/2+sqrt(2)*get_nsteps(psi.basis))
     @test isapprox(ψ_single,testvec,rtol=0.01)
 end
@@ -55,7 +54,7 @@ end
     QuantumOpticsBase.mul!(psi_out,wda,psi,1,0.0)
     testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis))
     testvec[get_waveguidetimeindex(wda)] *= 2
-    ψ_double=TwophotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(wda),get_nsteps(psi.basis))
+    ψ_double=TwoPhotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(wda),get_nsteps(psi.basis),get_nsteps(psi.basis)+1)
     @test isapprox([ψ_double[i] for i in eachindex(ψ_double)],testvec)    
 end
 
@@ -102,8 +101,8 @@ end
     QuantumOpticsBase.mul!(wda_out_1,wda,psi,1,0.0)
     QuantumOpticsBase.mul!(adw_out_1,adw,psi,1,0.0)
     
-    @test isapprox(view_onephoton(wda_out_1),view_onephoton(wda_out_2))
-    @test isapprox(view_onephoton(adw_out_1),view_onephoton(adw_out_2))  
+    @test isapprox(OnePhotonView(wda_out_1),OnePhotonView(wda_out_2))
+    @test isapprox(OnePhotonView(adw_out_1),OnePhotonView(adw_out_2))  
     @test isapprox(wda_out_1.data[1],wda_out_2.data[1])
     @test isapprox(adw_out_1.data[1],adw_out_2.data[1]) 
 end
@@ -182,4 +181,104 @@ end
     @test isapprox(out_l_adw,out_l_absorption)
     @test isapprox(out_f_wda,out_f_emission)
     @test isapprox(out_f_adw,out_f_absorption)
+end
+
+
+@testset "Input Output Operators" begin
+    using CavityWaveguide
+    times = 0:0.1:10
+    dt = times[2] - times[1]
+    nsteps = length(times)
+
+    bw = InputOutputWaveguideBasis(2,times)
+    bc = FockBasis(2)
+    wda_L = inputemission(bc,bw)
+    wda_R = outputemission(bc,bw)
+    adw_L = inputabsorption(bc,bw)
+    adw_R = outputabsorption(bc,bw)
+
+    tidx=100
+    set_waveguidetimeindex!(wda_L,tidx) 
+    set_waveguidetimeindex!(wda_R,tidx) 
+    set_waveguidetimeindex!(adw_L,tidx) 
+    set_waveguidetimeindex!(adw_R,tidx) 
+
+
+    ξfun(t1) = 1
+    psi = fockstate(bc,1) ⊗ onephoton(bw,:input,ξfun,times)
+    tmp = copy(psi)
+
+    testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
+    testvec[get_waveguidetimeindex(wda_L)] *= 2        
+    mul!(tmp,wda_L,psi,1,0)
+    psi_view = view_waveguide(tmp,[1,:])
+    two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps);
+    @test isapprox(two,testvec)
+    mul!(tmp,adw_L,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:input)
+    @test isapprox(one,testvec)
+
+
+    testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
+    mul!(tmp,wda_R,psi,1,0)
+    psi_view = view_waveguide(tmp,[1,:])
+    two = InputOutputTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1));
+    @test isapprox(two,testvec)
+    mul!(tmp,adw_R,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:input)
+    @test isapprox(one,testvec)
+
+
+    mul!(tmp,adw_L,psi,1,0)
+    psi_view = view_waveguide(tmp,[3,:])
+    @test isapprox(psi_view[1],1/sqrt(nsteps/2))
+    mul!(tmp,wda_L,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:input)
+    @test isapprox(one[tidx],2/sqrt(nsteps))
+
+
+    mul!(tmp,adw_R,psi,1,0)
+    psi_view = view_waveguide(tmp,[3,:])
+    @test isapprox(psi_view[1],0)
+    mul!(tmp,wda_R,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:output)
+    @test isapprox(one[tidx],0)
+
+    psi = fockstate(bc,1) ⊗ onephoton(bw,:output,ξfun,times)
+
+    testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
+    testvec[get_waveguidetimeindex(wda_L)] *= 2        
+    mul!(tmp,wda_R,psi,1,0)
+    psi_view = view_waveguide(tmp,[1,:])
+    two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps*(nsteps+1))÷2);
+    @test isapprox(two,testvec)
+    mul!(tmp,adw_R,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:output)
+    @test isapprox(one,testvec)
+
+    testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
+    mul!(tmp,wda_L,psi,1,0)
+    psi_view = view_waveguide(tmp,[1,:])
+    two = InputOutputTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1));
+    @test isapprox(two,testvec)
+    mul!(tmp,adw_L,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:output)
+    @test isapprox(one,testvec)
+
+
+    mul!(tmp,adw_R,psi,1,0)
+    psi_view = view_waveguide(tmp,[3,:])
+    @test isapprox(psi_view[1],1/sqrt(nsteps/2))
+    mul!(tmp,wda_R,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:output)
+    @test isapprox(one[tidx],2/sqrt(nsteps))
+
+
+    mul!(tmp,adw_L,psi,1,0)
+    psi_view = view_waveguide(tmp,[3,:])
+    @test isapprox(psi_view[1],0)
+    mul!(tmp,wda_L,tmp,1,0)
+    one = OnePhotonView(tmp,[2,:],type=:input)
+    @test isapprox(one[tidx],0)
+
 end

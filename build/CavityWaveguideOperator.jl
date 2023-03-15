@@ -271,7 +271,6 @@ function matmul_last!(result, a::CavityWaveguideOperator, b, α::Number, β::Num
     apply_last_op!(result,a,b,α,β,mapping)
     result
 end
-"""
 
 
 function apply_last_op!(result,a::CavityWaveguideOperator,br,α,β,mapping)
@@ -313,3 +312,4 @@ function waveguide_mul_first!(result, a::CavityWaveguideEmission, b, alpha::Numb
     end
     rmul!(view(result,map[1,1]:map[1,2]-map[1,1]:map[1,end]),beta)
 end
+"""

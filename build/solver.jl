@@ -18,10 +18,12 @@ function waveguide_evolution(times,psi,H;fout=nothing)
     ops = get_waveguide_operators(H)
     dt = times[2] - times[1]
     tend = times[end]
+    nsteps = length(times)
     function get_hamiltonian(time,psi)
         #index = findlast(times .<= time)
         #basis.timeindex = index
-        set_waveguidetimeindex!(ops,round(Int,time/dt,RoundUp)+1)
+        tidx = min(round(Int,time/dt,RoundUp)+1,nsteps)
+        set_waveguidetimeindex!(ops,tidx)
         #[op.timeindex = round(Int,time/dt,RoundUp)+1 for op in ops]
         #basis.timeindex = round(Int,time/dt,RoundUp)+1
         return H

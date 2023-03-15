@@ -3,8 +3,6 @@
 
 Basis for time binned Waveguide where `N` is the number of photons in the waveguide.
 Currently restricted to either 1 or 2. Times is timeinterval over which the photon state should be binned.
-
-
 """
 mutable struct WaveguideBasis{P} <: QuantumOptics.Basis
     shape::Vector{Int}
@@ -134,53 +132,6 @@ end
 function view_waveguide(ψ::Ket,index)
     view(reshape(ψ.data,Tuple(ψ.basis.shape)),index...)
 end
-
-
-"""
-    view_onephoton(ψ::Ket)
-    view_onephoton(ψ::Ket,index)
-
-Return a view of the onephoton mode ``ξ(t)`` given an input state containing a onephoton waveguide state: ``\\int_{t_0}^{t_{end}} dt  ξ(t) w^\\dagger(t) |0⟩``
-If no index is provided the ground state is returned. Index should follow same form outlined in [`view_waveguide`](@ref).
-
-TO DO: PERHAPS CHANGE NAME?
-
-
-function view_onephoton(ψ::Ket)
-    viewed_data = view_waveguide(ψ::Ket)
-    nsteps = get_nsteps(ψ.basis)
-    return  view(viewed_data,2:nsteps+1)
-end
-function view_onephoton(ψ::Ket,index)
-    viewed_data = view_waveguide(ψ::Ket,index)
-    nsteps = get_nsteps(ψ.basis)
-    return  view(viewed_data,2:nsteps+1)
-end
-"""
-
-
-"""
-    view_twophoton(ψ::Ket)
-    view_twophoton(ψ::Ket,index)
-
-Return a view of the twophoton mode ``ξ(t_1,t_2)`` given an input state containing a twophoton waveguide state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  ξ(t,t') w^\\dagger(t)w^\\dagger(t') |0⟩``
-If no index is provided the ground state is returned. Index should follow same form outlined in [`view_waveguide`](@ref).
-
-TO DO: PERHAPS CHANGE NAME?
-
-
-function view_twophoton(ψ::Ket)
-    loc = get_waveguide_location(ψ.basis)
-    index = Tuple(i==loc[1] ? (:) : 1 for i in 1:length(ψ.basis.shape))
-    view_twophoton(ψ::Ket,index)
-end
-function view_twophoton(ψ::Ket,index)
-    viewed_data = view_waveguide(ψ::Ket,index)
-    nsteps = get_nsteps(ψ.basis)
-    TwophotonView(viewed_data,nsteps,nsteps+1)
-end
-"""
-
 
 """
     get_waveguide_location(basis::WaveguideBasis)

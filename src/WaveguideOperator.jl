@@ -35,10 +35,10 @@ function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
 #Methods for copying waveguide operators
 function Base.:copy(x::WaveguideDestroy{B,B,N}) where {B,N}
-    WaveguideDestroy{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timestep)
+    WaveguideDestroy{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)
 end
 function Base.:copy(x::WaveguideCreate{B,B,N}) where {B,N}
-    WaveguideCreate{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timestep)
+    WaveguideCreate{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)
 end
 
 #Arithmetic operations for multiplying, which updates factor in the operator.

@@ -34,17 +34,11 @@ end
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
 #Methods for copying waveguide operators
-function Base.:copy(x::WaveguideDestroy{B,B,1}) where {B}
-    WaveguideDestroy{B,B,1}(x.basis_l,x.basis_r,x.factor,1)
+function Base.:copy(x::WaveguideDestroy{B,B,N}) where {B,N}
+    WaveguideDestroy{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)
 end
-function Base.:copy(x::WaveguideDestroy{B,B,2}) where {B}
-    WaveguideDestroy{B,B,2}(x.basis_l,x.basis_r,x.factor,1)
-end
-function Base.:copy(x::WaveguideCreate{B,B,1}) where {B}
-    WaveguideCreate{B,B,1}(x.basis_l,x.basis_r,x.factor,1)
-end
-function Base.:copy(x::WaveguideCreate{B,B,2}) where {B}
-    WaveguideCreate{B,B,2}(x.basis_l,x.basis_r,x.factor,1)
+function Base.:copy(x::WaveguideCreate{B,B,N}) where {B,N}
+    WaveguideCreate{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)
 end
 
 #Arithmetic operations for multiplying, which updates factor in the operator.
@@ -94,11 +88,10 @@ function create(basis::WaveguideBasis{2})
 end
 
 """
-    dagger(basis::WaveguideBasis{1})
-    dagger(basis::WaveguideBasis{2})
+    dagger(op::WaveguideCreate)
+    dagger(op::WaveguideCreate)
 
 Dagger opration on Waveguide operator. 
-
 """
 function dagger(op::WaveguideCreate)
     @assert op.basis_l == op.basis_r
@@ -122,7 +115,7 @@ end
 
 Methods for tensorproducts between QuantumOptics.jl operator and [`WaveguideOperator`](@ref). This is done by forming a LazyTensor.
 """
-#TODO: Update method to allow for three or more hilbert spaces.
+#TODO: Update method to allow for three or more hilbert spaces. Should be fixed
 function tensor(a::DataOperator,b::WaveguideOperator) 
     LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
 end
@@ -134,7 +127,6 @@ end
     identityoperator(a::WaveguideOperator)
 
 Return identityoperator(a.basis_l).
-QUESTION: (does basis_l or basis_r matter?)
 """
 function QuantumOptics.identityoperator(a::WaveguideOperator)
     identityoperator(a.basis_l)
@@ -149,7 +141,6 @@ end
     mul!(result::Bra{B1}, a::Bra{B2}, b::LazyTensor{B1,B2,F,I,T}, alpha, beta)
 
 In-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a LazyTensor that contains a [`WaveguideOperator`](@ref) 
-
 """
 function mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis, F,I,T<:Tuple{Vararg{AbstractOperator}}}
     b_data = Base.ReshapedArray(b.data, QuantumOpticsBase._comp_size(basis(b)), ())
@@ -251,25 +242,11 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,2},b,alpha,beta) where {B
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
     add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex)
-    twophotonview = TwophotonTimestepView(b,timeindex,nsteps)
+    twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,nsteps+1)
     #add_onephoton_twophoton!(result,twophotonview,alpha*a.factor,nsteps)
     axpy!(alpha*a.factor,twophotonview,view(result,2:1:nsteps+1))
     return
 end
-
-function waveguide_mul!(result,a::WaveguideDestroy{B,B,2},b,alpha,beta) where {B}
-    if !isone(beta)
-        rmul!(result,beta)
-    end
-    timeindex = a.timeindex
-    nsteps = a.basis_l.nsteps
-    add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex)
-    twophotonview = TwophotonTimestepView(b,timeindex,nsteps)
-    #add_onephoton_twophoton!(result,twophotonview,alpha*a.factor,nsteps)
-    axpy!(alpha*a.factor,twophotonview,view(result,2:1:nsteps+1))
-    return
-end
-
 
 #Create 1 waveguide photon 
 function waveguide_mul!(result,a::WaveguideCreate{B,B,1},b,alpha,beta) where {B}
@@ -287,7 +264,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,2},b,alpha,beta) where {B}
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
     add_onephoton_zerophoton!(result,b,alpha*a.factor,timeindex)
-    twophotonview = TwophotonTimestepView(result,timeindex,nsteps)
+    twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,nsteps+1)
     #add_twophoton_onephoton!(twophotonview,b,alpha*a.factor)
     #axpy_strided()
     axpy!(alpha*a.factor,view(b,2:1:nsteps+1),twophotonview)

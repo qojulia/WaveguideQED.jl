@@ -1,9 +1,11 @@
+abstract type LazyKet{B} end
+
 """
     LazyTensorKet(kets)
 
 Lazy tensor product between kets. Used in functions for beamsplitter and subsequent detection.
 """
-mutable struct LazyTensorKet{B}
+mutable struct LazyTensorKet{B} <: LazyKet{B}
     basis::B
     kets
     factor
@@ -30,7 +32,7 @@ dagger(x::LazyTensorKet) = LazyTensorBra(x.basis,dagger.(x.kets),x.factor)
 
 Lazy tensor product between bras. Used in functions for beamsplitter and subsequent detection.
 """
-mutable struct LazyTensorBra{B}
+mutable struct LazyTensorBra{B} <: LazyKet{B}
     basis::B
     bras
     factor
@@ -57,7 +59,7 @@ dagger(x::LazyTensorBra) = LazyTensorKet(x.basis,dagger.(x.bras),x.factor)
 
 Lazy sum of LazyTensorKets that is used to express entanglement between subsystems in LazyTensorKets. 
 """
-mutable struct LazySumKet{B,F}
+mutable struct LazySumKet{B,F} <: LazyKet{B}
     basis::B
     kets
     factors::F
@@ -167,7 +169,7 @@ function detect_single_click(ψ,detector::Detector,projection)
     p_time = zeros(ComplexF64,timesteps)
     tmp  = get_tmp(ψ)
     detect_single_click!(p_time,tmp,ψ,detector,projection)
-    real(transpose(conj.(p_time))*p_time)
+    p_time,real(transpose(conj.(p_time))*p_time)
 end
 function detect_single_click(ψ,detector::Detector)
     p1s = get_all_projectors(detector.operators[1].basis_l)
@@ -229,6 +231,10 @@ function detect_single_click!(p_time,detected_state::LazyTensorKet{B},ψ::LazyTe
     end
     p_time
 end
+
+Base.:*(projection::LazyKet{B},detector::Detector{B},ψ::LazyKet{B}) where {B} = detect_single_click(ψ,detector,projection)
+Base.:*(detector::Detector{B},ψ::LazyKet{B}) where {B} = detect_single_click(ψ,detector)
+
 
 """
     get_all_projectors(b)
@@ -294,18 +300,14 @@ Calculate probability of observing `projection` after beamsplitter operation and
 See [Beamsplitter](https://mabuni1998.github.io/CavityWaveguide/dev/detection_example/) for an example on how to use. 
 
 """
-function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection;dist=false) where {B}
+function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection) where {B}
     waveguide_operators=[get_waveguide_operators(detector1)...,get_waveguide_operators(detector2)...]
     timesteps = min([w.basis_l.nsteps for w in waveguide_operators]...) 
     p_time = zeros(ComplexF64,(timesteps,timesteps))
     a_measured  = get_tmp(ψ)
     tmp  = get_tmp(ψ)
     detect_double_click!(p_time,a_measured,tmp,ψ,detector1,detector2,projection)
-    if dist
-        p_time,_two_time_total_probability(p_time,timesteps)
-    else
-        _two_time_total_probability(p_time,timesteps)
-    end
+    p_time,_two_time_total_probability(p_time,timesteps)
 end
 function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B}) where B
     p1s = get_all_projectors(detector1.operators[1].basis_l)
@@ -363,3 +365,6 @@ function detect_double_click!(p_time,a_measured::LazyTensorKet{B},tmp::LazyTenso
     end
     p_time
 end
+
+Base.:*(projection::LazyKet{B},detector2::Detector{B},detector1::Detector{B},ψ::LazyKet{B}) where {B} = detect_double_click(ψ,detector1,detector2,projection)
+Base.:*(detector2::Detector{B},detector1::Detector{B},ψ::LazyKet{B}) where {B} = detect_double_click(ψ,detector1,detector2)

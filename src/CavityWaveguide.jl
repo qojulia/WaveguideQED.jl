@@ -12,7 +12,8 @@ export TwoPhotonTimestepView,TwophotonView,InputOutputTimestepView,InputOutputVi
     InputOutputWaveguideBasis,InputWaveguideCreate,OutputWaveguideCreate,InputWaveguideDestroy,InputWaveguideDestroy,outputdestroy,inputdestroy,outputcreate,inputcreate,inputemission,outputabsorption,outputemission,inputabsorption,
     waveguide_evolution,waveguide_montecarlo,CavityWaveguideOperator,
     detect_single_click,detect_single_click!,LazyTensorKet,LazyTensorBra,LazySumKet,get_all_projectors,detect_double_click,detect_double_click!,Detector,
-    plot_twophoton!
+    plot_twophoton!,
+    destroy,create,tensor,dagger,identityoperator
 
 include("view.jl")
 include("basis.jl")

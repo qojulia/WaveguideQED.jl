@@ -18,7 +18,7 @@ modules = [CavityWaveguide],
 authors = "Matias Bundgaard-Nielsen",
 pages = [
 "CavityWaveguide.jl" => "index.md",
-"Toturials" => ["Continous one Photon Fock States" => "continous_fockstates.md","Combining with QuantumOptics.jl" => "combining.md" ,"Continous Two Photon Fock States" => "2time_continous.md"],
+"Toturials" => ["Continous one Photon Fock States" => "toturial_continous_fockstates.md","Combining with QuantumOptics.jl" => "toturial_combining.md" ,"Continous Two Photon Fock States" => "toturial_2time_continous.md","Beamsplitter interference" => "toturial_detection.md"],
 "Examples" => ["Beamsplitter" => "detection_example.md"],
 "API" => "API.md",
 "References" => "references.md",

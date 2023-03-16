@@ -8,7 +8,7 @@ Added functionalities:
 * [`WaveguideOperator`](@ref) which are specialized operators allowing efficient annihilation and creation operators at each timebin in the waveguide. They are created by giving a basis to [`CavityWaveguide.destroy`](@ref) and [`CavityWaveguide.create`](@ref)
 * Since the interaction between the waveguide timebin mode $k$ and cavity/emitter is always given as: $a^\dagger w_k - a w_k^\dagger$ there are specially optimized functions for doing these operations called [`CavityWaveguideOperator`](@ref) which are created using a fockbasis and a waveguide basis and the functions [`emission`](@ref) and [`absorption`](@ref).
 * [`Detector`](@ref), [`LazyTensorKet`](@ref), and [`LazySumKet`](@ref) together with [`detect_single_click`](@ref) and [`detect_double_click`](@ref) allows one to do a beamsplitter interference and subsequent detection on photons comming from two waveguides. 
-
+* [`InputOutputWaveguideBasis`](@ref) for representing two waveguides (input and output) and the related generator functions [`zerophoton`](@ref), [`onephoton`](@ref), and [`twophoton`](@ref). Also see [`inputemission`](@ref),[`outputemission`](@ref), [`inputabsorption`](@ref) and [`outputabsorption`](@ref) for creating operators acting on the basis. 
 
 
 ```@meta

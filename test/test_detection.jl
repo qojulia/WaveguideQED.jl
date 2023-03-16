@@ -24,15 +24,31 @@
     Detector_plus = Detector(sys.wa/sqrt(2),sys.wb/sqrt(2))
     Detector_minus = Detector(sys.wa/sqrt(2),-sys.wb/sqrt(2))
 
-    @test isapprox(detect_single_click(psi1,Detector_plus,p2),0.5)
-    @test isapprox(detect_single_click(psi1,Detector_plus,p2),0.5)
-    @test isapprox(detect_single_click(psi1,Detector_minus,p2),0.5)
-    @test isapprox(detect_single_click(psi2,Detector_plus,p1),0.5)
-    @test isapprox(detect_single_click(psi2,Detector_minus,p1),0.5)
-    @test isapprox(detect_single_click(psi1,Detector_plus,p1)+1,1)
-    @test isapprox(detect_single_click(psi1,Detector_minus,p1)+1,1)
-    @test isapprox(detect_single_click(psi2,Detector_plus,p2)+1,1)
-    @test isapprox(detect_single_click(psi2,Detector_minus,p2)+1,1)
+    _,p = detect_single_click(psi1,Detector_plus,p2)
+    @test isapprox(p,0.5)
+    _,p = detect_single_click(psi1,Detector_plus,p2)
+    @test isapprox(p,0.5)
+
+    _,p = detect_single_click(psi1,Detector_minus,p2)
+    @test isapprox(p,0.5)
+
+    _,p = detect_single_click(psi2,Detector_plus,p1)
+    @test isapprox(p,0.5)
+
+    _,p = detect_single_click(psi2,Detector_minus,p1)
+    @test isapprox(p,0.5)
+
+    _,p = detect_single_click(psi1,Detector_plus,p1)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi1,Detector_minus,p1)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi2,Detector_plus,p2)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi2,Detector_minus,p2)
+    @test isapprox(p+1,1)
 
 
     psi_plus = (psi1+psi2)/sqrt(2)
@@ -40,15 +56,29 @@
     projector_plus = (p1+p2)/sqrt(2)
     projector_minus = (p1-p2)/sqrt(2)
 
-    @test isapprox(detect_single_click(psi_plus,Detector_plus,projector_plus),0.5)
-    @test isapprox(detect_single_click(psi_plus,Detector_minus,projector_minus),0.5)
-    @test isapprox(detect_single_click(psi_plus,Detector_plus,projector_minus)+1,1)
-    @test isapprox(detect_single_click(psi_plus,Detector_minus,projector_plus)+1,1)
+    _,p = detect_single_click(psi_plus,Detector_plus,projector_plus)
+    @test isapprox(p,0.5)
 
-    @test isapprox(detect_single_click(psi_minus,Detector_plus,projector_plus)+1,1)
-    @test isapprox(detect_single_click(psi_minus,Detector_minus,projector_minus)+1,1)
-    @test isapprox(detect_single_click(psi_minus,Detector_plus,projector_minus),0.5)
-    @test isapprox(detect_single_click(psi_minus,Detector_minus,projector_plus),0.5)
+    _,p = detect_single_click(psi_plus,Detector_minus,projector_minus)
+    @test isapprox(p,0.5)
+
+    _,p = detect_single_click(psi_plus,Detector_plus,projector_minus)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi_plus,Detector_minus,projector_plus)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi_minus,Detector_plus,projector_plus)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi_minus,Detector_minus,projector_minus)
+    @test isapprox(p+1,1)
+
+    _,p = detect_single_click(psi_minus,Detector_plus,projector_minus)
+    @test isapprox(p,0.5)
+
+    _,p = detect_single_click(psi_minus,Detector_minus,projector_plus)
+    @test isapprox(p,0.5)
 end
 
 @testset "Double detector click" begin
@@ -77,31 +107,69 @@ end
     projector_minus = (p1-p2)/sqrt(2)
     psi_two_photons = LazyTensorKet(psi_a_1,psi_b_2)
     p_down_down = LazyTensorKet(proj_down,proj_down)
+    _,p = detect_double_click(psi_two_photons,Detector_plus,Detector_plus,p_down_down)
+    @test isapprox(p,0.5)
+    
+    _,p = detect_double_click(psi_two_photons,Detector_minus,Detector_minus,p_down_down)
+    @test isapprox(p,0.5)
+    
 
-    @test isapprox(detect_double_click(psi_two_photons,Detector_plus,Detector_plus,p_down_down),0.5)
-    @test isapprox(detect_double_click(psi_two_photons,Detector_minus,Detector_minus,p_down_down),0.5)
-    @test isapprox(detect_double_click(psi_two_photons,Detector_plus,Detector_minus,p_down_down)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons,Detector_minus,Detector_plus,p_down_down)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons,Detector_minus,Detector_minus),0.5)
-    @test isapprox(detect_double_click(psi_two_photons,Detector_plus,Detector_plus),0.5)
+    _,p = detect_double_click(psi_two_photons,Detector_plus,Detector_minus,p_down_down)
+    @test isapprox(p+1,1)
+    
+    _,p = detect_double_click(psi_two_photons,Detector_minus,Detector_plus,p_down_down)
+    @test isapprox(p+1,1)
+    
+    p = detect_double_click(psi_two_photons,Detector_minus,Detector_minus)
+    @test isapprox(p,0.5)
+    
+    p = detect_double_click(psi_two_photons,Detector_plus,Detector_plus)
+    @test isapprox(p,0.5)
 
 
     psi_1_up = onephoton(bw,ξfun,param.times,1,15) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,2)
     psi_1_down = onephoton(bw,ξfun,param.times,1,15) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,1)
     psi_two_photons_entangled = LazySumKet(LazyTensorKet(psi_1_up,psi_1_down),LazyTensorKet(psi_1_down,psi_1_up))/sqrt(2)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,projector_plus),0.5)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,projector_plus),0.5)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus),0.5)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_plus)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_minus)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_plus),0.5)
+    
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,projector_plus)
+    @test isapprox(p,0.5)
 
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,p1),0.25)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,p2),0.25)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_plus,p1),0.25)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_plus,p2),0.25)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_plus,p1)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_minus,p2)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_minus,p1)+1,1)
-    @test isapprox(detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_plus,p2)+1,1)
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,projector_plus)
+    @test isapprox(p,0.5)
+
+    p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus)
+    @test isapprox(p,0.5)
+
+    p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_plus)
+    @test isapprox(p+1,1)
+
+    p = detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_minus)
+    @test isapprox(p+1,1)
+
+    p = detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_plus)
+    @test isapprox(p,0.5)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,p1)
+    @test isapprox(p,0.25)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_minus,p2)
+    @test isapprox(p,0.25)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_plus,p1)
+    @test isapprox(p,0.25)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_plus,p2)
+    @test isapprox(p,0.25)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_plus,p1)
+    @test isapprox(p+1,1)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_minus,p2)
+    @test isapprox(p+1,1)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_plus,Detector_minus,p1)
+    @test isapprox(p+1,1)
+
+    _,p = detect_double_click(psi_two_photons_entangled,Detector_minus,Detector_plus,p2)
+    @test isapprox(p+1,1)
 end

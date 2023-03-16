@@ -1,5 +1,5 @@
 # CavityWaveguide.jl
-<a href="https://mabuni1998.github.io/CavityWaveguide/dev/API/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> 
+<a href="https://mabuni1998.github.io/CavityWaveguide/dev/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> 
 <a href="https://codecov.io/gh/mabuni1998/CavityWaveguide"><img src="https://img.shields.io/codecov/c/gh/mabuni1998/CavityWaveguide?label=codecov" alt="Test coverage from codecov"></a>
 
 

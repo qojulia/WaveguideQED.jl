@@ -33,6 +33,9 @@ end
 
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
+Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct(x,y)
+
+
 #Methods for copying waveguide operators
 function Base.:copy(x::WaveguideDestroy{B,B,N}) where {B,N}
     WaveguideDestroy{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)

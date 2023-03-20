@@ -411,3 +411,5 @@ function outputemission(b1::FockBasis,b2::InputOutputWaveguideBasis{T}) where T
     btotal = tensor(b1,b2)
     return CavityWaveguideEmission(btotal,btotal,complex(1.0),outputcreate(b2),[2,1])
 end
+
+Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct(x,y)

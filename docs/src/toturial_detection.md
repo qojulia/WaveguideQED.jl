@@ -3,7 +3,7 @@ A beamsplitter is a partly reflective partly transmitive mirror that splits up a
 
 ![beamsplitter](beamsplitter_single_ilustration.png)
 
-Asuming that the beamsplitter is equal (50% transmission and 50% reflection) and that we have only a single photon in one of waveguides impinging on the beamsplitter, the photon will go to detector plus 50% of the time and detector minus the other 50% of the time.  
+Asuming that the beamsplitter is equal (50% transmission and 50% reflection) and that we have only a single photon in one of waveguides impinging on the beamsplitter, the photon will go to detector plus 50% of the time and detector minus the other 50% of the time. This can be modeled in `CavityWaveguide.jl` using [`LazyTensorKet`](@ref) and [`Detector`](@ref). We start by creating the two input waveguides.   
 
 
 ## Background Theory

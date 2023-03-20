@@ -30,6 +30,8 @@
     wR_single = outputabsorption(bw_single,be)
 
     H = im*sqrt(κ1/dt)*(wL-wdL) + im*sqrt(κ2/dt)*(wR-wdR)
+
+    
     H_single = im*sqrt(κ1/dt)*(wL_single-wdL_single) + im*sqrt(κ2/dt)*(wR_single-wdR_single) 
 
 

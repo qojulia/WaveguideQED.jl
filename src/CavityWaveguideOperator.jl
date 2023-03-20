@@ -38,6 +38,11 @@ function Base.:copy(x::CavityWaveguideAbsorption)
     CavityWaveguideAbsorption(x.basis_l,x.basis_r,x.factor,x.op,x.loc)
 end
 
+Base.:*(x::CavityWaveguideOperator{BL,BR},y::CavityWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct(x,y)
+Base.:*(x::CavityWaveguideOperator{BL,BR},y::WaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct(x,y)
+Base.:*(x::WaveguideOperator{BL,BR},y::CavityWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct(x,y)
+
+
 #Method for multiplying, which updates factor in the operator.
 function Base.:*(a::Number,b::CavityWaveguideOperator)
     out = copy(b)

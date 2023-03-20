@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Input output waveguides · CavityWaveguide.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">CavityWaveguide.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">CavityWaveguide.jl</a></li><li><span class="tocitem">Toturials</span><ul><li><a class="tocitem" href="../toturial_continous_fockstates/">Continous one Photon Fock States</a></li><li><a class="tocitem" href="../toturial_combining/">Combining with QuantumOptics.jl</a></li><li><a class="tocitem" href="../toturial_2time_continous/">Continous Two Photon Fock States</a></li><li><a class="tocitem" href="../toturial_detection/">Beamsplitter interference</a></li></ul></li><li><span class="tocitem">How to...</span><ul><li><a class="tocitem" href="../detection_example/">Beamsplitter</a></li><li class="is-active"><a class="tocitem" href>Input output waveguides</a></li></ul></li><li><a class="tocitem" href="../API/">API</a></li><li><a class="tocitem" href="../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">How to...</a></li><li class="is-active"><a href>Input output waveguides</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Input output waveguides</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/mabuni1998/CavityWaveguide/blob/main/docs/src/example_lodahl.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Input-Output-Waveguides"><a class="docs-heading-anchor" href="#Input-Output-Waveguides">Input-Output Waveguides</a><a id="Input-Output-Waveguides-1"></a><a class="docs-heading-anchor-permalink" href="#Input-Output-Waveguides" title="Permalink"></a></h1><p>In many of the examples considered so far, we only consider a single waveguide that serves as both input and output, thus only allowing for only one-sided cavities or quantum systems at the end of a waveguide. A more realistic scenario is having a waveguide with a quantum system in the middle. Here an incoming waveguide carying an excitation could scatter on the quantum system and one would have excitations going away from the quantum system in both the first and latter part of the waveguide as illustrated here:</p><p><img src="../two_waveguide_lodahl.png" alt="`alt text`"/></p><p>A way to model this scenario is to have to waveguides: an input and output waveguide, describing the first half of the waveguide and the latter part of the waveguide. The naive approach is to create two waveguides and tensor together with the quantum system. If we consider a two level system as our quantum system this would be:</p><pre><code class="language-julia hljs">times = 0:0.1:10
+bw = WaveguideBasis(2,times)
+be = FockBasis(1)
+Btotal = bw \otimes bc \otimes bw</code></pre><p>This might work if you only consider single photon excitations in the waveguides, but if you go consider two photon excitations the hilbert space blows up. Indeed in the above example the hilber space is of size: !!! But since we are only ever considering a total of two excitations, there is no possibility of having two photons in both waveguides simultanously (states of type: <span>$\ket{1_k,1_j}_{input}\ket{1_l,1_m}_{output}$</span>). This part of the Hilber space takes up the majority since it scales as <span>$\propto N^4$</span> where N is the number of timebins. Instead we can exploit that only a total of two excitations is present simultanosly in the system. For this we use another custom basis called <a href="../API/#CavityWaveguide.InputOutputWaveguideBasis"><code>InputOutputWaveguideBasis</code></a> where we only store states with up to two photons (that is states of type <span>$\ket{1_k,1_j}_{input}\ket{\emptyset}_{output}$</span>, <span>$\ket{\emptyset}_{input}\ket{1_k,1_j}_{output}$</span>, and <span>$\ket{1_k}_{input}\ket{1_j}_{output}$</span>). The <a href="../API/#CavityWaveguide.InputOutputWaveguideBasis"><code>InputOutputWaveguideBasis</code></a> can be initilized similarly to the <a href="../API/#CavityWaveguide.WaveguideBasis"><code>WaveguideBasis</code></a>:</p><pre><code class="language-julia hljs">bw = InputOutputWaveguideBasis(2,times)</code></pre><p>When creating operators, we now have to specify which waveguide they are acting on (input or output). The equivalent of <a href="../API/#CavityWaveguide.emission-Union{Tuple{T}, Tuple{WaveguideBasis{T}, QuantumInterface.FockBasis}} where T"><code>emission</code></a> and <a href="../API/#CavityWaveguide.absorption-Union{Tuple{T}, Tuple{WaveguideBasis{T}, QuantumInterface.FockBasis}} where T"><code>absorption</code></a> is then:</p><pre><code class="language-julia hljs">wdL = inputemission(bw,be)
+wL = inputabsorption(bw,be)
+wdR = outputemission(bw,be) 
+wR = outputabsorption(bw,be)</code></pre><p>where wdL = $</p><pre><code class="language-julia hljs">using CavityWaveguide
+using QuantumOptics
+using PyPlot
+pygui(false)
+pygui(true)
+
+times = 0:0.1:10
+dt = times[2] - times[1]
+κ1 = 1
+κ2 = 1
+
+#Create operators for two    photons interacting with cavity
+be = FockBasis(1)
+bw = InputOutputWaveguideBasis(2,times)
+bw_single = InputOutputWaveguideBasis(1,times)
+b = bw ⊗ be
+b_single = bw_single ⊗ be
+a = embed(b,2,destroy(be))
+ad = embed(b,2,create(be))
+wdL = inputemission(bw,be)
+wL = inputabsorption(bw,be)
+wdR = outputemission(bw,be) 
+wR = outputabsorption(bw,be)
+
+a_single = embed(b_single,2,destroy(be))
+ad_single = embed(b_single,2,create(be))
+wdL_single = inputemission(bw_single,be)
+wL_single = inputabsorption(bw_single,be)
+wdR_single = outputemission(bw_single,be) 
+wR_single = outputabsorption(bw_single,be)
+
+H = im*sqrt(κ1/dt)*(wL-wdL) + im*sqrt(κ2/dt)*(wR-wdR)
+H_single = im*sqrt(κ1/dt)*(wL_single-wdL_single) + im*sqrt(κ2/dt)*(wR_single-wdR_single) 
+
+
+ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
+ξ_one_fun(t1,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ^2)
+
+psi_double_list = []
+psi_single_list = []
+widths = [0.8,1,1.5,2.9,8.3]/sqrt(4*log(2))
+t0 = 5
+
+for w in widths
+    psi_in = twophoton(bw,:input,ξfun,times,w,w,t0) ⊗ fockstate(be,0)
+    psi_in_single = onephoton(bw_single,:input,ξ_one_fun,times,w,t0) ⊗ fockstate(be,0)
+    psi_out = waveguide_evolution(times,psi_in,H)
+    psi_out_single = waveguide_evolution(times,psi_in_single,H_single)
+    psi_R_scat = TwoPhotonView(psi_out,type=:input)
+    push!(psi_double_list,psi_R_scat)
+
+    psi_R_scat_single = zeros(ComplexF64,(length(times),length(times)))
+    single_R = OnePhotonView(psi_out_single,type=:input)
+
+    for i in eachindex(times)
+        for j in eachindex(times)
+            psi_R_scat_single[i,j] = single_R[i]*single_R[j]
+        end
+    end
+    push!(psi_single_list,psi_R_scat_single)
+end
+
+fig,axs = subplots(2,5,figsize=(18,7))
+times = times .- 5
+xgrid = repeat(times&#39;,length(times),1)
+ygrid = repeat(times,1,length(times))
+for (i,ax) in enumerate(axs[2,:])
+    cnt1= ax.contourf(xgrid,ygrid,psi_double_list[i].*conj(psi_double_list[i]),100,cmap=&quot;Blues&quot;)
+    for c in cnt1.collections
+        c.set_edgecolor(&quot;face&quot;)
+    end
+    ax.set_aspect(&quot;equal&quot;, &quot;box&quot;)
+    ax.set_xlabel(L&quot;$t_1$&quot;)
+    ax.set_ylabel(L&quot;$t_2$&quot;)
+    ax.set_title(&quot;&quot;)
+end
+
+for (i,ax) in enumerate(axs[1,:])
+    cnt1= ax.contourf(xgrid,ygrid,psi_single_list[i].*conj(psi_single_list[i]),100,cmap=&quot;Reds&quot;)
+    for c in cnt1.collections
+        c.set_edgecolor(&quot;face&quot;)
+    end
+    ax.set_aspect(&quot;equal&quot;, &quot;box&quot;)
+    ax.set_yticks([])
+    ax.set_xlabel(L&quot;$t_1$&quot;)
+end
+plt.tight_layout()
+plt.savefig(pwd()*&quot;/plots/lodahl_fig2.pdf&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../detection_example/">« Beamsplitter</a><a class="docs-footer-nextpage" href="../API/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Monday 20 March 2023 15:44">Monday 20 March 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

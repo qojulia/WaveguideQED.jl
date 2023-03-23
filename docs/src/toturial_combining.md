@@ -2,7 +2,7 @@
 
 Basises, states, and operators defined in `CavityWaveguide.jl` can be effortlesly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
 
-![alt text](sketch_onesidedcavity.jpg)
+![alt text](inputoutput_onewaveguide.png)
 
 We start by defining the basis of the cavity and waveguide:
 

@@ -5,9 +5,7 @@ version = "0.1.0"
 
 [deps]
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
-Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-NumericalIntegration = "e7bfaba1-d571-5449-8927-abc22e82249b"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 QuantumOptics = "6e0679c1-51ea-5a7c-ac74-d61b76210b0c"
@@ -16,8 +14,6 @@ UnsafeArrays = "c4a57d5a-5b31-53a6-b365-19f8c011fbd6"
 
 [compat]
 DifferentialEquations = "7"
-Interpolations = "0.13"
-NumericalIntegration = "0.3"
 Parameters = "0.12"
 PyPlot = "2"
 QuantumOptics = "1"

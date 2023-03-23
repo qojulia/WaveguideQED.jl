@@ -33,7 +33,7 @@ end
 
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
-Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct(x,y)
+Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct((x,y),x.factor*y.factor)
 
 
 #Methods for copying waveguide operators
@@ -120,10 +120,20 @@ Methods for tensorproducts between QuantumOptics.jl operator and [`WaveguideOper
 """
 #TODO: Update method to allow for three or more hilbert spaces. Should be fixed
 function tensor(a::DataOperator,b::WaveguideOperator) 
-    LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+    if isequal(a,identityoperator(basis(a)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,[2],(b,),1)
+    else
+        LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+    end
 end
 function tensor(a::WaveguideOperator,b::DataOperator) 
-    LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+    if isequal(b,identityoperator(basis(b)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,[1],(a,),1)
+    else
+        LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+    end
 end
  
 """
@@ -221,7 +231,7 @@ end
 #Get tempory vector
 function QuantumOpticsBase._tp_sum_get_tmp(op::WaveguideOperator, loc::Integer, arr::AbstractArray{S,N}, sym) where {S,N}
     shp = ntuple(i -> i == loc ? size(op,1) : size(arr,i), N)
-    QuantumOpticsBase._tp_matmul_get_tmp(S, shp, sym)
+    QuantumOpticsBase._tp_matmul_get_tmp(S, shp, sym,arr)
 end
 
 

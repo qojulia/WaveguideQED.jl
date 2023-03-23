@@ -1,5 +1,4 @@
 using Parameters
-using NumericalIntegration
 using DifferentialEquations
 
 @with_kw mutable struct parameters

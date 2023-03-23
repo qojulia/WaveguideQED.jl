@@ -13,22 +13,22 @@ be = FockBasis(1)
 Btotal = bw \otimes bc \otimes bw
 ```
 
-This might work if you only consider single photon excitations in the waveguides, but if you go consider two photon excitations the hilbert space blows up. Indeed in the above example the hilber space is of size: !!! But since we are only ever considering a total of two excitations, there is no possibility of having two photons in both waveguides simultanously (states of type: $\ket{1_k,1_j}_{input}\ket{1_l,1_m}_{output}$). This part of the Hilber space takes up the majority since it scales as $\propto N^4$ where N is the number of timebins. Instead we can exploit that only a total of two excitations is present simultanosly in the system. For this we use another custom basis called [`InputOutputWaveguideBasis`](@ref) where we only store states with up to two photons (that is states of type $\ket{1_k,1_j}_{input}\ket{\emptyset}_{output}$, $\ket{\emptyset}_{input}\ket{1_k,1_j}_{output}$, and $\ket{1_k}_{input}\ket{1_j}_{output}$). The [`InputOutputWaveguideBasis`](@ref) can be initilized similarly to the [`WaveguideBasis`](@ref):
+This might work if you only consider single photon excitations in the waveguides, but if you go consider two photon excitations the hilbert space blows up. Indeed in the above example the hilber space is of size: !!! But since we are only ever considering a total of two excitations, there is no possibility of having two photons in both waveguides simultanously (states of type: $\ket{1_k,1_j}_{input}\ket{1_l,1_m}_{output}$). This part of the Hilber space takes up the majority since it scales as $\propto N^4$ where N is the number of timebins. Instead we can exploit that only a total of two excitations is present simultanosly in the system. For this we use another custom basis called [`LeftRightWaveguideBasis`](@ref) where we only store states with up to two photons (that is states of type $\ket{1_k,1_j}_{input}\ket{\emptyset}_{output}$, $\ket{\emptyset}_{input}\ket{1_k,1_j}_{output}$, and $\ket{1_k}_{input}\ket{1_j}_{output}$). The [`LeftRightWaveguideBasis`](@ref) can be initilized similarly to the [`WaveguideBasis`](@ref):
 
 ```jldoctest
-bw = InputOutputWaveguideBasis(2,times)
+bw = LeftRightWaveguideBasis(2,times)
 ```
 
 When creating operators, we now have to specify which waveguide they are acting on (input or output). The equivalent of [`emission`](@ref) and [`absorption`](@ref) is then:
 
 ```jldoctest
-wdL = inputemission(bw,be)
-wL = inputabsorption(bw,be)
-wdR = outputemission(bw,be) 
-wR = outputabsorption(bw,be)
+wdL = leftemission(bw,be)
+wL = leftabsorption(bw,be)
+wdR = rightemission(bw,be) 
+wR = rightabsorption(bw,be)
 ```
 
-where $wdL = $
+where $wdL = $`
 
 
 ```jldoctest
@@ -45,23 +45,23 @@ dt = times[2] - times[1]
 
 #Create operators for two    photons interacting with cavity
 be = FockBasis(1)
-bw = InputOutputWaveguideBasis(2,times)
-bw_single = InputOutputWaveguideBasis(1,times)
+bw = LeftRightWaveguideBasis(2,times)
+bw_single = LeftRightWaveguideBasis(1,times)
 b = bw ⊗ be
 b_single = bw_single ⊗ be
 a = embed(b,2,destroy(be))
 ad = embed(b,2,create(be))
-wdL = inputemission(bw,be)
-wL = inputabsorption(bw,be)
-wdR = outputemission(bw,be) 
-wR = outputabsorption(bw,be)
+wdL = leftemission(bw,be)
+wL = leftabsorption(bw,be)
+wdR = rightemission(bw,be) 
+wR = rightabsorption(bw,be)
 
 a_single = embed(b_single,2,destroy(be))
 ad_single = embed(b_single,2,create(be))
-wdL_single = inputemission(bw_single,be)
-wL_single = inputabsorption(bw_single,be)
-wdR_single = outputemission(bw_single,be) 
-wR_single = outputabsorption(bw_single,be)
+wdL_single = leftemission(bw_single,be)
+wL_single = leftabsorption(bw_single,be)
+wdR_single = rightemission(bw_single,be) 
+wR_single = rightabsorption(bw_single,be)
 
 H = im*sqrt(κ1/dt)*(wL-wdL) + im*sqrt(κ2/dt)*(wR-wdR)
 H_single = im*sqrt(κ1/dt)*(wL_single-wdL_single) + im*sqrt(κ2/dt)*(wR_single-wdR_single) 

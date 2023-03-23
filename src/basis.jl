@@ -145,7 +145,7 @@ function get_waveguide_location(basis::WaveguideBasis)
     return 1
 end
 function get_waveguide_location(basis::CompositeBasis)
-    return findall(x-> typeof(x)<:WaveguideBasis || typeof(x) <: InputOutputWaveguideBasis ,basis.bases)[1]
+    return findall(x-> typeof(x)<:WaveguideBasis || typeof(x) <: LeftRightWaveguideBasis ,basis.bases)[1]
 end
 
 

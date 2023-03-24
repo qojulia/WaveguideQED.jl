@@ -13,7 +13,7 @@ bib,
 doctest = false,
 clean = true,
 sitename = "CavityWaveguide.jl",
-format = Documenter.HTML(),
+format = Documenter.HTML(assets=["assets/style.scss"]),
 modules = [CavityWaveguide],
 authors = "Matias Bundgaard-Nielsen",
 pages = [

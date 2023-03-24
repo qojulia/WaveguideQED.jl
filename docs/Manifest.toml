@@ -88,12 +88,6 @@ version = "0.8.18"
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
-[[deps.AxisAlgorithms]]
-deps = ["LinearAlgebra", "Random", "SparseArrays", "WoodburyMatrices"]
-git-tree-sha1 = "66771c8d21c8ff5e3a93379480a2307ac36863f7"
-uuid = "13072b0f-2c55-5437-9ae7-d433b7a33950"
-version = "1.0.1"
-
 [[deps.BandedMatrices]]
 deps = ["ArrayLayouts", "FillArrays", "LinearAlgebra", "SparseArrays"]
 git-tree-sha1 = "134fe629f08ca56f07b1d8028736dab437df34f5"
@@ -155,7 +149,7 @@ uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.5.1"
 
 [[deps.CavityWaveguide]]
-deps = ["DifferentialEquations", "Interpolations", "LinearAlgebra", "NumericalIntegration", "Parameters", "PyPlot", "QuantumOptics", "UnsafeArrays"]
+deps = ["DifferentialEquations", "LinearAlgebra", "Parameters", "PyPlot", "QuantumOptics", "SparseArrays", "UnsafeArrays"]
 path = "C:\\Users\\mabun\\OneDrive\\Dokumenter\\DTU\\Speciale\\scripts\\open_quantum_optics\\CavityWaveguide"
 uuid = "c4555495-0e8d-488d-8e6a-965ecefe9055"
 version = "0.1.0"
@@ -519,12 +513,6 @@ version = "2018.0.3+2"
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
-[[deps.Interpolations]]
-deps = ["AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "Requires", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
-git-tree-sha1 = "b7bc05649af456efc75d178846f47006c2c4c3c7"
-uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
-version = "0.13.6"
-
 [[deps.InverseFunctions]]
 deps = ["Test"]
 git-tree-sha1 = "49510dfcb407e572524ba94aeae2fced1f3feb0f"
@@ -764,12 +752,6 @@ git-tree-sha1 = "847efd501c7ee0caef3467e7e8286553b9d4dd45"
 uuid = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
 version = "1.2.0"
 
-[[deps.NumericalIntegration]]
-deps = ["Interpolations", "LinearAlgebra", "Logging"]
-git-tree-sha1 = "2a4ef5fc235053f9747d59cfdee19bcb8ba1e833"
-uuid = "e7bfaba1-d571-5449-8927-abc22e82249b"
-version = "0.3.3"
-
 [[deps.OffsetArrays]]
 deps = ["Adapt"]
 git-tree-sha1 = "f71d8950b724e9ff6110fc948dff5a329f901d64"
@@ -949,12 +931,6 @@ version = "1.5.3"
 git-tree-sha1 = "52315cf3098691c1416a356925027af5ab5bf548"
 uuid = "308eb6b3-cc68-5ff3-9e97-c3c4da4fa681"
 version = "0.2.0"
-
-[[deps.Ratios]]
-deps = ["Requires"]
-git-tree-sha1 = "dc84268fe0e3335a62e315a3a7cf2afa7178a734"
-uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
-version = "0.4.3"
 
 [[deps.RecipesBase]]
 deps = ["SnoopPrecompile"]
@@ -1315,12 +1291,6 @@ deps = ["HalfIntegers", "LRUCache", "Primes", "RationalRoots"]
 git-tree-sha1 = "960e5f708871c1d9a28a7f1dbcaf4e0ee34ee960"
 uuid = "9f57e263-0b3d-5e2e-b1be-24f2bb48858b"
 version = "2.0.0"
-
-[[deps.WoodburyMatrices]]
-deps = ["LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "de67fa59e33ad156a590055375a30b23c40299d3"
-uuid = "efce3f68-66dc-5838-9240-27a6d6f5f9b6"
-version = "0.5.5"
 
 [[deps.YAML]]
 deps = ["Base64", "Dates", "Printf", "StringEncodings"]

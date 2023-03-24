@@ -4,19 +4,11 @@ In many of the examples considered so far, we only consider a single waveguide t
 
 ![`alt text`](two_waveguide_lodahl.png)
 
-A way to model this scenario is to have to waveguides: an input and output waveguide, describing the first half of the waveguide and the latter part of the waveguide. The naive approach is to create two waveguides and tensor together with the quantum system. If we consider a two level system as our quantum system this would be:
-
-```jldoctest
-times = 0:0.1:10
-bw = WaveguideBasis(2,times)
-be = FockBasis(1)
-Btotal = bw \otimes bc \otimes bw
-```
-
-This might work if you only consider single photon excitations in the waveguides, but if you go consider two photon excitations the hilbert space blows up. Indeed in the above example the hilber space is of size: !!! But since we are only ever considering a total of two excitations, there is no possibility of having two photons in both waveguides simultanously (states of type: $\ket{1_k,1_j}_{input}\ket{1_l,1_m}_{output}$). This part of the Hilber space takes up the majority since it scales as $\propto N^4$ where N is the number of timebins. Instead we can exploit that only a total of two excitations is present simultanosly in the system. For this we use another custom basis called [`LeftRightWaveguideBasis`](@ref) where we only store states with up to two photons (that is states of type $\ket{1_k,1_j}_{input}\ket{\emptyset}_{output}$, $\ket{\emptyset}_{input}\ket{1_k,1_j}_{output}$, and $\ket{1_k}_{input}\ket{1_j}_{output}$). The [`LeftRightWaveguideBasis`](@ref) can be initilized similarly to the [`WaveguideBasis`](@ref):
+A way to model this scenario is to have to waveguides: a waveguide to the left and the right, describing the first half of the waveguide and the latter part of the waveguide. For this we use the custom basis called [`LeftRightWaveguideBasis`](@ref) (see [`Two Waveguides`](@ref twowaveguide) for an introduction). We initialize [`LeftRightWaveguideBasis`](@ref) and a basis for the atom:
 
 ```jldoctest
 bw = LeftRightWaveguideBasis(2,times)
+be = FockBasis(1)
 ```
 
 When creating operators, we now have to specify which waveguide they are acting on (input or output). The equivalent of [`emission`](@ref) and [`absorption`](@ref) is then:

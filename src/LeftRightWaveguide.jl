@@ -259,7 +259,6 @@ function waveguide_mul!(result,a::LeftWaveguideDestroy{B,B,2},b,alpha,beta) wher
     axpy!(alpha*a.factor,twophotonview_Left_Right,view(result,2+nsteps:1:2*nsteps+1))
     axpy!(alpha*a.factor,twophotonview_Left,view(result,2:1:nsteps+1))
     #@assert sum(isnan.(result)) == 0
-    
     return result
 end
 

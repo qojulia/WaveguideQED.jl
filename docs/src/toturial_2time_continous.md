@@ -47,6 +47,7 @@ plt.tight_layout()
 
 We now repeat the same setup as in [Combining with QuantumOptics.jl](@ref combining) but instead with a twophoton pulse scattering on the cavity. COMING UP!
 
+![alt text](secondgif.gif)
 
 
 

@@ -38,6 +38,9 @@ function waveguide_evolution(times,psi,H;fout=nothing)
     if fout === nothing
         tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=eval_last_element)
         return ψ[end]
+    elseif fout == 1
+        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian)
+        return ψ 
     else
         function feval(time,psi)
             if time == tend

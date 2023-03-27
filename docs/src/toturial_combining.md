@@ -102,5 +102,11 @@ plt.tight_layout()
 
 Here we see how the photon wavepacket is partially absorped into the cavity and then reemitted again.
 
+We can even animate the process:
+
+![alt text](firstgif.gif)
+
+
+
 
 [^1]: [Heuck2020Photon-photonCavities](@cite)

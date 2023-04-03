@@ -45,7 +45,7 @@ H = im*sqrt(κ1/dt)*(adwL-wdLa) + im*sqrt(κ2/dt)*(wdRa-adwR) + V/dt *(wdR*wL + 
 We can now study how single or two photon states scatter on the atom. We define the initial onephoton or twophoton gaussian state:
 
 ```jldoctest
-ξ_one_fun(t1,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ^2)
+ξ(t1,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ^2)
 ξfun(t1,t2,σ1,σ2,t0) = ξ_one_fun(t1,σ1,t0) * ξ_one_fun(t2,σ2,t0) 
 w = 1
 t0 = 5

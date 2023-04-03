@@ -21,10 +21,10 @@ $$\begin{equation*}
 \sum_{k=1}^N \sqrt{\Delta t} \xi(t_k) w_k^\dagger \ket{\emptyset}
 \end{equation*}$$
 
-In `CavityWaveguide.jl`, the timebins above are represented as elements in arrays corresponding to each timebin. Let`s say you want to represent a single photon contionous fock state that starts at $t=0$ and ends at $t=10$ with $\Delta t = 0.1$. This can be done be first creating waveguide basis defined on such a timeinterval:
+In `WaveguideQED.jl`, the timebins above are represented as elements in arrays corresponding to each timebin. Let`s say you want to represent a single photon contionous fock state that starts at $t=0$ and ends at $t=10$ with $\Delta t = 0.1$. This can be done be first creating waveguide basis defined on such a timeinterval:
 
 ```jldoctest
-using CavityWaveguide
+using WaveguideQED
 times = 0:0.1:10
 bw = WaveguideBasis(1,times)
 ```

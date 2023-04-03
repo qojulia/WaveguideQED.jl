@@ -1,5 +1,5 @@
 using QuantumOptics
-using CavityWaveguide
+using WaveguideQED
 using LinearAlgebra
 using PyPlot
 pygui(false)

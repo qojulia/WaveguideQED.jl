@@ -161,7 +161,7 @@ Calculate probability of observing `projection` after beamsplitter operation and
 * If `projection` is given returns probability of having detector click and being in state defined by `projection`
 * If `projection` is not given returns the total probability of having a the detector click (only a single click, for double clicks use [`detect_double_click`](@ref)) by applying all possibile projections with zerophotons in the waveguide using [`get_all_projectors`](@ref).
 
-See [Beamsplitter](https://mabuni1998.github.io/CavityWaveguide/dev/detection_example/) for an example on how to use.
+See [Beamsplitter](https://mabuni1998.github.io/WaveguideQED/dev/detection_example/) for an example on how to use.
 """
 function detect_single_click(ψ,detector::Detector,projection)
     waveguide_operators=get_waveguide_operators(detector)
@@ -297,7 +297,7 @@ Calculate probability of observing `projection` after beamsplitter operation and
 * If `projection` is given: Returns probability of having `detector1` and `detector2` click and being in state defined by `projection`
 * If `projection` is not given: Returns the total probability of having `detector1` and `detector2` click by applying all possibile projections with zerophotons in the waveguide using [`get_all_projectors`](@ref).
 
-See [Beamsplitter](https://mabuni1998.github.io/CavityWaveguide/dev/detection_example/) for an example on how to use. 
+See [Beamsplitter](https://mabuni1998.github.io/WaveguideQED/dev/detection_example/) for an example on how to use. 
 
 """
 function detect_double_click(ψ,detector1::Detector{B},detector2::Detector{B},projection) where {B}

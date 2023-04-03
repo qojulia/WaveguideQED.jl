@@ -19,6 +19,19 @@ function QuantumOpticsBase.:-(a::CavityWaveguideOperator,b::CavityWaveguideOpera
     LazySum([1,-1],[a,b])
 end
 
+function QuantumOpticsBase.:+(a::WaveguideInteraction,b::WaveguideInteraction)
+    @assert a.basis_l == b.basis_l
+    @assert a.basis_r == b.basis_r
+    LazySum(a,b)
+end
+
+function QuantumOpticsBase.:-(a::WaveguideInteraction,b::WaveguideInteraction)
+    @assert a.basis_l == b.basis_l
+    @assert a.basis_r == b.basis_r
+    LazySum([1,-1],[a,b])
+end
+
+
 function QuantumOpticsBase.:+(a::LazyTensor{B1,B2},b::Operator{B1,B2}) where {B1,B2}
     LazySum(a) + b
 end
@@ -45,12 +58,24 @@ function QuantumOpticsBase.:+(a::LazyProduct{B1,B2},b::LazyProduct{B1,B2}) where
 end
 
 function QuantumOpticsBase.:⊗(a::LazyTensor,b::Operator)
-    a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+    if isequal(b,identityoperator(basis(b)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
+    else
+        a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+    end
 end
 
 function QuantumOpticsBase.:⊗(a::Operator,b::LazyTensor)
-    LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
+    if isequal(a,identityoperator(basis(a)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
+    else
+        LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
+    end
 end
+
+
 
 function QuantumOpticsBase.:⊗(a::Operator,b::LazySum)
     btotal_l = a.basis_l ⊗ b.basis_l

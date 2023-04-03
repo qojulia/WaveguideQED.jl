@@ -15,7 +15,7 @@ function plot_twophoton!(ax,twophotonstate::TwoPhotonView,times)
     ax.set_aspect("equal", "box")
     cnt1
 end
-function plot_twophoton!(ax,twophotonstate::LeftRightView,times)
+function plot_twophoton!(ax,twophotonstate::TwoWaveguideView,times)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
     cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)

@@ -1,4 +1,4 @@
-    using CavityWaveguide
+    using WaveguideQED
     using QuantumOptics
     using PyPlot
     pygui(false)

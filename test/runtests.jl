@@ -1,4 +1,4 @@
-using CavityWaveguide
+using WaveguideQED
 using Test
 using QuantumOptics
 

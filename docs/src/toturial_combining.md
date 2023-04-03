@@ -1,20 +1,20 @@
 # [Combining with QuantumOptics.jl](@id combining)
 
-Basises, states, and operators defined in `CavityWaveguide.jl` can be effortlesly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
+Basises, states, and operators defined in `WaveguideQED.jl` can be effortlesly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
 
 ![alt text](inputoutput_onewaveguide.png)
 
 We start by defining the basis of the cavity and waveguide:
 
 ```jldoctest
-using CavityWaveguide
+using WaveguideQED
 using QuantumOptics
 times = 0:0.1:10
 bw = WaveguideBasis(1,times)
 bc = FockBasis(1)
 ```
 
-Next we want to create the Hamiltonian for the system. The interaction between the waveguide and cavity is at timestep k given by[^1] $$H_k = i \hbar \sqrt{\gamma / \Delta t}( a^\dagger w_k - a w_k^\dagger)$$, where $$a$$     ($$a^\dagger$$) is the cavity annihilation (creation) operator, $$w_k$$($$w_k^\dagger$$) is the waveguide annihilation (creation) operator, $$\gamma$$ is the leakage rate of the cavity, and `\Delta t = times[2]-times[1]` is the width of the timebin. `CavityWaveguide.jl` follows the same syntax as [`QuantumOptics.jl`](https://qojulia.org/) and operators are defined from a basis. Operators of different Hilbert spaces are then combined using ⊗ (``\otimes``):
+Next we want to create the Hamiltonian for the system. The interaction between the waveguide and cavity is at timestep k given by[^1] $$H_k = i \hbar \sqrt{\gamma / \Delta t}( a^\dagger w_k - a w_k^\dagger)$$, where $$a$$     ($$a^\dagger$$) is the cavity annihilation (creation) operator, $$w_k$$($$w_k^\dagger$$) is the waveguide annihilation (creation) operator, $$\gamma$$ is the leakage rate of the cavity, and `\Delta t = times[2]-times[1]` is the width of the timebin. `WaveguideQED.jl` follows the same syntax as [`QuantumOptics.jl`](https://qojulia.org/) and operators are defined from a basis. Operators of different Hilbert spaces are then combined using ⊗ (``\otimes``):
 
 ```jldoctest
 a = destroy(bc)
@@ -102,7 +102,7 @@ plt.tight_layout()
 
 Here we see how the photon wavepacket is partially absorped into the cavity and then reemitted again.
 
-We can even animate the process:
+We if we plot the wavefunction as a function of time (and do some displacing) we can even animate the process:
 
 ![alt text](firstgif.gif)
 

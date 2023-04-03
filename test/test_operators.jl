@@ -184,18 +184,17 @@ end
 end
 
 
-@testset "Left Right Operators" begin
-    using CavityWaveguide
+@testset "Multiple Waveguide Operators" begin
     times = 0:0.1:10
     dt = times[2] - times[1]
     nsteps = length(times)
 
-    bw = LeftRightWaveguideBasis(2,times)
+    bw = WaveguideBasis(2,2,times)
     bc = FockBasis(2)
-    wda_L = Leftemission(bc,bw)
-    wda_R = Rightemission(bc,bw)
-    adw_L = Leftabsorption(bc,bw)
-    adw_R = Rightabsorption(bc,bw)
+    wda_L = emission(bc,bw,1)
+    wda_R = emission(bc,bw,2)
+    adw_L = absorption(bc,bw,1)
+    adw_R = absorption(bc,bw,2)
 
     tidx=100
     set_waveguidetimeindex!(wda_L,tidx) 
@@ -205,7 +204,7 @@ end
 
 
     ξfun(t1) = 1
-    psi = fockstate(bc,1) ⊗ onephoton(bw,:Left,ξfun,times)
+    psi = fockstate(bc,1) ⊗ onephoton(bw,1,ξfun,times)
     tmp = copy(psi)
 
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
@@ -215,17 +214,17 @@ end
     two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps);
     @test isapprox(two,testvec)
     mul!(tmp,adw_L,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Left)
+    one = OnePhotonView(tmp,[2,:],1)
     @test isapprox(one,testvec)
 
 
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
     mul!(tmp,wda_R,psi,1,0)
     psi_view = view_waveguide(tmp,[1,:])
-    two = LeftRightTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),:Left);
+    two = TwoWaveguideTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),false);
     @test isapprox(two,testvec)
     mul!(tmp,adw_R,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Left)
+    one = OnePhotonView(tmp,[2,:],1)
     @test isapprox(one,testvec)
 
 
@@ -233,7 +232,7 @@ end
     psi_view = view_waveguide(tmp,[3,:])
     @test isapprox(psi_view[1],1/sqrt(nsteps/2))
     mul!(tmp,wda_L,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Left)
+    one = OnePhotonView(tmp,[2,:],1)
     @test isapprox(one[tidx],2/sqrt(nsteps))
 
 
@@ -241,10 +240,10 @@ end
     psi_view = view_waveguide(tmp,[3,:])
     @test isapprox(psi_view[1],0)
     mul!(tmp,wda_R,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Right)
+    one = OnePhotonView(tmp,[2,:],2)
     @test isapprox(one[tidx],0)
 
-    psi = fockstate(bc,1) ⊗ onephoton(bw,:Right,ξfun,times)
+    psi = fockstate(bc,1) ⊗ onephoton(bw,2,ξfun,times)
 
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
     testvec[get_waveguidetimeindex(wda_L)] *= 2        
@@ -253,16 +252,16 @@ end
     two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps*(nsteps+1))÷2);
     @test isapprox(two,testvec)
     mul!(tmp,adw_R,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Right)
+    one = OnePhotonView(tmp,[2,:],2)
     @test isapprox(one,testvec)
 
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
     mul!(tmp,wda_L,psi,1,0)
     psi_view = view_waveguide(tmp,[1,:])
-    two = LeftRightTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),:Right);
+    two = TwoWaveguideTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),true);
     @test isapprox(two,testvec)
     mul!(tmp,adw_L,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Right)
+    one = OnePhotonView(tmp,[2,:],2)
     @test isapprox(one,testvec)
 
 
@@ -270,7 +269,7 @@ end
     psi_view = view_waveguide(tmp,[3,:])
     @test isapprox(psi_view[1],1/sqrt(nsteps/2))
     mul!(tmp,wda_R,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Right)
+    one = OnePhotonView(tmp,[2,:],2)
     @test isapprox(one[tidx],2/sqrt(nsteps))
 
 
@@ -278,7 +277,7 @@ end
     psi_view = view_waveguide(tmp,[3,:])
     @test isapprox(psi_view[1],0)
     mul!(tmp,wda_L,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],type=:Left)
+    one = OnePhotonView(tmp,[2,:],1)
     @test isapprox(one[tidx],0)
 
 end

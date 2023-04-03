@@ -10,7 +10,7 @@ abstract type WaveguideOperator{B1,B2} <: AbstractOperator{B1,B2} end
 Operator structure for dispatching annihilation operation on Waveguide state.
 N is used to dispatch one or two photon routine. 
 """
-mutable struct WaveguideDestroy{B1,B2,N} <: WaveguideOperator{B1,B2}
+mutable struct WaveguideDestroy{B1,B2,Np,idx} <: WaveguideOperator{B1,B2}
     basis_l::B1
     basis_r::B2
     factor::ComplexF64
@@ -23,7 +23,7 @@ end
 Operator structure for dispatching creation operation on Waveguide state.
 N is used to dispatch one or two photon routine. 
 """
-mutable struct WaveguideCreate{B1,B2,N} <:WaveguideOperator{B1,B2}
+mutable struct WaveguideCreate{B1,B2,N,idx} <:WaveguideOperator{B1,B2}
     basis_l::B1
     basis_r::B2
     factor::ComplexF64
@@ -33,15 +33,15 @@ end
 
 function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
-Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct((x,y),x.factor*y.factor)
+#Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct((x,y),x.factor*y.factor)
 
 
 #Methods for copying waveguide operators
-function Base.:copy(x::WaveguideDestroy{B,B,N}) where {B,N}
-    WaveguideDestroy{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)
+function Base.:copy(x::WaveguideDestroy{B,B,Np,idx}) where {B,Np,idx}
+    WaveguideDestroy{B,B,Np,idx}(x.basis_l,x.basis_r,x.factor,x.timeindex)
 end
-function Base.:copy(x::WaveguideCreate{B,B,N}) where {B,N}
-    WaveguideCreate{B,B,N}(x.basis_l,x.basis_r,x.factor,x.timeindex)
+function Base.:copy(x::WaveguideCreate{B,B,Np,idx}) where {B,Np,idx}
+    WaveguideCreate{B,B,Np,idx}(x.basis_l,x.basis_r,x.factor,x.timeindex)
 end
 
 #Arithmetic operations for multiplying, which updates factor in the operator.
@@ -65,13 +65,14 @@ Base.:-(a::WaveguideOperator) = *(-1,a)
 Annihilation operator for [`WaveguideBasis`](@ref) for either one or two photons. 
 
 """
-function destroy(basis::WaveguideBasis{1})
+function destroy(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)
-    return WaveguideDestroy{B,B,1}(basis,basis,1,1)
+    return WaveguideDestroy{B,B,Np,1}(basis,basis,1,1)
 end
-function destroy(basis::WaveguideBasis{2})
+function destroy(basis::WaveguideBasis{Np,Nw},idx::Int) where {Np,Nw}
+    @assert idx <= Nw
     B = typeof(basis)
-    return WaveguideDestroy{B,B,2}(basis,basis,1,1)
+    return WaveguideDestroy{B,B,Np,idx}(basis,basis,1,1)
 end
 
 """
@@ -81,14 +82,16 @@ end
 Creation operator for [`WaveguideBasis`](@ref) for either one or two photons. 
 
 """
-function create(basis::WaveguideBasis{1})
+function create(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)
-    return WaveguideCreate{B,B,1}(basis,basis,1,1)
+    return WaveguideCreate{B,B,Np,1}(basis,basis,1,1)
 end
-function create(basis::WaveguideBasis{2})
+function create(basis::WaveguideBasis{Np,Nw},idx::Int) where {Np,Nw}
+    @assert idx <= Nw
     B = typeof(basis)
-    return WaveguideCreate{B,B,2}(basis,basis,1,1)
+    return WaveguideCreate{B,B,Np,idx}(basis,basis,1,1)
 end
+
 
 """
     dagger(op::WaveguideCreate)
@@ -96,19 +99,13 @@ end
 
 Dagger opration on Waveguide operator. 
 """
-function dagger(op::WaveguideCreate)
+function dagger(op::WaveguideCreate{B,B,Np,idx}) where {B,Np,idx}
     @assert op.basis_l == op.basis_r
-    out = destroy(op.basis_l)
-    out.factor = op.factor
-    out.timeindex = op.timeindex
-    out 
+    WaveguideDestroy{B,B,Np,idx}(op.basis_l,op.basis_r,op.factor,op.timeindex)
 end
-function dagger(op::WaveguideDestroy)
+function dagger(op::WaveguideDestroy{B,B,Np,idx}) where {B,Np,idx}
     @assert op.basis_l == op.basis_r
-    out = create(op.basis_l)
-    out.factor = op.factor
-    out.timeindex = op.timeindex
-    out
+    WaveguideCreate{B,B,Np,idx}(op.basis_l,op.basis_r,op.factor,op.timeindex)
 end
 
 
@@ -186,7 +183,44 @@ function QuantumOpticsBase.:_tp_matmul!(result, a::WaveguideOperator, loc::Integ
     end
     QuantumOpticsBase._tp_matmul_mid!(result, a, loc, b, α, β)
 end
+function QuantumOpticsBase._tp_matmul_mid!(result, a::WaveguideOperator, loc::Integer, b, α::Number, β::Number)
+    sz_b_1 = 1
+    for i in 1:loc-1
+        sz_b_1 *= size(b,i)
+    end
+    sz_b_3 = 1
+    for i in loc+1:ndims(b)
+        sz_b_3 *= size(b,i)
+    end
 
+    # TODO: Perhaps we should avoid reshaping here... should be possible to infer
+    # contraction index tuple sizes
+    br = Base.ReshapedArray(b, (sz_b_1, size(b, loc), sz_b_3), ())
+    result_r = Base.ReshapedArray(result, (sz_b_1, size(a, 1), sz_b_3), ())
+
+    # Try to "minimize" the transpose for efficiency.
+    move_left = sz_b_1 < sz_b_3
+    perm = move_left ? (2,1,3) : (1,3,2)
+
+    br_p = QuantumOpticsBase._tp_matmul_get_tmp(eltype(br), ((size(br, i) for i in perm)...,), :_tp_matmul_mid_in, br)
+    @strided permutedims!(br_p, br, perm)
+    #permutedims!(br_p, br, perm)
+
+    result_r_p = QuantumOpticsBase._tp_matmul_get_tmp(eltype(result_r), ((size(result_r, i) for i in perm)...,), :_tp_matmul_mid_out, result_r)
+    β == 0.0 || @strided permutedims!(result_r_p, result_r, perm)
+    #β == 0.0 || permutedims!(result_r_p, result_r, perm)
+
+    if move_left
+        QuantumOpticsBase._tp_matmul_first!(result_r_p, a, br_p, α, β)
+    else
+        QuantumOpticsBase._tp_matmul_last!(result_r_p, a, br_p, α, β)
+    end
+
+    @strided permutedims!(result_r, result_r_p, perm)
+    #permutedims!(result_r, result_r_p, perm)
+
+    result
+end
 
 #Called from _tp_matmul! and _tp_matmul_mid!
 #Calls waveguide_mul! on correct view of whole subsets of the state.
@@ -240,15 +274,15 @@ function mul!(result::Ket{B},a::WaveguideOperator{B,B},input::Ket{B},alpha,beta)
 end
 
 #Destroy 1 waveguide photon
-function waveguide_mul!(result,a::WaveguideDestroy{B,B,1},b,alpha,beta) where {B}
+function waveguide_mul!(result,a::WaveguideDestroy{B,B,1,idx},b,alpha,beta) where {B,idx}
     if !isone(beta)
         rmul!(result,beta)
     end
-    add_zerophoton_onephoton!(result,b,alpha*a.factor,a.timeindex)
+    add_zerophoton_onephoton!(result,b,alpha*a.factor,a.timeindex+(idx-1)*a.basis_l.nsteps)
     return
 end
 #Destroy 2 waveguide photon
-function waveguide_mul!(result,a::WaveguideDestroy{B,B,2},b,alpha,beta) where {B}
+function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,1},b,alpha,beta) where {B<:SingleWaveguideBasis}
     if !isone(beta)
         rmul!(result,beta)
     end
@@ -256,21 +290,40 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,2},b,alpha,beta) where {B
     nsteps = a.basis_l.nsteps
     add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex)
     twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,nsteps+1)
-    #add_onephoton_twophoton!(result,twophotonview,alpha*a.factor,nsteps)
     axpy!(alpha*a.factor,twophotonview,view(result,2:1:nsteps+1))
     return
 end
-
-#Create 1 waveguide photon 
-function waveguide_mul!(result,a::WaveguideCreate{B,B,1},b,alpha,beta) where {B}
+#Destroy 2 waveguide photon
+function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,idx},b,alpha,beta) where {B<:MultipleWaveguideBasis,idx}
     if !isone(beta)
         rmul!(result,beta)
     end
-    add_onephoton_zerophoton!(result,b,alpha*a.factor,a.timeindex)
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    Nw  = get_number_of_waveguides(a.basis_l)
+    add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex+(idx-1)*nsteps)
+    twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
+    axpy!(alpha*a.factor,twophotonview,view(result,2+(idx-1)*nsteps:1:idx*nsteps+1))
+    @simd for k in filter(x -> x != idx, 1:Nw)
+        i,j = min(k,idx),max(k,idx)
+        index = (i-1)*Nw + j - (i*(i+1))÷2
+        twophotonview = TwoWaveguideTimestepView(b,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
+        axpy!(alpha*a.factor,twophotonview,view(result,2+(k-1)*nsteps:1:k*nsteps+1))
+    end
+    return
+end
+
+
+#Create 1 waveguide photon 
+function waveguide_mul!(result,a::WaveguideCreate{B,B,1,idx},b,alpha,beta) where {B,idx}
+    if !isone(beta)
+        rmul!(result,beta)
+    end
+    add_onephoton_zerophoton!(result,b,alpha*a.factor,a.timeindex+(idx-1)*a.basis_l.nsteps)
     return
 end
 #Create 2 waveguide photon
-function waveguide_mul!(result,a::WaveguideCreate{B,B,2},b,alpha,beta) where {B}
+function waveguide_mul!(result,a::WaveguideCreate{B,B,2,1},b,alpha,beta) where {B<:SingleWaveguideBasis}
     if !isone(beta)
         rmul!(result,beta)
     end
@@ -278,11 +331,31 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,2},b,alpha,beta) where {B}
     nsteps = a.basis_l.nsteps
     add_onephoton_zerophoton!(result,b,alpha*a.factor,timeindex)
     twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,nsteps+1)
-    #add_twophoton_onephoton!(twophotonview,b,alpha*a.factor)
-    #axpy_strided()
     axpy!(alpha*a.factor,view(b,2:1:nsteps+1),twophotonview)
     return
 end
+#Create 2 waveguide photon
+function waveguide_mul!(result,a::WaveguideCreate{B,B,2,idx},b,alpha,beta) where {B<:MultipleWaveguideBasis,idx}
+    if !isone(beta)
+        rmul!(result,beta)
+    end
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    Nw  = get_number_of_waveguides(a.basis_l)
+    add_onephoton_zerophoton!(result,b,alpha*a.factor,timeindex+(idx-1)*nsteps)
+    twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
+    axpy!(alpha*a.factor,view(b,2+(idx-1)*nsteps:1:idx*nsteps+1),twophotonview)
+    @simd for k in filter(x -> x != idx, 1:Nw)
+        i,j = min(k,idx),max(k,idx)
+        index = (i-1)*Nw + j - (i*(i+1))÷2
+        twophotonview = TwoWaveguideTimestepView(result,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
+        axpy!(alpha*a.factor,view(b,2+(k-1)*nsteps:1:k*nsteps+1),twophotonview)
+    end
+    return
+end
+
+
+
 
 function add_zerophoton_onephoton!(a,b,alpha,timeindex::Int)
     a[1] += alpha*b[timeindex+1]

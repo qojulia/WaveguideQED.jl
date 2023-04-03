@@ -1,4 +1,4 @@
-using CavityWaveguide
+using WaveguideQED
 using QuantumOptics
 
 times = 0:0.1:20

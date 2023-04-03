@@ -2,9 +2,9 @@ push!(LOAD_PATH,"../src/")
 
 using Documenter
 using DocumenterCitations
-using CavityWaveguide
+using WaveguideQED
 
-DocMeta.setdocmeta!(CavityWaveguide, :DocTestSetup, :(using CavityWaveguide); recursive=true)
+DocMeta.setdocmeta!(WaveguideQED, :DocTestSetup, :(using WaveguideQED); recursive=true)
 
 bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"))
 
@@ -12,12 +12,12 @@ makedocs(
 bib,
 doctest = false,
 clean = true,
-sitename = "CavityWaveguide.jl",
+sitename = "WaveguideQED.jl",
 format = Documenter.HTML(assets=["assets/style.css"]),
-modules = [CavityWaveguide],
+modules = [WaveguideQED],
 authors = "Matias Bundgaard-Nielsen",
 pages = [
-"CavityWaveguide.jl" => "index.md",
+"WaveguideQED.jl" => "index.md",
 "Theoretical Background" => ["Continous one Photon Fock States" => "toturial_continous_fockstates.md","Continous Two Photon Fock States" => "toturial_2time_continous.md"],
 "Toturials" => ["Combining with QuantumOptics.jl" => "toturial_combining.md" ],
 "Beamsplitter interference" => "toturial_detection.md",
@@ -29,5 +29,5 @@ pages = [
 )
 
 deploydocs(
-    repo = "github.com/mabuni1998/CavityWaveguide.git"
+    repo = "github.com/mabuni1998/WaveguideQED.jl.git"
 )

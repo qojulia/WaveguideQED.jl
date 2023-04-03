@@ -3,7 +3,7 @@ A beamsplitter is a partly reflective partly transmitive mirror that splits up a
 
 ![beamsplitter](beamsplitter_single_ilustration.png)
 
-Asuming that the beamsplitter is equal (50% transmission and 50% reflection) and that we have only a single photon in one of waveguides impinging on the beamsplitter, the photon will go to detector plus 50% of the time and detector minus the other 50% of the time. This can be modeled in `CavityWaveguide.jl` using [`LazyTensorKet`](@ref) and [`Detector`](@ref). We start by creating the two input waveguides.   
+Asuming that the beamsplitter is equal (50% transmission and 50% reflection) and that we have only a single photon in one of waveguides impinging on the beamsplitter, the photon will go to detector plus 50% of the time and detector minus the other 50% of the time. This can be modeled in `WaveguideQED.jl` using [`LazyTensorKet`](@ref) and [`Detector`](@ref). We start by creating the two input waveguides.   
 
 
 ## Background Theory
@@ -28,7 +28,7 @@ $$\begin{align*}
 
 where we introduced $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d} = int_{t_0}^{t_{end}} \mathrm{d}t \int_{t_0}^{t_{end}} \mathrm{d}t' \xi_a(t)\xi_b(t') w_{c/d}^\dagger(t) w_{c/d}^\dagger(t') \ket{0}_{c/d}$$. $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d}$$ thus corresponds to both photons going into the same direction. It is also evident that if $$\xi_a(t)\xi_b(t') - \xi_a(t')\xi_b(t) \right = 0$$ then we will have no photons in waveguide c and d simultanously. This condition is exactly fulfilled if the photon in waveguide a is indistinquishable from the photon in waveguide b. This also means that if the photons ARE distinquishable, we will start to see photon occuring in waveguide c and d simultanously. All this and more can be simulated in the code and in the next section we walk through how to set the above example up in the code.
 
-## Beamsplitter and detection in CavityWaveguide.jl
+## Beamsplitter and detection in WaveguideQED.jl
 
 In `CaviyWaveguide.jl` we create the two incoming photons in each of their respective waveguides and define the corresponding annihilation operators:
 

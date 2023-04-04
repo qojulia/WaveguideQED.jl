@@ -18,6 +18,7 @@ DifferentialEquations = "7"
 Parameters = "0.12"
 PyPlot = "2"
 QuantumOptics = "1"
+Strided = "1"
 UnsafeArrays = "1"
 julia = "1"
 

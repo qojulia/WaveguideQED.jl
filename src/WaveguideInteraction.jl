@@ -30,6 +30,24 @@ function get_waveguide_operators(op::WaveguideInteraction)
     [op.op1,op.op2]
 end
 
+function tensor(a::AbstractOperator,b::WaveguideInteraction)
+    btotal = tensor(a.basis_l,b.basis_r)
+    if isequal(a,identityoperator(basis(a)))
+        WaveguideInteraction(btotal,btotal,b.factor,b.op1,b.op2,b.loc .+length(basis(a).shape))
+    else
+        sorted_idx = sortperm([1,b.loc[1]+1,b.loc[2]+1])
+        LazyTensor(btotal,btotal,[1,b.loc[1]+1,b.loc[2]+1][sorted_idx],(a,b)[sorted_idx])
+    end
+end
+function tensor(a::WaveguideInteraction,b::AbstractOperator)
+    btotal = tensor(a.basis_l,b.basis_r)
+    if isequal(b,identityoperator(basis(b)))
+        WaveguideInteraction(btotal,btotal,a.factor,a.op1,a.op2,a.loc)
+    else
+        sorted_idx = sortperm([a.loc[1]+1,a.loc[2]+1,length(btotal.shape)])
+        LazyTensor(btotal,btotal,[a.loc[1]+1,a.loc[2]+1,length(btotal.shape)][sorted_idx],(a.op,get_cavity_operator(a),b)[sorted_idx])
+    end
+end
 
 function mul!(result::Ket{B1}, a::WaveguideInteraction{B1,B2}, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     dims = basis(result).shape
@@ -50,8 +68,14 @@ function mul!(result::Ket{B1}, a::WaveguideInteraction{B1,B2}, b::Ket{B2}, alpha
     idx_vec2[i] = 2
     stride = linear_index(dims,idx_vec2)- linear_index(dims,idx_vec1)
     idx_vec2[i] = 1
-    iterate_over_interaction!(result.data,b.data,a,a.factor*alpha,beta,iter,idx_vec1,range_idx,1,stride,dims[i],dims)
-    
+    if length(dims) == 1
+        li1 = linear_index(dims,idx_vec1)
+        end_idx = dims[i]
+        waveguide_interaction_mul!(view(result.data,li1:stride:li1+(end_idx-1)*stride),a.op1,a.op2,view(b.data,li1:stride:li1+(end_idx-1)*stride),alpha,beta)            
+    else
+        iterate_over_interaction!(result.data,b.data,a,a.factor*alpha,beta,iter,idx_vec1,range_idx,1,stride,dims[i],dims)
+    end
+
     return result
 end
 
@@ -126,10 +150,10 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx},bop::
     nsteps = a.basis_l.nsteps
     Nw = get_number_of_waveguides(a.basis_l)
 
-    @inbounds result[1+(idx1-1)*nsteps+timeindex] += alpha*a.factor*bop.factor*b[1+(idx2-1)*nsteps+timeindex] 
+    @inbounds result[1+(idx-1)*nsteps+timeindex] += alpha*a.factor*bop.factor*b[1+(idx-1)*nsteps+timeindex] 
     
     twophotonview_b = TwoPhotonTimestepView(b,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
-    twophotonview_r = TwoPhotonTimestepView(b,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
+    twophotonview_r = TwoPhotonTimestepView(result,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
     axpy!(alpha*a.factor*bop.factor,twophotonview_b,twophotonview_r)
     
     @simd for k in filter(x -> x != idx, 1:Nw)
@@ -161,4 +185,18 @@ end
 function Base.:*(a::T1,b::T2) where {T1<: WaveguideOperatorT,T2<: WaveguideOperatorT}
     @assert a.indices[1] == b.indices[1]
     WaveguideInteraction(basis(a),basis(a),a.factor*b.factor,a.operators[1],b.operators[1],a.indices[1])
+end
+
+function expect(a::WaveguideInteraction,psi::Ket)
+    out = 0
+    for i in 1:get_nsteps(basis(a))
+        #println(i)
+        out += expect(a,psi,i)
+    end
+    out
+end
+
+function expect(a::WaveguideInteraction,psi::Ket,i)
+    set_waveguidetimeindex!(a,i)
+    dot(psi.data,(a*psi).data)
 end

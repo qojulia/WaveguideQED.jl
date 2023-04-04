@@ -1,4 +1,7 @@
-# [Combining with QuantumOptics.jl](@id combining)
+# Toturials
+In this section, we show simple examples that illustrate how to use **WaveguideQED.jl** in combination with [`QuantumOptics.jl`](https://qojulia.org/)
+
+## [Combining with QuantumOptics.jl](@id combining)
 
 Basises, states, and operators defined in `WaveguideQED.jl` can be effortlesly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
 
@@ -77,17 +80,20 @@ end
 ψ_out,na = waveguide_evolution(times,ψ_in,H,fout=exp_a)
 ```
 
-If we also want to know the number of photons in the waveguide state as a function of time, we can add `norm(OnePhotonView(psi))^2` to our expectation function as:
+If we also want to know the number of photons in the waveguide state as a function of time another operator to out expectation function as:
 
 ```jldoctest
 n = (ad*a) ⊗ identityoperator(bw)
+n_w = identityoperator(bw) ⊗ (create(bw)*destroy(bw))
 function exp_na_and_nw(time,psi)
-    (expect(n,psi),norm(OnePhotonView(psi))^2)
+    (expect(n,psi),expect(n_w,psi))
 end
 ψ_out,na,nw = waveguide_evolution(times,ψ_in,H,fout=exp_na_and_nw)
 ```
 
-Which we can plot as:
+Where `expect(n_w,psi)` calculates the expectation value of all times of the pulse at each timestep: $\mathrm{expect(n_w,psi)} = \bra{\psi} \sum_k  I \otimes w_k^\dagger w_k  \ket{psi}$
+
+This can be plottet as:
 
 ```jldoctest
 fig,ax = subplots(1,1,figsize=(9,4.5))

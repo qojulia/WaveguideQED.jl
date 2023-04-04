@@ -1,20 +1,27 @@
-# [Two Waveguides](@id twowaveguide)
-In the previous examples, we have only considered cases with a single waveguide. In this toturial, we show how to model a beamsplitter and an optical switch using two waveguides. A beamsplitter or a swap gate can be modelled using the Hamiltonian $H = V(w_a^\dagger w_b + w_b^\dagger w_a)$ where V is some interaction strength that determines which interaction is moddeled (we will discuss this in detail later). $w_a$ and $w_b$ is the annihilation operators of the two waveguides. We can describe the state of two waveguides with a total of N excitations by adding an argument specifying the number of waveguides as:
+# Multiple waveguides
+
+## [Two Waveguides](@id twowaveguide)
+In the previous examples, we have only considered cases with a single waveguide. In this toturial, we show how to model a beamsplitter and an optical switch using two waveguides. A beamsplitter or a swap gate can be modelled using the Hamiltonian $H_I = V(w_1^\dagger w_2 + w_2^\dagger w_1)$ where V is some interaction strength that determines which interaction is moddeled (we will discuss this in detail later). $w_1$ and $w_2$ is the annihilation operators of the two waveguides. A sketch of the system can be seen here:
+
+![Alt text](twowaveguide.png)
+
+
+ We can describe the state of two waveguides with a total of N excitations by adding an argument specifying the number of waveguides as:
 
 ```jldoctest
 times = 0:0.1:10
 NPhotons = 2
 NWaveguides = 2
-bw_twophotons = WaveguideBasis(NPhotons,NWaveguides,times)
+bw = WaveguideBasis(NPhotons,NWaveguides,times)
 ```
 
 When creating operators, we now have to specify which waveguide they are acting on (in this case number one or two). This is done by an extra argument to [`create`](@ref) and [`destroy`](@ref):
 
 ```jldoctest
-wdL = create(bw,1)
-wL = destroy(bw,1)
-wdR = create(bw,2) 
-wR = destroy(bw,2)
+wd1 = create(bw,1)
+w1 = destroy(bw,1)
+wd2 = create(bw,2) 
+w2 = destroy(bw,2)
 ```
 
 Similarly, initializing one or two photon states in the first or second waveguide is done by:
@@ -22,20 +29,20 @@ Similarly, initializing one or two photon states in the first or second waveguid
 ```jldoctest
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
-ψ_single_first = onephoton(bw,1,ξ,times,2,5)
-ψ_double_first = twophoton(bw,1,ξ2,times,2,5)
-ψ_single_second = onephoton(bw,2,ξ,times,2,5)
-ψ_double_second = twophoton(bw,2,ξ2,times,2,5)
+ψ_single_1 = onephoton(bw,1,ξ,times,2,5)
+ψ_double_1 = twophoton(bw,1,ξ2,times,2,5)
+ψ_single_2 = onephoton(bw,2,ξ,times,2,5)
+ψ_double_2 = twophoton(bw,2,ξ2,times,2,5)
 ```
 
 If we want to describe a simultanous excitation in both waveguides (states like $\ket{1_i}_\mathrm{left}\ket{1_j }_\mathrm{right}$) we specify both indeces of the waveguides:
 
 ```jldoctest
-ψ_single_first_and_second = twophoton(bw,[1,2],ξ2,times,2,5)
+ψ_single_1_and_2 = twophoton(bw,[1,2],ξ2,times,2,5)
 ```
 
 ## Beamsplitter
-Let's now treat the same example as in [Interference on Beamsplitter](@ref BStoturial). We consider the two waveguides in a identic single photon state and thus use the above defined `ψ_single_first_and_second`. The Hamiltonian governing a beamsplitter in the time binned formalism has $V= \pi/4$:
+Let's now treat the same example as in [Interference on Beamsplitter](@ref BStoturial). We consider the two waveguides in a identic single photon state and thus use the above defined `ψ_single_1_and_2`. The Hamiltonian governing a beamsplitter in the time binned formalism has $V= \pi/4$:
 
 ```jldoctest
 V = pi/4
@@ -45,7 +52,7 @@ H = im*V/dt*(wdR*wL - wdL*wR)
 We can then evolve the system under this Hamiltonian to perform the beamsplitting operation:
 
 ```jldoctest
-psi_out = waveguide_evolution(times,ψ_single_first_and_second,H)
+psi_out = waveguide_evolution(times,ψ_single_1_and_2,H)
 ```
 
 We can then view the final state to verify that we only have twophotons in the same waveguide simultanouesly:
@@ -61,8 +68,13 @@ julia> norm(psi_LR)^2
 0.49999981822067935
 8.736388404016349e-7
 ```
-
 Except for numerical errors we thus have 50% chance of observing both photons in the same waveguide and 0 (8.736388404016349e-9)% of observing both photons in each of the waveguide simultanoues. 
+
+
+Similarly, we can plot the scattering / splitting of a single photon arriving in the left arm. 
+
+![Alt text](bs.gif)
+
 
 ## Swap
 If we instead choose $V = \pi / 2$ we get the SWAP operation. Let us consider on photons in the left waveguide and swap them to right waveguide and plot before and after:
@@ -70,29 +82,11 @@ If we instead choose $V = \pi / 2$ we get the SWAP operation. Let us consider on
 ```jldoctest
 V = pi/2
 H = im*V/dt*(wdR*wL - wdL*wR)
-psi_out_swap = waveguide_evolution(times,ψ_single_first,H)
-first_before = OnePhotonView(ψ_single_first,1)
-second_before = OnePhotonView(ψ_single_first,2)
+psi_out_swap = waveguide_evolution(times,ψ_single_1,H)
 first_after = OnePhotonView(psi_out_swap,1)
 second_after = OnePhotonView(psi_out_swap,2)
-
-fig,ax = subplots(1,2,figsize=(9,4.5))
-ax[1].plot(times,first_before,"r-",label="First")
-ax[1].plot(times,second_before,"b-",label="Second")
-ax[2].plot(times,first_after,"r-")
-ax[2].plot(times,second_after,"b-")
-
-ax[1].legend(loc="lower left")
-ax[1].set_title("Before")
-ax[1].set_xlabel("time [a.u]")
-ax[1].set_ylabel("ξ(t)")
-
-ax[2].set_title("After")
-ax[2].set_xlabel("time [a.u]")
-
-plt.tight_layout()
 ```
-!["Alt text"](swap.png)
+!["Alt text"](swap.gif)
 
 
 

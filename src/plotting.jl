@@ -36,3 +36,13 @@ function plot_twophoton!(ax,state::Ket,times)
     ax.set_aspect("equal", "box")
     cnt1
 end
+function plot_twophoton!(ax,twophotonstate,times)
+    xgrid = repeat(times',length(times),1)
+    ygrid = repeat(times,1,length(times))
+    cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)
+    for c in cnt1.collections
+        c.set_edgecolor("face")
+    end
+    ax.set_aspect("equal", "box")
+    cnt1
+end

@@ -8,6 +8,7 @@ html.theme--documenter-dark pre,
 html.theme--documenter-dark code {
   font-family: "Consolas";
 }
+html.theme--documenter-light pre,
 html.theme--documenter-light code {
   font-family: "Consolas";
 }

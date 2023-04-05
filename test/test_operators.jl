@@ -1,4 +1,7 @@
+using Test
+using WaveguideQED
 using LinearAlgebra
+using QuantumOptics
 include("helper_functions.jl")
 
 @testset "Waveguide annihilation" begin
@@ -17,7 +20,7 @@ include("helper_functions.jl")
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
-    
+
     ξfun(t1,t2) = 1
     input = twophoton(bw,ξfun,param.times)
     psi = fockstate(bc,0) ⊗ input
@@ -46,7 +49,7 @@ end
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
-    
+
     ξfun(t1) = 1
     input = onephoton(bw,ξfun,param.times)
     psi = fockstate(bc,1) ⊗  input
@@ -55,7 +58,7 @@ end
     testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis))
     testvec[get_waveguidetimeindex(wda)] *= 2
     ψ_double=TwoPhotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(wda),get_nsteps(psi.basis),get_nsteps(psi.basis)+1)
-    @test isapprox([ψ_double[i] for i in eachindex(ψ_double)],testvec)    
+    @test isapprox([ψ_double[i] for i in eachindex(ψ_double)],testvec)
 end
 
 @testset "1 photon 2 photon the same" begin
@@ -75,7 +78,7 @@ end
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
-    
+
     ξfun(t1) = 1
     input = onephoton(bw,ξfun,param.times)
     psi = fockstate(bc,0) ⊗  input
@@ -93,18 +96,18 @@ end
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
-    
+
     input = onephoton(bw,ξfun,param.times)
     psi = fockstate(bc,0) ⊗  input
     adw_out_1 = copy(psi)
     wda_out_1 = copy(psi)
     QuantumOpticsBase.mul!(wda_out_1,wda,psi,1,0.0)
     QuantumOpticsBase.mul!(adw_out_1,adw,psi,1,0.0)
-    
+
     @test isapprox(OnePhotonView(wda_out_1),OnePhotonView(wda_out_2))
-    @test isapprox(OnePhotonView(adw_out_1),OnePhotonView(adw_out_2))  
+    @test isapprox(OnePhotonView(adw_out_1),OnePhotonView(adw_out_2))
     @test isapprox(wda_out_1.data[1],wda_out_2.data[1])
-    @test isapprox(adw_out_1.data[1],adw_out_2.data[1]) 
+    @test isapprox(adw_out_1.data[1],adw_out_2.data[1])
 end
 
 @testset "Cavity Waveguide Operator" begin
@@ -197,10 +200,10 @@ end
     adw_R = absorption(bc,bw,2)
 
     tidx=100
-    set_waveguidetimeindex!(wda_L,tidx) 
-    set_waveguidetimeindex!(wda_R,tidx) 
-    set_waveguidetimeindex!(adw_L,tidx) 
-    set_waveguidetimeindex!(adw_R,tidx) 
+    set_waveguidetimeindex!(wda_L,tidx)
+    set_waveguidetimeindex!(wda_R,tidx)
+    set_waveguidetimeindex!(adw_L,tidx)
+    set_waveguidetimeindex!(adw_R,tidx)
 
 
     ξfun(t1) = 1
@@ -208,7 +211,7 @@ end
     tmp = copy(psi)
 
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
-    testvec[get_waveguidetimeindex(wda_L)] *= 2        
+    testvec[get_waveguidetimeindex(wda_L)] *= 2
     mul!(tmp,wda_L,psi,1,0)
     psi_view = view_waveguide(tmp,[1,:])
     two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps);
@@ -246,7 +249,7 @@ end
     psi = fockstate(bc,1) ⊗ onephoton(bw,2,ξfun,times)
 
     testvec = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))
-    testvec[get_waveguidetimeindex(wda_L)] *= 2        
+    testvec[get_waveguidetimeindex(wda_L)] *= 2
     mul!(tmp,wda_R,psi,1,0)
     psi_view = view_waveguide(tmp,[1,:])
     two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps*(nsteps+1))÷2);

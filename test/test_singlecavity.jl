@@ -1,3 +1,6 @@
+using Test
+using WaveguideQED
+using QuantumOptics
 include("helper_functions.jl")
 
 @testset "Singlephoton with cavity" begin
@@ -25,7 +28,7 @@ include("helper_functions.jl")
     ξvec = ξfun.(param.times,param.σ,param.t0)
     #Define initial state
     ψ_cw = onephoton(bw,ξvec)
-    psi = fockstate(bc,0) ⊗  ψ_cw 
+    psi = fockstate(bc,0) ⊗  ψ_cw
 
     #Solve
     ψ = waveguide_evolution(param.times, psi, H)

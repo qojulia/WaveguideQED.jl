@@ -1,9 +1,10 @@
 module WaveguideQED
 
-using QuantumOptics,UnsafeArrays,Strided
-import LinearAlgebra: mul!, rmul!,axpy!
-import QuantumOptics.QuantumOpticsBase: dagger,tensor,create,destroy
-import QuantumOptics: identityoperator
+using QuantumOptics
+using Strided
+using UnsafeArrays
+import LinearAlgebra: axpy!, mul!, rmul!
+import QuantumOptics: create, dagger, destroy, identityoperator, tensor
 
 export TwoPhotonTimestepView,TwophotonView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,
     WaveguideBasis,zerophoton,onephoton,twophoton,view_waveguide,get_waveguidetimeindex,set_waveguidetimeindex!,get_nsteps,get_waveguide_location,get_waveguide_basis,get_waveguide_operators,

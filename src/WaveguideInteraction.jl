@@ -45,7 +45,7 @@ function tensor(a::WaveguideInteraction,b::AbstractOperator)
         WaveguideInteraction(btotal,btotal,a.factor,a.op1,a.op2,a.loc)
     else
         sorted_idx = sortperm([a.loc[1]+1,a.loc[2]+1,length(btotal.shape)])
-        LazyTensor(btotal,btotal,[a.loc[1]+1,a.loc[2]+1,length(btotal.shape)][sorted_idx],(a.op,get_cavity_operator(a),b)[sorted_idx])
+        LazyTensor(btotal,btotal,[a.loc[1]+1,a.loc[2]+1,length(btotal.shape)][sorted_idx],(a,b)[sorted_idx])
     end
 end
 

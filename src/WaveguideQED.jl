@@ -6,7 +6,7 @@ using UnsafeArrays
 import LinearAlgebra: axpy!, dot, mul!, rmul!
 import QuantumOptics: create, dagger, destroy, expect, identityoperator, tensor
 
-export TwoPhotonTimestepView,TwophotonView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,TwoWaveguideView,
+export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,TwoWaveguideView,
     WaveguideBasis,zerophoton,onephoton,twophoton,view_waveguide,get_waveguidetimeindex,set_waveguidetimeindex!,get_nsteps,get_waveguide_location,get_waveguide_basis,get_waveguide_operators,
     WaveguideOperator,WaveguideDestroy,WaveguideCreate,
     CavityWaveguideAbsorption,CavityWaveguideEmission,emission,absorption,
@@ -25,4 +25,5 @@ include("solver.jl")
 include("should_upstream.jl")
 include("detection.jl")
 include("plotting.jl")
+include("precompile.jl")
 end

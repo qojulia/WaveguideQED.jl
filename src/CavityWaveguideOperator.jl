@@ -356,7 +356,7 @@ function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, be
         li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
         rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)            
     else
-        iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_destroythird_axis!)
+        iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_destroy_third_axis!)
         a.indexing.idx_vec1[j] = dims[j]
         iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_rmul_axis!)
     end

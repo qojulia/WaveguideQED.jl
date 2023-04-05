@@ -113,7 +113,7 @@ function QuantumOpticsBase.:⊗(a::LazyProduct,b::Operator)
     for i in eachindex(ops)
         ops[i] = a.operators[i] ⊗ b
     end
-    LazyProduct(btotal_l,btotal_r,a.factors,ops)
+    LazyProduct(btotal_l,btotal_r,a.factor,ops)
 end
 
 function QuantumOpticsBase.:⊗(a::AbstractOperator,b::LazyTensor)

@@ -265,28 +265,6 @@ function get_nsteps(basis::CompositeBasis)
 end
 
 
-"""
-    get_waveguidetimeindex(basis::WaveguideBasis)
-    get_waveguidetimeindex(basis::Basis)
-    get_waveguidetimeindex(basis::CompositeBasis)
-
-Return timeindex of [`WaveguideBasis`](@ref) given either a [`WaveguideBasis`](@ref) or a `CompositeBasis` containing a [`WaveguideBasis`](@ref)
-
-"""
-function get_waveguidetimeindex(basis::WaveguideBasis)
-    basis.timeindex
-end
-function get_waveguidetimeindex(basis::Basis)
-    0
-end
-function get_waveguidetimeindex(basis::CompositeBasis)
-    for b in basis.bases
-        if get_waveguidetimeindex(b) != 0
-            return get_waveguidetimeindex(b)
-        end
-    end
-end
-
 function get_number_of_waveguides(x::WaveguideBasis{Np,Nw}) where {Np,Nw}
     Nw
 end

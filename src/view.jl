@@ -81,8 +81,8 @@ end
     OnePhotonView(ψ::Ket,index,typw)
 
 
-Return a view of the onephoton mode ``ξ(t)`` given a state defined on a [`WaveguideBasis`](@ref) or [`LeftRightWaveguideBasis`](@ref).
-If the state is a [`LeftRightWaveguideBasis`](@ref) the `type` parameter can be used to choose between the Left or Right mode with `type = :Left` or `type = :Right`   
+Return a view of the onephoton mode ``ξ(t)`` given a state defined on a [`WaveguideBasis`](@ref) or [`aveguideBasis`](@ref).
+If the state is a [`WaveguideBasis`](@ref) the `type` parameter can be used to choose between the Left or Right mode with `type = :Left` or `type = :Right`   
 If no index is provided the ground state is returned. Index should follow same form outlined in [`view_waveguide`](@ref).
 """
 function OnePhotonView(ψ::T) where {T<:SingleWaveguideKet}
@@ -167,7 +167,7 @@ function TwoPhotonView(ψ::T,WI1::Int,WI2::Int) where {T <: MultipleWaveguideKet
     index = Tuple(i==loc[1] ? (:) : 1 for i in 1:length(ψ.basis.shape))
     TwoPhotonView(ψ,index,WI1,WI2)
 end
-function TwoPhotonView(ψ::T,WI::I) where {T <: MultipleWaveguideKet,I<:Union{Vector{Any},Vector{Int64},Tuple{Vararg{Union{Int64,Colon}}}}}
+function TwoPhotonView(ψ::T,WI::I) where {T <: MultipleWaveguideKet,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}}
     loc = get_waveguide_location(ψ.basis)
     index = Tuple(i==loc[1] ? (:) : 1 for i in 1:length(ψ.basis.shape))
     TwoPhotonView(ψ,index,WI)

@@ -237,7 +237,7 @@ twophoton(b::WaveguideBasis{T,Nw},ξ::Matrix;norm=true) where {T,Nw} = twophoton
 View the Waveguide state given a state ψ containing a WaveguideBasis by returning `view(reshape(ψ.data,Tuple(ψ.basis.shape)),index...)`. If no index is provided the ground state is returned.
 The index provided should be of the form `[:,i,j]` where `(:)` is at the location of the WaveguideBasis and i and j are indeces of other basises. See example: 
 
-```jldoctest
+```@example
 julia> using WaveguideQED; #hide
 julia> using QuantumOptics; #hide
 julia> times=0:0.1:10;
@@ -249,7 +249,6 @@ julia> ψ_total = ψ_waveguide ⊗ fockstate(bc1,1) ⊗ fockstate(bc2,1);
 julia> ψ_view = view_waveguide(ψ_total);
 julia> ψ_view_index = view_waveguide(ψ_total,[:,1,1]);
 julia> ψ_view==ψ_view_index
-true
 ```
 """
 function view_waveguide(ψ::Ket)

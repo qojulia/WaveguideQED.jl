@@ -10,7 +10,7 @@ bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"))
 
 makedocs(
 bib,
-doctest = false,
+doctest = true,
 clean = true,
 sitename = "WaveguideQED.jl",
 format = Documenter.HTML(assets=["assets/style.css"]),
@@ -18,11 +18,11 @@ modules = [WaveguideQED],
 authors = "Matias Bundgaard-Nielsen",
 pages = [
 "WaveguideQED.jl" => "index.md",
-"toturial_continous_fockstates.md",
-"toturial_combining.md",
-"toturial_twochannels.md",
-"Beamsplitter interference" => "toturial_detection.md",
-"Examples" => ["Input output waveguides" => "example_lodahl.md"],
+"theoreticalbackground.md",
+"toturial.md",
+"detection.md",
+"multiplewaveguides.md",
+"Examples" => ["Scattering on two level system" => "example_lodahl.md"],
 "API" => "API.md",
 "References" => "references.md",
 ]

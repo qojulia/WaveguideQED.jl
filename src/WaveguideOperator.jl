@@ -5,10 +5,10 @@ abstract type WaveguideOperator{B1,B2} <: AbstractOperator{B1,B2} end
 
 
 """
-    WaveguideDestroy{N} <: WaveguideOperator
+    WaveguideDestroy{B1,B2,Np,idx} <: WaveguideOperator{B1,B2}
 
 Operator structure for dispatching annihilation operation on Waveguide state.
-N is used to dispatch one or two photon routine. 
+Np is used to dispatch one or two photon routine and idx denotes the index of the waveguide the operator is acting on. 
 """
 mutable struct WaveguideDestroy{B1,B2,Np,idx} <: WaveguideOperator{B1,B2}
     basis_l::B1
@@ -18,10 +18,10 @@ mutable struct WaveguideDestroy{B1,B2,Np,idx} <: WaveguideOperator{B1,B2}
 end
 
 """
-    WaveguideCreate{N} <: WaveguideOperator
+    WaveguideCreate{B1,B2,N,idx} <: WaveguideOperator{B1,B2}
 
 Operator structure for dispatching creation operation on Waveguide state.
-N is used to dispatch one or two photon routine. 
+Np is used to dispatch one or two photon routine and idx denotes the index of the waveguide the operator is acting on. 
 """
 mutable struct WaveguideCreate{B1,B2,N,idx} <:WaveguideOperator{B1,B2}
     basis_l::B1
@@ -59,37 +59,52 @@ end
 Base.:-(a::WaveguideOperator) = *(-1,a)
 
 """
-    destroy(basis::WaveguideBasis{1})
-    destroy(basis::WaveguideBasis{2})
+    destroy(basis::WaveguideBasis{Np,1}) where {Np}
+    destroy(basis::WaveguideBasis{Np,Nw},i::Int) where {Np,Nw}
 
-Annihilation operator for [`WaveguideBasis`](@ref) for either one or two photons. 
+Annihilation operator ``w`` for [`WaveguideBasis`](@ref) ``w_i(t_k) | 1_j \\emptyset \\rangle_i = \\delta_{k,j} | \\emptyset \\rangle`` with cutoff (maximum number of photons Np) where `i` is the index of the waveguide.
+``t_k`` is determined by the timeindex property of the operator which can be changed by [`set_waveguidetimeindex!(a::WaveguideOperator,k::Int)`](@ref) 
 
+# Arguments
+- basis of type WaveguideBasis, defines cutoff photon number `Np` and number of waveguides `Nw`
+- i determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
+
+# Returns
+WaveguideDesroy{B,B,Np,i} <: WaveguideOperator
 """
 function destroy(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)
     return WaveguideDestroy{B,B,Np,1}(basis,basis,1,1)
 end
-function destroy(basis::WaveguideBasis{Np,Nw},idx::Int) where {Np,Nw}
-    @assert idx <= Nw
+function destroy(basis::WaveguideBasis{Np,Nw},i::Int) where {Np,Nw}
+    @assert i <= Nw
     B = typeof(basis)
-    return WaveguideDestroy{B,B,Np,idx}(basis,basis,1,1)
+    return WaveguideDestroy{B,B,Np,i}(basis,basis,1,1)
 end
 
 """
-    create(basis::WaveguideBasis{1})
-    create(basis::WaveguideBasis{2})
+    create(basis::WaveguideBasis{Np,1}) where {Np}
+    create(basis::WaveguideBasis{Np,Nw},i::Int) where {Np,Nw}
 
-Creation operator for [`WaveguideBasis`](@ref) for either one or two photons. 
+Creation operator ``w^\\dagger`` for [`WaveguideBasis`](@ref) ``w_i(t_k)^\\dagger | \\emptyset \\rangle = | 1_k \\emptyset \\rangle_i `` with cutoff (maximum number of photons Np) where `i` is the index of the waveguide.
+``t_k`` is determined by the timeindex property of the operator which can be changed by [`set_waveguidetimeindex!(a::WaveguideOperator,k::Int)`](@ref) 
 
+
+# Arguments
+- basis of type WaveguideBasis, defines cutoff photon number `Np` and number of waveguides `Nw`
+- i determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
+
+# Returns
+WaveguideCreate{B,B,Np,i} <: WaveguideOperator
 """
 function create(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)
     return WaveguideCreate{B,B,Np,1}(basis,basis,1,1)
 end
-function create(basis::WaveguideBasis{Np,Nw},idx::Int) where {Np,Nw}
-    @assert idx <= Nw
+function create(basis::WaveguideBasis{Np,Nw},i::Int) where {Np,Nw}
+    @assert i <= Nw
     B = typeof(basis)
-    return WaveguideCreate{B,B,Np,idx}(basis,basis,1,1)
+    return WaveguideCreate{B,B,Np,i}(basis,basis,1,1)
 end
 
 
@@ -119,7 +134,7 @@ Methods for tensorproducts between QuantumOptics.jl operator and [`WaveguideOper
 function tensor(a::DataOperator,b::WaveguideOperator) 
     if isequal(a,identityoperator(basis(a)))
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[2],(b,),1)
+        LazyTensor(btotal,btotal,[length(basis(a).shape)+1],(b,),1)
     else
         LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
     end
@@ -142,6 +157,10 @@ function QuantumOptics.identityoperator(a::WaveguideOperator)
     identityoperator(a.basis_l)
 end
 function QuantumOptics.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:WaveguideOperator}
+    @assert b1==b2
+    identityoperator(b1)
+end
+function identityoperator(::Type{T},::Type{ComplexF64}, b1::Basis, b2::Basis) where {T<:WaveguideOperator}
     @assert b1==b2
     identityoperator(b1)
 end
@@ -207,7 +226,7 @@ function QuantumOpticsBase._tp_matmul_mid!(result, a::WaveguideOperator, loc::In
     #permutedims!(br_p, br, perm)
 
     result_r_p = QuantumOpticsBase._tp_matmul_get_tmp(eltype(result_r), ((size(result_r, i) for i in perm)...,), :_tp_matmul_mid_out, result_r)
-    β == 0.0 || @strided permutedims!(result_r_p, result_r, perm)
+    @strided permutedims!(result_r_p, result_r, perm)
     #β == 0.0 || permutedims!(result_r_p, result_r, perm)
 
     if move_left

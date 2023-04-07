@@ -7,7 +7,7 @@ import LinearAlgebra: axpy!, dot, mul!, rmul!
 import QuantumOptics: create, dagger, destroy, expect, identityoperator, tensor
 
 export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,TwoWaveguideView,
-    WaveguideBasis,zerophoton,onephoton,twophoton,view_waveguide,get_waveguidetimeindex,set_waveguidetimeindex!,get_nsteps,get_waveguide_location,get_waveguide_basis,get_waveguide_operators,
+    WaveguideBasis,zerophoton,onephoton,twophoton,view_waveguide,get_waveguidetimeindex,set_waveguidetimeindex!,get_nsteps,get_waveguide_location,get_waveguide_basis,get_number_of_waveguides,get_waveguide_operators,
     WaveguideOperator,WaveguideDestroy,WaveguideCreate,
     CavityWaveguideAbsorption,CavityWaveguideEmission,emission,absorption,
     WaveguideInteraction,

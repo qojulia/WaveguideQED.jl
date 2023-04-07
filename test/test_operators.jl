@@ -5,71 +5,58 @@ using QuantumOptics
 include("helper_functions.jl")
 
 @testset "Waveguide annihilation" begin
-    param=parameters()
-    param.δ = 0
-    param.x3 = 0
-    param.times = 0:0.1:20
-    dt = param.times[2] - param.times[1]
+    times = 0:1:10
+    dt = times[2] - times[1]
 
     bc = FockBasis(2)
-    bw = WaveguideBasis(2,param.times)
+    bw = WaveguideBasis(2,times)
     a = destroy(bc)
     ad = create(bc);
-    n = ad*a ⊗ identityoperator(bw)
     w = destroy(bw)
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
 
     ξfun(t1,t2) = 1
-    input = twophoton(bw,ξfun,param.times)
+    input = twophoton(bw,ξfun,times)
     psi = fockstate(bc,0) ⊗ input
     psi_out = copy(psi)
 
-    QuantumOpticsBase.mul!(psi_out,adw,psi,1.0,0.0)
+    mul!(psi_out,adw,psi,1.0,0.0)
     ψ_single=OnePhotonView(psi_out,[2,:])
-    testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis)*(get_nsteps(psi.basis)-1)/2+sqrt(2)*get_nsteps(psi.basis))
+    testvec = ones(length(times)) .* 1/sqrt(get_nsteps(psi.basis)*(get_nsteps(psi.basis))÷2)
     @test isapprox(ψ_single,testvec,rtol=0.01)
 end
 
 @testset "Waveguide creation" begin
-    param=parameters()
-    param = parameters()
-    param.δ = 0
-    param.x3 = 0
-    param.times = 0:0.1:20
-    dt = param.times[2] - param.times[1]
+    times = 0:1:10
+    dt = times[2] - times[1]
 
-    bw = WaveguideBasis(2,param.times)
+    bw = WaveguideBasis(2,times)
     bc = FockBasis(2)
     a = destroy(bc)
     ad = create(bc);
-    n = ad*a ⊗ identityoperator(bw)
     w = destroy(bw)
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
 
     ξfun(t1) = 1
-    input = onephoton(bw,ξfun,param.times)
+    input = onephoton(bw,ξfun,times)
     psi = fockstate(bc,1) ⊗  input
     psi_out = copy(psi)
-    QuantumOpticsBase.mul!(psi_out,wda,psi,1,0.0)
-    testvec = ones(length(param.times)) .* 1/sqrt(get_nsteps(psi.basis))
+    mul!(psi_out,wda,psi,1,0.0)
+    testvec = ones(length(times)) .* 1/sqrt(get_nsteps(psi.basis))
     testvec[get_waveguidetimeindex(wda)] *= 2
     ψ_double=TwoPhotonTimestepView(view_waveguide(psi_out),get_waveguidetimeindex(wda),get_nsteps(psi.basis),get_nsteps(psi.basis)+1)
     @test isapprox([ψ_double[i] for i in eachindex(ψ_double)],testvec)
 end
 
 @testset "1 photon 2 photon the same" begin
-    param=parameters()
-    param = parameters()
-    param.δ = 0
-    param.x3 = 0
-    param.times = 0:0.1:20
-    dt = param.times[2] - param.times[1]
+    times = 0:1:10
+    dt = times[2] - times[1]
 
-    bw = WaveguideBasis(2,param.times)
+    bw = WaveguideBasis(2,times)
     bc = FockBasis(2)
     a = destroy(bc)
     ad = create(bc);
@@ -80,14 +67,14 @@ end
     adw = ad ⊗ w
 
     ξfun(t1) = 1
-    input = onephoton(bw,ξfun,param.times)
+    input = onephoton(bw,ξfun,times)
     psi = fockstate(bc,0) ⊗  input
     wda_out_2 = copy(psi)
     adw_out_2 = copy(psi)
     QuantumOpticsBase.mul!(wda_out_2,wda,psi,1,0.0)
     QuantumOpticsBase.mul!(adw_out_2,wda,psi,1,0.0)
 
-    bw = WaveguideBasis(1,param.times)
+    bw = WaveguideBasis(1,times)
     bc = FockBasis(2)
     a = destroy(bc)
     ad = create(bc);
@@ -97,12 +84,12 @@ end
     wda = a ⊗ wd
     adw = ad ⊗ w
 
-    input = onephoton(bw,ξfun,param.times)
+    input = onephoton(bw,ξfun,times)
     psi = fockstate(bc,0) ⊗  input
     adw_out_1 = copy(psi)
     wda_out_1 = copy(psi)
-    QuantumOpticsBase.mul!(wda_out_1,wda,psi,1,0.0)
-    QuantumOpticsBase.mul!(adw_out_1,adw,psi,1,0.0)
+    mul!(wda_out_1,wda,psi,1,0.0)
+    mul!(adw_out_1,adw,psi,1,0.0)
 
     @test isapprox(OnePhotonView(wda_out_1),OnePhotonView(wda_out_2))
     @test isapprox(OnePhotonView(adw_out_1),OnePhotonView(adw_out_2))
@@ -111,13 +98,28 @@ end
 end
 
 @testset "Cavity Waveguide Operator" begin
-    param = parameters()
-    param.δ = 0
-    param.x3 = 0
+    times = 0:1:10
+    
+    left_1photon = prep_order(1,1,1,1,[1,2,3])
+    middle_1photon = prep_order(1,1,1,1,[2,3,1])
+    right_1photon = prep_order(1,1,1,1,[3,1,2])
+    
+    @test unity_test(left_1photon)
+    @test unity_test(middle_1photon)
+    @test unity_test(right_1photon)
 
-    param.times = 0:0.1:10
-    dt = param.times[2] -param.times[1]
-    bw = WaveguideBasis(2,param.times)
+    left_2photon = prep_order(2,1,1,1,[1,2,3])
+    middle_2photon = prep_order(2,1,1,1,[2,3,1])
+    right_2photon = prep_order(2,1,1,1,[3,1,2])
+    
+    @test unity_test(left_2photon)
+    @test unity_test(middle_2photon)
+    @test unity_test(right_2photon)
+
+
+    """
+    dt = times[2] -times[1]
+    bw = WaveguideBasis(2,times)
     bc = FockBasis(1)
     be = FockBasis(1)
     a = destroy(bc)
@@ -138,9 +140,9 @@ end
 
 
     ξfun(t,σ,t0) = complex(1/(σ*sqrt(2*pi))*exp(-2*log(2)*(t-t0)^2/σ^2))/sqrt(0.2820947917738782)
-    ξvec = ξfun.(param.times,1,1) * transpose(ξfun.(param.times,1,1))
+    ξvec = ξfun.(times,1,1) * transpose(ξfun.(times,1,1))
     #Define initial state
-    #ψ_cw = onephoton(bw,ξfun,param.times,param.σ,param.t0)
+    #ψ_cw = onephoton(bw,ξfun,times,param.σ,param.t0)
     ψ_cw = twophoton(bw,ξvec)
 
     psi_l = fockstate(be,0) ⊗ fockstate(bc,0) ⊗ ψ_cw
@@ -184,11 +186,22 @@ end
     @test isapprox(out_l_adw,out_l_absorption)
     @test isapprox(out_f_wda,out_f_emission)
     @test isapprox(out_f_adw,out_f_absorption)
+    """
 end
 
 
 @testset "Multiple Waveguide Operators" begin
-    times = 0:0.1:10
+    for i in 1:3   
+        left_1photon = prep_order(2,3,i,i,[1,2,3])
+        middle_1photon = prep_order(2,3,i,i,[2,3,1])
+        right_1photon = prep_order(2,3,i,i,[3,1,2])
+        @test test_multiplewaveguides(left_1photon[1],3,i,[1,2,3],left_1photon[4][2],left_1photon[3][2])
+        @test test_multiplewaveguides(middle_1photon[1],3,i,[2,3,1],middle_1photon[4][2],middle_1photon[3][2])
+        @test test_multiplewaveguides(right_1photon[1],3,i,[3,1,2],right_1photon[4][2],right_1photon[3][2])
+    end
+    
+    """
+    times = 0:1:10
     dt = times[2] - times[1]
     nsteps = length(times)
 
@@ -199,7 +212,7 @@ end
     adw_L = absorption(bc,bw,1)
     adw_R = absorption(bc,bw,2)
 
-    tidx=100
+    tidx=5
     set_waveguidetimeindex!(wda_L,tidx)
     set_waveguidetimeindex!(wda_R,tidx)
     set_waveguidetimeindex!(adw_L,tidx)
@@ -282,5 +295,20 @@ end
     mul!(tmp,wda_L,tmp,1,0)
     one = OnePhotonView(tmp,[2,:],1)
     @test isapprox(one[tidx],0)
+    """
+end
 
+@testset "Multiple Waveguide Interaction" begin
+    combinations_list = [[1,2],[1,3],[2,3],[2,1],[3,2],[3,1]]
+    for c in combinations_list  
+        left_1photon = prep_order(2,3,c[1],c[2],[1,2,3])
+        middle_1photon = prep_order(2,3,c[2],c[1],[2,3,1])
+        right_1photon = prep_order(2,3,c[1],c[2],[3,1,2])
+        @test test_interaction(left_1photon[1],3,c[1],c[2],[1,2,3],left_1photon[2][2])
+        @test test_interaction(middle_1photon[1],3,c[2],c[1],[2,3,1],middle_1photon[2][2])
+        @test test_interaction(right_1photon[1],3,c[1],c[2],[3,1,2],right_1photon[2][2])
+        @test test_interaction(left_1photon[1],3,c[1],c[2],[1,2,3],left_1photon[2][1])
+        @test test_interaction(middle_1photon[1],3,c[2],c[1],[2,3,1],middle_1photon[2][1])
+        @test test_interaction(right_1photon[1],3,c[1],c[2],[3,1,2],right_1photon[2][1])
+    end
 end

@@ -9,7 +9,7 @@ Added functionalities:
 * Since the interaction between the waveguide timebin mode $k$ and cavity/emitter is always given as: $a^\dagger w_k - a w_k^\dagger$ there are specially optimized functions for doing these operations called [`CavityWaveguideOperator`](@ref) which are created using a fockbasis and a waveguide basis and the functions [`emission`](@ref) and [`absorption`](@ref).
 * [`Detector`](@ref), [`LazyTensorKet`](@ref), and [`LazySumKet`](@ref) together with [`detect_single_click`](@ref) and [`detect_double_click`](@ref) allows one to do a beamsplitter interference and subsequent detection on photons comming from two waveguides. 
 
-![alt text](firstgif.gif)
+![alt text](./animations/firstgif.gif)
 
 ```@meta
 DocTestSetup = quote

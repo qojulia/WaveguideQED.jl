@@ -3,6 +3,7 @@ Abstract type used for operators on acting on a combined [`WaveguideBasis`](@ref
 """
 abstract type  CavityWaveguideOperator{BL,BR} <: AbstractOperator{BL,BR} end
 
+#Indexing structure used to loop over state. Needs cleanup and can possible be removed with the addition of eachslice(a,dims=(1,3,...)) in julia 1.9
 struct WaveguideIndexing{N}
     ndims::Int
     k_idx::Int
@@ -44,7 +45,7 @@ end
 """
     CavityWaveguideAbsorption{B1,B2} <: CavityWaveguideOperator{B1,B2}
 
-Structure for fast simultaneous cavity creation and waveguide annihilation operator
+Structure for fast simultaneous Cavity creation and Waveguide annihilation operator
 """
 mutable struct CavityWaveguideAbsorption{B1,B2} <: CavityWaveguideOperator{B1,B2}
     basis_l::B1
@@ -105,6 +106,16 @@ function get_cavity_operator(a::CavityWaveguideAbsorption)
     create(a.basis_l.bases[a.loc[2]])
 end
 
+function QuantumOpticsBase.:+(a::CavityWaveguideOperator,b::CavityWaveguideOperator)
+    @assert a.basis_l == b.basis_l
+    @assert a.basis_r == b.basis_r
+    LazySum(a,b)
+end
+function QuantumOpticsBase.:-(a::CavityWaveguideOperator,b::CavityWaveguideOperator)
+    @assert a.basis_l == b.basis_l
+    @assert a.basis_r == b.basis_r
+    LazySum([1,-1],[a,b])
+end
 
 
 """
@@ -147,6 +158,14 @@ function absorption(a::Operator,b::T) where T<: WaveguideOperator
     btotal = tensor(basis(a),basis(b))
     CavityWaveguideAbsorption(btotal,btotal,complex(1.0),b,[2,1])
 end
+function absorption(a::CompositeBasis,b::T,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+    btotal = tensor(a,basis(b))
+    CavityWaveguideAbsorption(btotal,btotal,complex(1.0),get_waveguide_operators(b)[1],[get_waveguide_location(basis(b))+length(a.shape),i])
+end
+function absorption(a::T,b::CompositeBasis,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+    btotal = tensor(basis(a),b)
+    CavityWaveguideAbsorption(btotal,btotal,complex(1.0),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
+end
 
 """
     emission(b1::WaveguideBasis{T},b2::FockBasis) where T
@@ -188,12 +207,23 @@ function emission(a::Operator,b::T) where T<: WaveguideOperator
     btotal = tensor(basis(a),basis(b))
     CavityWaveguideEmission(btotal,btotal,complex(1.0),b,[2,1])
 end
+function emission(a::CompositeBasis,b::T,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+    btotal = tensor(a,basis(b))
+    CavityWaveguideEmission(btotal,btotal,complex(1.0),get_waveguide_operators(b)[1],[get_waveguide_location(basis(b))+length(a.shape),i])
+end
+function emission(a::T,b::CompositeBasis,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+    btotal = tensor(basis(a),b)
+    CavityWaveguideEmission(btotal,btotal,complex(1.0),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
+end
+
+
+
+
 
 """
     identityoperator(a::CavityWaveguideOperator)
 
 Return identityoperator(a.basis_l).
-QUESTION: (does basis_l or basis_r matter?)
 """
 function QuantumOptics.identityoperator(a::CavityWaveguideOperator)
     identityoperator(a.basis_l)
@@ -247,10 +277,7 @@ function tensor(a::T,b::AbstractOperator) where {T<:CavityWaveguideEmission}
         LazyTensor(btotal,btotal,[a.loc[1]+1,a.loc[2]+1,length(btotal.shape)][sorted_idx],(a.op,get_cavity_operator(a),b)[sorted_idx])
     end
 end
-
-
-
-function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
+function tensor(a::T,b::Operator{BL,BR,F}) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
     if isequal(b,identityoperator(basis(b)))
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
@@ -262,7 +289,7 @@ function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
         a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
     end
 end
-function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
+function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
     if isequal(a,identityoperator(basis(a)))
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
@@ -274,8 +301,7 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
         LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
     end
 end
-
-function tensor(a::T,b::Operator) where {T<:WaveguideOperator}
+function tensor(a::T,b::Operator{BL,BR,F})  where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperator}
     if isequal(b,identityoperator(basis(b)))
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,(1,),(a,))
@@ -285,62 +311,110 @@ function tensor(a::T,b::Operator) where {T<:WaveguideOperator}
         absorption(a,b)
     else
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,),(a,))
+        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
     end
 end
-function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
+function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperator}
     if isequal(a,identityoperator(basis(a)))
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(2,),(b,))
+        LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
     elseif isequal(a,destroy(basis(a)))
         emission(a,b)
     elseif isequal(a,create(basis(a)))
         absorption(a,b)
     else
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,),(a,))
+        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
     end
 end
 
+
+
+
+#Used to construct CavityWaveguideOperators from LazyTensors or CompositeBasis
+
+function is_destroy(data,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        ind .= 0
+        ind[k] = 1
+        if isequal(data,tensor([i == 0 ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+            return k
+        end
+    end
+    return 0
+end
+function is_create(data,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        ind .= 0
+        ind[k] = 1
+        if isequal(data,tensor([i == 0 ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+            return k
+        end
+    end
+    return 0
+end
+
+function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
+    if isequal(b,identityoperator(basis(b)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
+    elseif (k = is_destroy(b.data,basis(b))) > 0
+        emission(a,basis(b),k)
+    elseif (k = is_create(b.data,basis(b))) > 0
+        absorption(a,basis(b),k)
+    else
+        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+    end
+end
+function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
+    if isequal(a,identityoperator(basis(a)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
+    elseif (k = is_destroy(a.data,basis(a))) > 0
+        emission(basis(a),b,k)
+    elseif (k = is_create(a.data,basis(a))) > 0
+        absorption(basis(a),b,k)
+    else
+        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+    end
+end
+
+function tensor(a::T,b::Operator)  where {T<:WaveguideOperator}
+    if isequal(b,identityoperator(basis(b)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,(1,),(a,))
+    elseif (k = is_destroy(b.data,basis(b))) > 0
+        emission(a,basis(b),k)
+    elseif (k = is_create(b.data,basis(b))) > 0
+        absorption(a,basis(b),k)
+    else
+        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+    end
+end
+function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
+    if isequal(a,identityoperator(basis(a)))
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
+    elseif (k = is_destroy(a.data,basis(a))) > 0
+        emission(basis(a),b,k)
+    elseif (k = is_create(a.data,basis(a))) > 0
+        absorption(basis(a),b,k)
+    else
+        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+    end
+end
+
+
+
 """
     mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
-    mmul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
+    mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     
 Fast in-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a [`CavityWaveguideOperator`](@ref).
-Routine only works if [`WaveguideBasis`] is the first or last basis in Hilbertspace.
-    dims = basis(result).shape
-    n = length(dims)
-    iter = a.indexing.iter
-    idx_vec1=a.indexing.idx_vec1
-    idx_vec2=a.indexing.idx_vec2
-    range_idx = a.indexing.range_idx
-    
-    idx_vec1[i] = 1
-    idx_vec2[i] = 2
-    stride = linear_index(n,idx_vec2,strides)- linear_index(n,idx_vec1,strides)
-    idx_vec2[i] = 1
-    if length(iter) == 0
-        end_idx = dims[i]
-        for k in 1:dims[j]-1
-            idx_vec1[j] = k
-            idx_vec2[j] = k+1
-            li1 = linear_index(n,idx_vec1,strides)
-            li2 = linear_index(n,idx_vec2,strides)
-            waveguide_mul!(view(result.data,li1:stride:li1+(end_idx-1)*stride),a.op,view(b.data,li2:stride:li2+(end_idx-1)*stride),sqrt(k)*a.factor*alpha,beta)
-        end
-        idx_vec1[j] = dims[j]
-        li1 = linear_index(n,idx_vec1,strides)
-        rmul!(view(result.data,li1:stride:li1+(end_idx-1)*stride),beta)
-    else
-        for k in 1:dims[j]-1
-            idx_vec1[j] = k
-            idx_vec2[j] = k+1
-            iterate_over_iter!(result.data,b.data,a,sqrt(k)*a.factor*alpha,beta,iter,idx_vec1,idx_vec2,range_idx,1,stride,dims[i],dims)
-        end
-        idx_vec1[j] = dims[j]
-        iterate_rmul!(result.data,beta,iter,idx_vec1,range_idx,1,stride,dims[i],dims)
-    end
-    return result
 """
 function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     dims = basis(result).shape
@@ -353,8 +427,7 @@ function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, be
     elseif length(dims) == 3
         loop_destroy_third_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)     
         a.indexing.idx_vec1[j] = dims[j]
-        li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
-        rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)            
+        loop_rmul_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
     else
         iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_destroy_third_axis!)
         a.indexing.idx_vec1[j] = dims[j]
@@ -372,10 +445,8 @@ function mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, 
         rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)            
     elseif length(dims) == 3
         loop_create_third_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
-        
         a.indexing.idx_vec1[j] = 1
-        li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
-        rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)            
+        loop_rmul_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
     else
         iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_create_third_axis!)
         a.indexing.idx_vec1[j] = 1

@@ -14,6 +14,11 @@ end
 
 Base.:*(x::WaveguideInteraction{BL,BR},y::WaveguideInteraction{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 
+identityoperator(x::WaveguideInteraction) = identityoperator(x.basis_l)
+function identityoperator(::Type{T},::Type{ComplexF64}, b1::Basis, b2::Basis) where {T<:WaveguideInteraction}
+    @assert b1==b2
+    identityoperator(b1)
+end
 #Method for multiplying, which updates factor in the operator.
 function Base.:*(a::Number,b::WaveguideInteraction)
     out = copy(b)
@@ -21,6 +26,17 @@ function Base.:*(a::Number,b::WaveguideInteraction)
     out
 end
 Base.:*(b::WaveguideInteraction,a::Number)=*(a,b)
+
+function QuantumOpticsBase.:+(a::WaveguideInteraction,b::WaveguideInteraction)
+    @assert a.basis_l == b.basis_l
+    @assert a.basis_r == b.basis_r
+    LazySum(a,b)
+end
+function QuantumOpticsBase.:-(a::WaveguideInteraction,b::WaveguideInteraction)
+    @assert a.basis_l == b.basis_l
+    @assert a.basis_r == b.basis_r
+    LazySum([1,-1],[a,b])
+end
 
 function set_waveguidetimeindex!(op::WaveguideInteraction,timeindex)
     op.op1.timeindex = timeindex
@@ -187,7 +203,10 @@ function Base.:*(a::T1,b::T2) where {T1<: WaveguideOperatorT,T2<: WaveguideOpera
     WaveguideInteraction(basis(a),basis(a),a.factor*b.factor,a.operators[1],b.operators[1],a.indices[1])
 end
 
-function expect(a::WaveguideInteraction,psi::Ket)
+const TensorWaveguideInteraction = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{WaveguideInteraction}}
+
+
+function expect(a::T,psi::Ket) where T<:Union{WaveguideInteraction,TensorWaveguideInteraction}
     out = 0
     for i in 1:get_nsteps(basis(a))
         #println(i)
@@ -196,7 +215,7 @@ function expect(a::WaveguideInteraction,psi::Ket)
     out
 end
 
-function expect(a::WaveguideInteraction,psi::Ket,i)
+function expect(a::T,psi::Ket,i) where T<:Union{WaveguideInteraction,TensorWaveguideInteraction}
     set_waveguidetimeindex!(a,i)
     dot(psi.data,(a*psi).data)
 end

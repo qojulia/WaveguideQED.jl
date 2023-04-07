@@ -81,7 +81,7 @@ end
     OnePhotonView(ψ::Ket,index,typw)
 
 
-Return a view of the onephoton mode ``ξ(t)`` given a state defined on a [`WaveguideBasis`](@ref) or [`aveguideBasis`](@ref).
+Return a view of the onephoton mode ``ξ(t)`` given a state defined on a [`WaveguideBasis`](@ref) or [`WaveguideBasis`](@ref).
 If the state is a [`WaveguideBasis`](@ref) the `type` parameter can be used to choose between the Left or Right mode with `type = :Left` or `type = :Right`   
 If no index is provided the ground state is returned. Index should follow same form outlined in [`view_waveguide`](@ref).
 """

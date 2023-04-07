@@ -1,7 +1,7 @@
-# [Interference on Beamsplitter](@id BStoturial)
+# [Detection and Projections](@id BStoturial)
 A beamsplitter is a partly reflective partly transmitive mirror that splits up an incomming photon as depicted here.
 
-![beamsplitter](beamsplitter_single_ilustration.png)
+![beamsplitter](./illustrations/single_beamsplitter.png)
 
 Asuming that the beamsplitter is equal (50% transmission and 50% reflection) and that we have only a single photon in one of waveguides impinging on the beamsplitter, the photon will go to detector plus 50% of the time and detector minus the other 50% of the time. This can be modeled in `WaveguideQED.jl` using [`LazyTensorKet`](@ref) and [`Detector`](@ref). We start by creating the two input waveguides.   
 
@@ -9,7 +9,7 @@ Asuming that the beamsplitter is equal (50% transmission and 50% reflection) and
 ## Background Theory
 Two photons inpinging on a beamsplitter is a classic example of destructive and constructive interference. If the two photons are indistinquishable, they will always appear in pairs on the other side of the beamsplitter. That is the following scenario:  
 
-![beamsplitter](beamsplitter_ilustration.png)
+![beamsplitter](./illustrations/hong_au_mandel.png)
 
 However, what happens if the two photons have a slight mismatch in frequency or their temporal distribution and how do we model this? Assuming the beamsplitter is 50/50 the beamsplitter transformation is[^1]  : $w_a \rightarrow (w_c + w_d)/\sqrt(2)$ and $w_b \rightarrow (w_c - w_d)/\sqrt(2)$, where $w_k$ is the annihilation operator for waveguide $k=\{a,b,c,d\}$. A one photon continous fockstate in waveguide a and b with wavefunction $\xi_a(t)$ and $\xi_b(t)$ has the combined state:
 
@@ -32,7 +32,9 @@ where we introduced $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d
 
 In `CaviyWaveguide.jl` we create the two incoming photons in each of their respective waveguides and define the corresponding annihilation operators:
 
-```jldoctest
+```@example detection
+using WaveguideQED #hide
+using QuantumOptics #hide
 times = 0:0.1:20
 bw = WaveguideBasis(1,times)
 ξfun(t,σ,t0) = complex(sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))
@@ -40,62 +42,55 @@ waveguide_a = onephoton(bw,ξfun,times,1,10)
 waveguide_b = onephoton(bw,ξfun,times,1,10)
 wa = destroy(bw)
 wb = destroy(bw)
-```
+nothing #hide
+``` 
 
 We then combine the states of waveguide a and b in a lazy tensor structure (tensor product is never calculated but the dimensions are inferred in subsequent calculations):
 
-```jldoctest
+```@example detection
 ψ_total = LazyTensorKet(waveguide_a,waveguide_b)
-```
+nothing #hide
+``` 
 
 Now we define [`Detector`](@ref) operators, which defines the beamsplitter and subsequent detection operation. In the following $\mathrm{Dplus} = D_+ = \frac{1}{\sqrt{2}}(w_a + w_b) $ and $\mathrm{Dminus} = D_- = \frac{1}{\sqrt{2}}(w_a - w_b)$
 
-```jldoctest
+```@example detection
 Dplus = Detector(wa/sqrt(2),wb/sqrt(2))
 Dminus = Detector(wa/sqrt(2),-wb/sqrt(2))
-```
+nothing #hide
+``` 
 
 The [`Detector`](@ref) applies the first operator (`wa/sqrt(2)`) to the first `Ket` in LazyTensorKet (`waveguide_a`) and the second operator (L`$\pm$ wb/sqrt(2)`) to the second `Ket` in `LazyTensorKet` (waveguide_b). The probability of detecting a photon in the detectors can then be calculated by:
 
-```jldoctest
-julia> p_plus = Dplus * ψ_total
-julia> p_minus = Dminus * ψ_total
-0.0
-0.0
+```@repl detection
+p_plus = Dplus * ψ_total
+p_minus = Dminus * ψ_total
 ```
 
 The returned probabilities are zero because there is no states that result in only ONE click at the detectors. Instead we have to ask for the probability of detecting TWO photons:
 
-```jldoctest
-julia> p_plus_plus = Dplus * Dplus * ψ_total
-julia> p_minus_minus = Dminus * Dminus * ψ_total
-0.4999999999999984
-0.4999999999999984
+```@repl detection
+p_plus_plus = Dplus * Dplus * ψ_total
+p_minus_minus = Dminus * Dminus * ψ_total
 ```
 
 Notice that we here asked what is the probability of having a detection event in detector plus/minus and subsequently another detection event in detector plus/minus. The output was $50\%$ for both cases reflecting the above calculations where we would expect the two photons always come in pairs. As a consequence the probability of having a click in detector plus and then in detector minus (or vice versa) is given as:
 
-```jldoctest
-julia> p_plus_minus = Dplus * Dminus * ψ_total
-julia> p_minus_plus = Dminus * Dplus * ψ_total
-0.0
-0.0
+```@repl detection
+p_plus_minus = Dplus * Dminus * ψ_total
+p_minus_plus = Dminus * Dplus * ψ_total
 ```
 
 As expected the resulting probabilities are zero. If we instead displace the photons in time so that one is centered around $t = 5$ and another around $t = 15$ we get:
 
-```jldoctest
-waveguide_a = onephoton(bw,ξfun,times,1,5)
-waveguide_b = onephoton(bw,ξfun,times,1,15)
-ψ_total = LazyTensorKet(waveguide_a,waveguide_b)
-julia> p_plus_plus = Dplus * Dplus * ψ_total
-julia> p_minus_minus = Dminus * Dminus * ψ_total
-julia> p_plus_minus = Dplus * Dminus * ψ_total
-julia> p_minus_plus = Dminus * Dplus * ψ_total
-0.24999999999999967
-0.24999999999999967
-0.24999999999999967
-0.24999999999999967
+```@repl detection
+waveguide_a = onephoton(bw,ξfun,times,1,5);
+waveguide_b = onephoton(bw,ξfun,times,1,15);
+ψ_total = LazyTensorKet(waveguide_a,waveguide_b);
+p_plus_plus = Dplus * Dplus * ψ_total
+p_minus_minus = Dminus * Dminus * ψ_total
+p_plus_minus = Dplus * Dminus * ψ_total
+p_minus_plus = Dminus * Dplus * ψ_total
 ```
 
 Thus we have an equal probability detection events in the same detector and in opposite detectors, since the two photon pulse are temporaly seperated.

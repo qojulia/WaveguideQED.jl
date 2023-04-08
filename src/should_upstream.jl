@@ -4,7 +4,7 @@ function QuantumOpticsBase.:+(a::LazyTensor{B1,B2},b::LazyTensor{B1,B2}) where {
 end
 
 function QuantumOpticsBase.:-(a::LazyTensor{B1,B2},b::LazyTensor{B1,B2}) where {B1,B2}
-    LazySum([1,-1],[a,b])
+    LazySum((1,-1),(a,b))
 end
 
 function QuantumOpticsBase.:+(a::LazyTensor{B1,B2},b::Operator{B1,B2}) where {B1,B2}
@@ -35,7 +35,7 @@ end
 function QuantumOpticsBase.:⊗(a::LazyTensor,b::Operator)
     if isequal(b,identityoperator(basis(b)))
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
+        LazyTensor(btotal,btotal,(a.indices...,),(a.operators...,),a.factor)
     else
         a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
     end
@@ -44,7 +44,7 @@ end
 function QuantumOpticsBase.:⊗(a::Operator,b::LazyTensor)
     if isequal(a,identityoperator(basis(a)))
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
+        LazyTensor(btotal,btotal,(b.indices...,).+1 ,(b.operators...,),b.factor)
     else
         LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
     end

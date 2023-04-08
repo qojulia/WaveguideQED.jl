@@ -167,8 +167,7 @@ end
 
 """
     mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta)
-    mul!(result::Bra{B1}, a::Bra{B2}, b::LazyTensor{B1,B2,F,I,T}, alpha, beta)
-
+    
 In-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a LazyTensor that contains a [`WaveguideOperator`](@ref) 
 """
 function mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis, F,I,T<:Tuple{Vararg{AbstractOperator}}}
@@ -179,16 +178,6 @@ function mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, be
     iso_ops = QuantumOpticsBase._explicit_isometries(a.indices, a.basis_l, a.basis_r)
 
     QuantumOpticsBase._tp_sum_matmul!(result_data, tp_ops, iso_ops, b_data, alpha * a.factor, beta)
-    result
-end
-function mul!(result::Bra{B1}, a::Bra{B2}, b::LazyTensor{B1,B2,F,I,T}, alpha, beta) where {B1<:Basis,B2<:Basis, F,I,T<:Tuple{Vararg{AbstractOperator}}}
-    a_data = Base.ReshapedArray(a.data, QuantumOpticsBase._comp_size(basis(a)), ())
-    result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
-
-    tp_ops = (tuple(( (isa(op,DataOperator) ? op.data : op) for op in b.operators)...), b.indices)
-    iso_ops = QuantumOpticsBase._explicit_isometries(b.indices, b.basis_l, b.basis_r)
-
-    QuantumOpticsBase._tp_sum_matmul!(result_data, tp_ops, iso_ops, a_data, alpha * b.factor, beta)
     result
 end
 

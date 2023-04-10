@@ -51,8 +51,6 @@ This state can be visuallized by:
 
 ```@example theory
 using PyPlot
-rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams"); #hide
-rcParams["font.size"] = 20; #hide
 viewed_state = OnePhotonView(ψ)
 fig,ax = subplots(1,1,figsize=(9,4.5))
 ax.plot(times,viewed_state,"r-")

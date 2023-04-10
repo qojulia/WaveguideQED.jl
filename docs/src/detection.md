@@ -1,4 +1,4 @@
-# [Detection and Projections](@id BStoturial)
+# [Detection and Projections](@id BStutorial)
 A beamsplitter is a partly reflective partly transmitive mirror that splits up an incomming photon as depicted here.
 
 ![beamsplitter](./illustrations/single_beamsplitter.png)

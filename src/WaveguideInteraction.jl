@@ -182,6 +182,55 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx},bop::
     result
 end
 
+function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,2,idx},bop::WaveguideDestroy{B1,B2,2,idx},b,alpha,beta) where {B1,B2,idx}
+    if !isone(beta)
+        rmul!(result,beta)
+    end
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    Nw = get_number_of_waveguides(a.basis_l)
+
+    result[1] += sqrt(2)*alpha*a.factor*bop.factor*b[1+Nw*nsteps+(idx-1)*(nsteps*(nsteps+1))÷2+twophoton_index(timeindex,nsteps,timeindex)] 
+    result
+end
+function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx},bop::WaveguideCreate{B1,B2,2,idx},b,alpha,beta) where {B1,B2,idx}
+    if !isone(beta)
+        rmul!(result,beta)
+    end
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    Nw = get_number_of_waveguides(a.basis_l)
+    result[1+Nw*nsteps+(idx-1)*(nsteps*(nsteps+1))÷2+twophoton_index(timeindex,nsteps,timeindex)] += sqrt(2)*alpha*a.factor*bop.factor*b[1] 
+    result
+end
+
+function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,2,idx1},bop::WaveguideDestroy{B1,B2,2,idx2},b,alpha,beta) where {B1,B2,idx1,idx2}
+    if !isone(beta)
+        rmul!(result,beta)
+    end
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    Nw = get_number_of_waveguides(a.basis_l)
+    m,l = min(idx1,idx2),max(idx1,idx2)
+    index_r = (m-1)*Nw + l - (m*(m+1))÷2
+    result[1] += alpha*a.factor*bop.factor*b[1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index_r-1)*nsteps^2+(timeindex-1)*nsteps + timeindex] 
+    result
+end
+function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx1},bop::WaveguideCreate{B1,B2,2,idx2},b,alpha,beta) where {B1,B2,idx1,idx2}
+    if !isone(beta)
+        rmul!(result,beta)
+    end
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    Nw = get_number_of_waveguides(a.basis_l)
+    m,l = min(idx1,idx2),max(idx1,idx2)
+    index_r = (m-1)*Nw + l - (m*(m+1))÷2
+    result[1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index_r-1)*nsteps^2+(timeindex-1)*nsteps + timeindex]  += alpha*a.factor*bop.factor*b[1] 
+end
+
+
+
+
 function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,Np,idx1},bop::WaveguideCreate{B1,B2,1,idx2},b,alpha,beta) where {B1,B2,Np,idx1,idx2}
     if !isone(beta)
         rmul!(result,beta)

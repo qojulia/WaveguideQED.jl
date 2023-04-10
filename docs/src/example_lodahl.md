@@ -97,7 +97,9 @@ nothing #hide
 Finall, this can be plotted and we note that this matches fig. 3 in Ref. ^[1]:
 
 ```@example lodahl
-using PyPlot #hide
+using PyPlot; #hide
+rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams"); #hide
+rcParams["font.size"] = 20; #hide
 fig,axs = subplots(3,2,figsize=(9,17))
 plot_list = [ψ2LeftScat,ψ2RightScat,ψ2LeftRightScat,ψ1LeftScat,ψ1RightScat,ψ1LeftRightScat]
 for (i,ax) in enumerate(axs)

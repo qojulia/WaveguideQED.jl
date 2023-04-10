@@ -58,6 +58,8 @@ Plotting the wavefunction and its norm square gives:
 
 ```@example toturial
 using PyPlot
+rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams"); #hide
+rcParams["font.size"] = 20; #hide
 viewed_state = OnePhotonView(ψ_out)
 fig,ax = subplots(1,2,figsize=(9,4.5))
 ax[1].plot(times,viewed_state,"r-")

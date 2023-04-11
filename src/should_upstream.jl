@@ -55,19 +55,13 @@ end
 function QuantumOpticsBase.:⊗(a::Operator,b::LazySum)
     btotal_l = a.basis_l ⊗ b.basis_l
     btotal_r = a.basis_r ⊗ b.basis_r
-    ops = Vector{AbstractOperator}(undef,length(b.operators))
-    for i in eachindex(ops)
-        ops[i] = a ⊗ b.operators[i]
-    end
+    ops = ([a ⊗ op op in b.operators]...,)
     LazySum(btotal_l,btotal_r,b.factors,ops)
 end
 function QuantumOpticsBase.:⊗(a::LazySum,b::Operator)
     btotal_l = a.basis_l ⊗ b.basis_l
     btotal_r = a.basis_r ⊗ b.basis_r
-    ops = Vector{AbstractOperator}(undef,length(a.operators))
-    for i in eachindex(ops)
-        ops[i] = a.operators[i] ⊗ b
-    end
+    ops = ([op ⊗ b op in a.operators]...,)
     LazySum(btotal_l,btotal_r,a.factors,ops)
 end
 
@@ -75,19 +69,13 @@ end
 function QuantumOpticsBase.:⊗(a::Operator,b::LazyProduct)
     btotal_l = a.basis_l ⊗ b.basis_l
     btotal_r = a.basis_r ⊗ b.basis_r
-    ops = Vector{AbstractOperator}(undef,length(b.operators))
-    for i in eachindex(ops)
-        ops[i] = a ⊗ b.operators[i]
-    end
+    ops = ([a ⊗ op op in b.operators]...,)
     LazyProduct(btotal_l,btotal_r,b.factor,ops)
 end
 function QuantumOpticsBase.:⊗(a::LazyProduct,b::Operator)
     btotal_l = a.basis_l ⊗ b.basis_l
     btotal_r = a.basis_r ⊗ b.basis_r
-    ops = Vector{AbstractOperator}(undef,length(a.operators))
-    for i in eachindex(ops)
-        ops[i] = a.operators[i] ⊗ b
-    end
+    ops = ([op ⊗ b op in a.operators]...,)
     LazyProduct(btotal_l,btotal_r,a.factor,ops)
 end
 

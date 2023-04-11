@@ -92,7 +92,6 @@ The effect of the creation operator is to create a photon in timebin k and can b
 This is also seen if we plot the creation operator acting on the vacuum:
 
 ```@example theory
-using PyPlot
 ψ = wd*zerophoton(bw)
 viewed_state = OnePhotonView(ψ)
 fig,ax = subplots(1,1,figsize=(9,4.5))
@@ -143,6 +142,7 @@ We can define a twophoton basis and corresponding operator by:
 ```@example theory
 bw = WaveguideBasis(2,times)
 wd = create(bw)
+nothing #hide
 ```
 The creation operator can then be visualized by acting on a onephoton state with ones all over. This is seen in the following. Note that the state is visualized as a contour plot mirrored around the diagonal.
 
@@ -170,7 +170,6 @@ nothing #hide
 Here, we defined the two photon equivalent of our single photon gaussian state. When we visualize it, we now need two times, and we make a contour plot. This is easily done viewing the twophoton state: 
 
 ```@example theory
-using PyPlot
 viewed_state = TwoPhotonView(ψ)
 fig,ax = subplots(1,1,figsize=(4.5,4.5))
 plot_twophoton!(ax,viewed_state,times)

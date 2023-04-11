@@ -75,15 +75,14 @@ function Base.setindex!(x::OnePhotonView,Left,i::Int)
 end
 
 """
-    OnePhotonView(ψ::Ket)
-    OnePhotonView(ψ::Ket,type)
-    OnePhotonView(ψ::Ket,index)
-    OnePhotonView(ψ::Ket,index,typw)
+    OnePhotonView(ψ::T) where {T<:SingleWaveguideKet}
+    OnePhotonView(ψ::T,index::I) where {T<:SingleWaveguideKet,I<:Union{Vector{Any},Vector{Int64},Tuple{Vararg{Union{Int64,Colon}}}}}
+    OnePhotonView(ψ::T,WI::Int)  where {T<:MultipleWaveguideKet}
+    OnePhotonView(ψ::T,index::I,WI::Int) where {T<:MultipleWaveguideKet,I<:Union{Vector{Any},Vector{Int64},Tuple{Vararg{Union{Int64,Colon}}}}}
 
-
-Return a view of the onephoton mode ``ξ(t)`` given a state defined on a [`WaveguideBasis`](@ref) or [`WaveguideBasis`](@ref).
-If the state is a [`WaveguideBasis`](@ref) the `type` parameter can be used to choose between the Left or Right mode with `type = :Left` or `type = :Right`   
-If no index is provided the ground state is returned. Index should follow same form outlined in [`view_waveguide`](@ref).
+Return a view of the onephoton wavefunction ``ξ(t)`` given a state containing a [`WaveguideBasis`](@ref).
+If the [`WaveguideBasis`](@ref) contains more than one waveguide, a waveguide index ``WI`` is required to indicate which waveguide is viewed (1,2,3,... etc.)  
+If the state contains more basises (e.g. a cavity) ``index`` used to indicate which state should be viewed. Index should follow same form outlined in [`view_waveguide`](@ref) and if not given the groundstate is assummed.
 """
 function OnePhotonView(ψ::T) where {T<:SingleWaveguideKet}
     loc = get_waveguide_location(ψ.basis)
@@ -146,7 +145,19 @@ function twophoton_index(j,nsteps,timeindex)
     (j-1)*nsteps-((j-2)*(j-1))÷2+timeindex-j+1
 end
 
-
+"""
+    TwoPhotonView(ψ::T) where {T <: SingleWaveguideKet}
+    TwoPhotonView(ψ::T,index::I) where {T <: SingleWaveguideKet,I<:Union{Vector{Any},Vector{Int64},Tuple{Vararg{Union{Int64,Colon}}}}}
+    TwoPhotonView(ψ::T,WI::Int) where {T <: MultipleWaveguideKet}
+    TwoPhotonView(ψ::T,WI1::Int,WI2::Int) where {T <: MultipleWaveguideKet}
+    TwoPhotonView(ψ::T,WI::I) where {T <: MultipleWaveguideKet,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}}
+    TwoPhotonView(ψ::T,index::I,WI::Int)  where {T<:MultipleWaveguideKet,I<:Union{Vector{Any},Vector{Int64},Tuple{Vararg{Union{Int64,Colon}}}}}
+    
+Return a view of the twophoton wavefunction ``ξ(t1,t2)`` given a state containing a [`WaveguideBasis`](@ref).
+If the [`WaveguideBasis`](@ref) contains more than one waveguide, a waveguide index ``WI`` is required to indicate which waveguide is viewed.
+`WI` follows the same syntax  outlined in [`twophoton`](@ref) for more information on how to view the state.
+If the state contains more basises (e.g. a cavity) ``index`` used to indicate which state should be viewed. Index should follow same form outlined in [`view_waveguide`](@ref) and if not given the groundstate is assummed.
+"""
 function TwoPhotonView(ψ::T) where {T <: SingleWaveguideKet}
     loc = get_waveguide_location(ψ.basis)
     index = Tuple(i==loc[1] ? (:) : 1 for i in 1:length(ψ.basis.shape))

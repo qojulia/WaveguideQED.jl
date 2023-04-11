@@ -19,7 +19,7 @@ authors = "Matias Bundgaard-Nielsen",
 pages = [
 "WaveguideQED.jl" => "index.md",
 "theoreticalbackground.md",
-"toturial.md",
+"tutorial.md",
 "detection.md",
 "multiplewaveguides.md",
 "Examples" => ["Scattering on two level system" => "example_lodahl.md"],

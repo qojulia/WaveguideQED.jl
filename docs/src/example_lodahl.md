@@ -81,8 +81,8 @@ For the single photon states we have to calculate the two time scattered distrib
 ψ1LeftScat = zeros(ComplexF64,(length(times),length(times)))
 ψ1RightScat = zeros(ComplexF64,(length(times),length(times)))
 ψ1LeftRightScat = zeros(ComplexF64,(length(times),length(times)))
-ψ1Right = OnePhotonView(ψScat1,[:,1],1)
-ψ1Left = OnePhotonView(ψScat1,[:,1],2)
+ψ1Right = OnePhotonView(ψScat1,[:,1],2)
+ψ1Left = OnePhotonView(ψScat1,[:,1],1)
 
 for i in eachindex(times)
     for j in eachindex(times)
@@ -97,9 +97,9 @@ nothing #hide
 Finall, this can be plotted and we note that this matches fig. 3 in Ref. ^[1]:
 
 ```@example lodahl
-using PyPlot #hide
+using PyPlot; #hide
 fig,axs = subplots(3,2,figsize=(9,17))
-plot_list = [ψ2LeftScat,ψ2RightScat,ψ2LeftRightScat,ψ1LeftScat,ψ1RightScat,ψ1LeftRightScat]
+plot_list = [ψ2RightScat,ψ2LeftScat,ψ2LeftRightScat,ψ1RightScat,ψ1LeftScat,ψ1LeftRightScat]
 for (i,ax) in enumerate(axs)
     plot_twophoton!(ax,plot_list[i],times)
 end

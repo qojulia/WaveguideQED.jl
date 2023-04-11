@@ -202,7 +202,7 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Function,times,args
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i,j)
     for l in 1:nsteps
-        for m in l:nsteps
+        for m in 1:nsteps
             viewed_data[l,m] = ξ(times[l],times[m],args...)
         end
     end
@@ -216,7 +216,7 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Matrix;norm=true) w
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i,j)
     for l in 1:nsteps
-        for m in l:nsteps
+        for m in 1:nsteps
             viewed_data[l,m] = ξ[l,m]
         end
     end

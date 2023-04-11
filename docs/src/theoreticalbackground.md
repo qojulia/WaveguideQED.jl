@@ -53,7 +53,7 @@ This state can be visuallized by:
 using PyPlot
 viewed_state = OnePhotonView(ψ)
 fig,ax = subplots(1,1,figsize=(9,4.5))
-ax.plot(times,viewed_state,"r-")
+ax.plot(times,viewed_state,"r-");
 ax.set_xlabel("Time [a.u]")
 ax.set_ylabel(L"$\xi(t)$")
 plt.tight_layout()
@@ -95,7 +95,7 @@ This is also seen if we plot the creation operator acting on the vacuum:
 ψ = wd*zerophoton(bw)
 viewed_state = OnePhotonView(ψ)
 fig,ax = subplots(1,1,figsize=(9,4.5))
-ax.plot(times,viewed_state,"r-")
+ax.plot(times,viewed_state,"r-");
 ax.set_xlabel("Time [a.u]")
 ax.set_ylabel(L"$\xi(t)$")
 plt.tight_layout()
@@ -142,6 +142,7 @@ We can define a twophoton basis and corresponding operator by:
 ```@example theory
 bw = WaveguideBasis(2,times)
 wd = create(bw)
+println(pwd())
 nothing #hide
 ```
 The creation operator can then be visualized by acting on a onephoton state with ones all over. This is seen in the following. Note that the state is visualized as a contour plot mirrored around the diagonal.

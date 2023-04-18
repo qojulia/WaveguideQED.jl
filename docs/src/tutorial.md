@@ -3,7 +3,7 @@ In this section, we show simple examples that illustrate how to use **WaveguideQ
 
 ## [Combining with QuantumOptics.jl](@id combining)
 
-Basises, states, and operators defined in `WaveguideQED.jl` can be effortlesly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
+Basises, states, and operators defined in `WaveguideQED.jl` can be effortlessly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
 
 ![alt text](./illustrations/inputoutput_onewaveguide.png)
 
@@ -18,7 +18,7 @@ bc = FockBasis(1)
 nothing #hide
 ```
 
-Next we want to create the Hamiltonian for the system. The interaction between the waveguide and cavity is at timestep k given by[^1] $$H_k = i \hbar \sqrt{\gamma / \Delta t}( a^\dagger w_k - a w_k^\dagger)$$, where $$a$$     ($$a^\dagger$$) is the cavity annihilation (creation) operator, $$w_k$$($$w_k^\dagger$$) is the waveguide annihilation (creation) operator, $$\gamma$$ is the leakage rate of the cavity, and `\Delta t = times[2]-times[1]` is the width of the timebin. `WaveguideQED.jl` follows the same syntax as [`QuantumOptics.jl`](https://qojulia.org/) and operators are defined from a basis. Operators of different Hilbert spaces are then combined using ⊗ (``\otimes``):
+Next, we want to create the Hamiltonian for the system. The interaction between the waveguide and cavity is at timestep k given by[^1] $$H_k = i \hbar \sqrt{\gamma / \Delta t}( a^\dagger w_k - a w_k^\dagger)$$, where $$a$$ ($$a^\dagger$$) is the cavity annihilation (creation) operator, $$w_k$$($$w_k^\dagger$$) is the waveguide annihilation (creation) operator, $$\gamma$$ is the leakage rate of the cavity, and `\Delta t = times[2]-times[1]` is the width of the time-bin. `WaveguideQED.jl` follows the same syntax as [`QuantumOptics.jl`](https://qojulia.org/), and operators are defined from a basis. Operators of different Hilbert spaces are then combined using ⊗ (``\otimes``) or `tensor`:
 
 ```@example tutorial
 a = destroy(bc)
@@ -31,7 +31,7 @@ H = im*sqrt(γ/dt)*( ad ⊗ w - a ⊗ wd  )
 nothing #hide
 ```
 
-With this we can now simulate the scattering of a single photon with a gaussian wavefunction scattered on a cavity. We define the initial state as waveguide state as:
+With this, we can now simulate the scattering of a single photon with a Gaussian wavefunction scattered on a cavity. We define the initial state as waveguide state as:
 
 ```@example tutorial
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
@@ -40,14 +40,14 @@ With this we can now simulate the scattering of a single photon with a gaussian 
 nothing #hide
 ```
 
-Assuming the cavity is empty the combined initial state is then:
+Assuming the cavity is empty, the combined initial state is then:
 
 ```@example tutorial
 ψ_in = fockstate(bc,0) ⊗ ψ_waveguide
 nothing #hide
 ```
 
-With the initial state we can then call the solver the get the wavefunction after the interaction with the cavity.
+With the initial state, we can then call the solver the get the wavefunction after the interaction with the cavity.
 
 ```@example tutorial
 ψ_out = waveguide_evolution(times,ψ_in,H)
@@ -58,26 +58,30 @@ Plotting the wavefunction and its norm square gives:
 
 ```@example tutorial
 using PyPlot
+rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams") #hide
+rcParams["font.size"] = 20 #hide
+rcParams["font.family"] = "serif" #hide
+rcParams["mathtext.fontset"] ="cm" #hide
 viewed_state = OnePhotonView(ψ_out)
 fig,ax = subplots(1,2,figsize=(9,4.5))
-ax[1].plot(times,viewed_state,"r-")
+ax[1].plot(times,real.(viewed_state),"r-",label="Real part")
 ax[1].set_xlabel("Time [a.u]")
 ax[1].set_ylabel(L"$\xi(t)$")
 
 ax[2].plot(times,abs.(viewed_state).^2,"r-")
 ax[2].set_xlabel("Time [a.u]")
 ax[2].set_ylabel(L"$|\xi(t)|^2$")
-plt.tight_layout()
+plt.tight_layout() #hide
 plt.savefig("scat_onephoton.svg") #hide
 nothing #hide
 ```
 ![alt text](scat_onephoton.svg)
 
-We see that the wavefunction has changed after the interaction with the cavity. More specifically we see how the pulse gets absorped into the cavity leading and a corresponding phase change of the wave. This phase change also leads to destructive interference between the photon being emitted from the cavity and the reflection af the incoming photon. This leads to the dip in the photon wavefunction after the interaction.
+We see that the wavefunction has changed after the interaction with the cavity. More specifically, we see how the pulse gets absorbed into the cavity leading and a corresponding phase change of the wave. This phase change also leads to destructive interference between the photon being emitted from the cavity and the reflection of the incoming photon. This leads to a dip in the photon wavefunction after the interaction.
 
 ## Expectation values
 
-In the previous example, only the state at the final timestep was shown. This shows the output wavefunction, but one might also be interested in intermediate states or expectation values. Expectation values can be outputtet from the solver by using the `fout` keyword. As an example, we can get the number of photons in the cavity as a function of time by:
+In the previous example, only the state at the final timestep was shown. This shows the output wavefunction, but one might also be interested in intermediate states or expectation values. Expectation values can be outputted from the solver by using the `fout` keyword. As an example, we can get the number of photons in the cavity as a function of time by:
 
 ```@example tutorial
 n = (ad*a) ⊗ identityoperator(bw)
@@ -88,7 +92,7 @@ end
 nothing #hide
 ```
 
-If we also want to know the number of photons in the waveguide state as a function of time another operator to out expectation function as:
+If we also want to know the number of photons in the waveguide state as a function of time, another operator to out expectation function as:
 
 ```@example tutorial
 n = (ad*a) ⊗ identityoperator(bw)
@@ -102,7 +106,7 @@ nothing #hide
 
 Where `expect(n_w,psi)` calculates the expectation value of all times of the pulse at each timestep: $\mathrm{expect(n_w,psi)} = \bra{\psi} \sum_k  I \otimes w_k^\dagger w_k  \ket{psi}$
 
-This can be plottet as:
+This can be plotted as:
 
 ```@example tutorial
 fig,ax = subplots(1,1,figsize=(9,4.5))
@@ -117,9 +121,9 @@ plt.savefig("photon_number.svg") #hide
 ```
 ![alt text](photon_number.svg)
 
-Here we see how the photon wavepacket is partially absorped into the cavity and then reemitted again.
+Here we see how the photon wavepacket is partially absorbed into the cavity and then reemitted again.
 
-If we plot the wavefunction as a function of time (and do some displacing) we can even animate the process:
+If we plot the wavefunction as a function of time (and do some displacing), we can even animate the process:
 
 ![alt text](./animations/firstgif.gif)
 

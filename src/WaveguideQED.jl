@@ -16,8 +16,8 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
     plot_twophoton!,
     destroy,create,tensor,⊗,dagger,identityoperator,expect
 
-include("basis.jl")
 include("view.jl")
+include("basis.jl")
 include("WaveguideOperator.jl")
 include("CavityWaveguideOperator.jl")
 include("WaveguideInteraction.jl")

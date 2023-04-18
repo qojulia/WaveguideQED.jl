@@ -156,7 +156,7 @@ function test_multiplewaveguides(b,Nw,idx,order,wda1,adw1)
     end
 
     mul!(tmp,adw1,tmp,1,0)
-    one = OnePhotonView(tmp,first_idx,idx)
+    one = OnePhotonView(tmp,idx,first_idx)
     if !isapprox(one,testvec2)
         return false
     end

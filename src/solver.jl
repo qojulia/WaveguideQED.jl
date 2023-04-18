@@ -15,20 +15,20 @@ Integrate time-dependent Schroedinger equation to evolve states or compute propa
 * if `fout=nothing` the output of the solver will be the state `ψ` at the last timestep. 
 * if `fout` is given a tuple with the state `ψ` at the last timestep and the output of `fout` is given. If `fout` returns a tuple the tuple will be flattened.
 * if `fout = 1` `ψ` at all timesteps is returned.
-Example `fout(t,psi) = (expect(A,psi),expect(B,psi))` will result in  a tuple (ψ, ⟨A(t)⟩,⟨B(t)⟩), where `⟨A(t)⟩` is a vector with the expectation value of `A` as a function of time.
+
+# Examples 
+
+* `fout(t,psi) = (expect(A,psi),expect(B,psi))` will result in  a tuple (ψ, ⟨A(t)⟩,⟨B(t)⟩), where `⟨A(t)⟩` is a vector with the expectation value of `A` as a function of time.
+
 """
 function waveguide_evolution(times,psi,H;fout=nothing)
     ops = get_waveguide_operators(H)
     dt = times[2] - times[1]
     tend = times[end]
     nsteps = length(times)
-    function get_hamiltonian(time,psi)
-        #index = findlast(times .<= time)
-        #basis.timeindex = index
+    function get_hamiltonian(time,psi) 
         tidx = min(round(Int,time/dt,RoundUp)+1,nsteps)
         set_waveguidetimeindex!(ops,tidx)
-        #[op.timeindex = round(Int,time/dt,RoundUp)+1 for op in ops]
-        #basis.timeindex = round(Int,time/dt,RoundUp)+1
         return H
     end
     function eval_last_element(time,psi)
@@ -60,7 +60,7 @@ end
 """
     waveguide_montecarlo(times,psi,H,J;fout=nothing)
 
-See documentation for [`waveguide_evolution`](@ref). J should be a list of collapse operators. 
+See documentation for [`waveguide_evolution`](@ref) on how to define `fout`. J should be a list of collapse operators following documentation of [`timeevolution.mcwf_dynamic`](https://docs.qojulia.org/api/#QuantumOptics.timeevolution.mcwf_dynamic). 
 """
 function waveguide_montecarlo(times,psi,H,J;fout=nothing,kwargs...)
     ops = get_waveguide_operators(H)

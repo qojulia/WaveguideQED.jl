@@ -67,10 +67,10 @@ Annihilation operator ``w`` for [`WaveguideBasis`](@ref) ``w_i(t_k) | 1_j \\empt
 
 # Arguments
 - basis of type WaveguideBasis, defines cutoff photon number `Np` and number of waveguides `Nw`
-- i determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
+- `i` determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
 
 # Returns
-WaveguideDesroy{B,B,Np,i} <: WaveguideOperator
+[`WaveguideDestroy{B,B,Np,i} <: WaveguideOperator`](@ref)
 """
 function destroy(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)
@@ -92,10 +92,10 @@ Creation operator ``w^\\dagger`` for [`WaveguideBasis`](@ref) ``w_i(t_k)^\\dagge
 
 # Arguments
 - basis of type WaveguideBasis, defines cutoff photon number `Np` and number of waveguides `Nw`
-- i determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
+- `i` determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
 
 # Returns
-WaveguideCreate{B,B,Np,i} <: WaveguideOperator
+[`WaveguideCreate{B,B,Np,i} <: WaveguideOperator`](@ref)
 """
 function create(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)

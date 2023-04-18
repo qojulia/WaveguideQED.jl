@@ -257,14 +257,13 @@ const TensorWaveguideInteraction = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{W
 
 function expect(a::T,psi::Ket) where T<:Union{WaveguideInteraction,TensorWaveguideInteraction}
     out = 0
+    tmp_data = QuantumOpticsBase._tp_matmul_get_tmp(eltype(psi.data), (length(psi.data),), :tp_ex, psi.data)
+    tmp_ket = Ket(psi.basis,tmp_data)
     for i in 1:get_nsteps(basis(a))
-        #println(i)
-        out += expect(a,psi,i)
+        set_waveguidetimeindex!(a,i)
+        mul!(tmp_ket,a,psi,1,0)
+        out += dot(psi.data,tmp_ket.data)
     end
     out
 end
 
-function expect(a::T,psi::Ket,i) where T<:Union{WaveguideInteraction,TensorWaveguideInteraction}
-    set_waveguidetimeindex!(a,i)
-    dot(psi.data,(a*psi).data)
-end

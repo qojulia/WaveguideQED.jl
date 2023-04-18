@@ -15,7 +15,7 @@ ax.contour object with the plotted state.
 function plot_twophoton!(ax,twophotonstate::TwoPhotonView,times)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
-    cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)
+    cnt1= ax.contourf(xgrid,ygrid,abs.(twophotonstate).^2,100)
     for c in cnt1.collections
         c.set_edgecolor("face")
     end
@@ -25,7 +25,7 @@ end
 function plot_twophoton!(ax,twophotonstate::TwoWaveguideView,times)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
-    cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)
+    cnt1= ax.contourf(xgrid,ygrid,abs.(twophotonstate).^2,100)
     for c in cnt1.collections
         c.set_edgecolor("face")
     end
@@ -36,7 +36,7 @@ function plot_twophoton!(ax,state::Ket,times)
     twophotonstate = TwoPhotonView(state)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
-    cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)
+    cnt1= ax.contourf(xgrid,ygrid,abs.(twophotonstate).^2,100)
     for c in cnt1.collections
         c.set_edgecolor("face")
     end
@@ -46,7 +46,7 @@ end
 function plot_twophoton!(ax,twophotonstate,times)
     xgrid = repeat(times',length(times),1)
     ygrid = repeat(times,1,length(times))
-    cnt1= ax.contourf(xgrid,ygrid,twophotonstate.*conj(twophotonstate),100)
+    cnt1= ax.contourf(xgrid,ygrid,abs.(twophotonstate).^2,100)
     for c in cnt1.collections
         c.set_edgecolor("face")
     end

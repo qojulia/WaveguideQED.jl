@@ -230,7 +230,7 @@ end
     two = TwoPhotonTimestepView(psi_view,tidx,nsteps,1+2*nsteps);
     @test isapprox(two,testvec)
     mul!(tmp,adw_L,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],1)
+    one = OnePhotonView(tmp,1,[2,:])
     @test isapprox(one,testvec)
 
 
@@ -240,7 +240,7 @@ end
     two = TwoWaveguideTimestepView(psi_view,tidx,nsteps,1+2*nsteps+(nsteps)*(nsteps+1),false);
     @test isapprox(two,testvec)
     mul!(tmp,adw_R,tmp,1,0)
-    one = OnePhotonView(tmp,[2,:],1)
+    one = OnePhotonView(tmp,1,[2,:])
     @test isapprox(one,testvec)
 
 

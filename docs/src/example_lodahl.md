@@ -9,7 +9,7 @@ In many of the examples considered so far, we only consider a single waveguide t
 ![`alt text`](./illustrations/two_waveguide_lodahl.png)
 
 
-A way to model this scenario is to have two waveguides: a waveguide to the left and the right, describing the first half of the waveguide and the latter half. For this, we use [`WaveguideBasis`](@ref) but with an extra argument specifying that we need two waveguides (see [`twowaveguide`](@ref) for an introduction). We initialize [`WaveguideBasis`](@ref) with two waveguides and a basis for the atom (note that a fockbasis with only one excitation allowed is the same as a two-level-system):
+A way to model this scenario is to have two waveguides: a waveguide to the left and the right, describing the first half of the waveguide and the latter half. For this, we use [`WaveguideBasis`](@ref) but with an extra argument specifying that we need two waveguides (see [`Multiple Waveguides`](@ref twowaveguide) for an introduction). We initialize [`WaveguideBasis`](@ref) with two waveguides and a basis for the atom (note that a fockbasis with only one excitation allowed is the same as a two-level-system):
 
 ```@example lodahl
 using WaveguideQED #hide
@@ -101,7 +101,7 @@ rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams") #hide
 rcParams["font.size"] = 20 #hide
 rcParams["font.family"] = "serif" #hide
 rcParams["mathtext.fontset"] ="cm" #hide
-fig,axs = subplots(3,2,figsize=(6,17))
+fig,axs = subplots(3,2,figsize=(6,9))
 plot_list = [ψ2RightScat,ψ2LeftScat,ψ2LeftRightScat,ψ1RightScat,ψ1LeftScat,ψ1LeftRightScat]
 for (i,ax) in enumerate(axs)
     plot_twophoton!(ax,plot_list[i],times)

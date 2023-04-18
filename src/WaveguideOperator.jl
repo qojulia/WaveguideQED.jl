@@ -70,7 +70,7 @@ Annihilation operator ``w`` for [`WaveguideBasis`](@ref) ``w_i(t_k) | 1_j \\empt
 - `i` determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
 
 # Returns
-[`WaveguideDestroy{B,B,Np,i} <: WaveguideOperator`](@ref)
+[`WaveguideDestroy`](@ref)
 """
 function destroy(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)
@@ -95,7 +95,7 @@ Creation operator ``w^\\dagger`` for [`WaveguideBasis`](@ref) ``w_i(t_k)^\\dagge
 - `i` determines which waveguide the operator acts on and should be `i ≤ Nw`. If `Nw=1` then `i=1` is assumed (there is only one waveguide).
 
 # Returns
-[`WaveguideCreate{B,B,Np,i} <: WaveguideOperator`](@ref)
+[`WaveguideCreate`](@ref)
 """
 function create(basis::WaveguideBasis{Np,1}) where {Np}
     B = typeof(basis)

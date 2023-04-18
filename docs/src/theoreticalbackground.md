@@ -108,7 +108,7 @@ nothing #hide
 ```
 ![alt text](created_onephoton_continuous_fockstate.svg)
 
-We see a spike around `t = times[10] = 0.9`, where we now created an excitation. In itself, the waveguide basis, states, and operators are not particularly interesting, but when combined with other quantum mechanical systems such as cavities and emitters, the framework can produce powerful results. See [`combining`](@ref) for an introduction on how to combine with quantum systems defined in ['QuantumOptics.jl'](https://qojulia.org/).
+We see a spike around `t = times[10] = 0.9`, where we now created an excitation. In itself, the waveguide basis, states, and operators are not particularly interesting, but when combined with other quantum mechanical systems such as cavities and emitters, the framework can produce powerful results. See [`Combining with QuantumOptics`](@ref combining) for an introduction on how to combine with quantum systems defined in ['QuantumOptics.jl'](https://qojulia.org/).
 
 
 ## Continuous two-photon fock states
@@ -172,7 +172,7 @@ If we want to create a two-photon Gaussian state, we instead do:
 nothing #hide
 ```
 
-Here, we defined the two-photon equivalent of our single-photon Gaussian state. When we visualize it, we now need two times, and we make a contour plot. This is easily done by viewing the two-photon state and using [`plot_twophoton`](@ref): 
+Here, we defined the two-photon equivalent of our single-photon Gaussian state. When we visualize it, we now need two times, and we make a contour plot. This is easily done by viewing the two-photon state and using [`plot_twophoton!`](@ref): 
 
 ```@example theory
 viewed_state = TwoPhotonView(ψ)

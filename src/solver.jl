@@ -35,7 +35,7 @@ function waveguide_evolution(times,psi,H;fout=nothing)
         if time == tend
             return psi
         else
-            return psi
+            return 0
         end
     end
     if fout === nothing
@@ -75,7 +75,7 @@ function waveguide_montecarlo(times,psi,H,J;fout=nothing,kwargs...)
         if time == tend
             return psi
         else
-            return psi
+            return 0
         end
     end
     if fout === nothing

@@ -1,5 +1,5 @@
 # WaveguideQED.jl
-<a href="https://mabuni1998.github.io/WaveguideQED.jl/dev/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> 
+<a href="https://qojulia.github.io/WaveguideQED.jl/dev/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> 
 <a href="https://codecov.io/gh/mabuni1998/WaveguideQED.jl"><img src="https://img.shields.io/codecov/c/gh/mabuni1998/WaveguideQED.jl?label=codecov" alt="Test coverage from codecov"></a>
 
 

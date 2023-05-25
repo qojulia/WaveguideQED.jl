@@ -140,7 +140,9 @@ function test_multiplewaveguides(b,Nw,idx,order,wda1,adw1)
     ξfun(t1) = 1
     psi = tensor([i == bw_idx ? onephoton(b.bases[i],idx,ξfun,times) : i==bc_idx ? fockstate(b.bases[i],1) : fockstate(b.bases[i],0) for i in 1:3]...)
     tmp = copy(psi)
+    tmp2 = copy(psi)
     
+
     testvec1 = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))   
 
     
@@ -155,8 +157,8 @@ function test_multiplewaveguides(b,Nw,idx,order,wda1,adw1)
         return false
     end
 
-    mul!(tmp,adw1,tmp,1,0)
-    one = OnePhotonView(tmp,idx,first_idx)
+    mul!(tmp2,adw1,tmp,1,0)
+    one = OnePhotonView(tmp2,idx,first_idx)
     if !isapprox(one,testvec2)
         return false
     end

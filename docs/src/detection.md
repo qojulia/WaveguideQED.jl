@@ -38,8 +38,8 @@ using QuantumOptics #hide
 times = 0:0.1:20
 bw = WaveguideBasis(1,times)
 ξfun(t,σ,t0) = complex(sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))
-waveguide_a = onephoton(bw,ξfun,times,1,10)
-waveguide_b = onephoton(bw,ξfun,times,1,10)
+waveguide_a = onephoton(bw,ξfun,1,10)
+waveguide_b = onephoton(bw,ξfun,1,10)
 wa = destroy(bw)
 wb = destroy(bw)
 nothing #hide
@@ -84,8 +84,8 @@ p_minus_plus = Dminus * Dplus * ψ_total
 As expected, the resulting probabilities are zero. If we instead displace the photons in time so that one is centered around $t = 5$ and another around $t = 15$ we get:
 
 ```@repl detection
-waveguide_a = onephoton(bw,ξfun,times,1,5);
-waveguide_b = onephoton(bw,ξfun,times,1,15);
+waveguide_a = onephoton(bw,ξfun,1,5);
+waveguide_b = onephoton(bw,ξfun,1,15);
 ψ_total = LazyTensorKet(waveguide_a,waveguide_b);
 p_plus_plus = Dplus * Dplus * ψ_total
 p_minus_minus = Dminus * Dminus * ψ_total

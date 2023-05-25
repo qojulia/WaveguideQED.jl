@@ -36,7 +36,7 @@ With this, we can now simulate the scattering of a single photon with a Gaussian
 ```@example tutorial
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 σ,t0 = 1,5
-ψ_waveguide = onephoton(bw,ξ,times,σ,t0)
+ψ_waveguide = onephoton(bw,ξ,σ,t0)
 nothing #hide
 ```
 

@@ -18,6 +18,7 @@ struct WaveguideIndexing{N}
     end
 end
 
+
 function WaveguideIndexing(b::Basis,loc)
     dims = b.shape
     alldims = [1:length(dims)...]
@@ -109,14 +110,18 @@ end
 function QuantumOpticsBase.:+(a::CavityWaveguideOperator,b::CavityWaveguideOperator)
     @assert a.basis_l == b.basis_l
     @assert a.basis_r == b.basis_r
-    LazySum(a,b)
+    LazySum(a) +LazySum(b)
 end
 function QuantumOpticsBase.:-(a::CavityWaveguideOperator,b::CavityWaveguideOperator)
     @assert a.basis_l == b.basis_l
     @assert a.basis_r == b.basis_r
-    LazySum([1,-1],[a,b])
+    LazySum(a) - LazySum(b) 
 end
-
+function QuantumOpticsBase.:-(a::CavityWaveguideOperator)
+    out = copy(a)
+    out.factor = -a.factor
+    return out
+end
 
 """
     absorption(b1::WaveguideBasis{T},b2::FockBasis) where T
@@ -225,10 +230,10 @@ end
 
 Return identityoperator(a.basis_l).
 """
-function QuantumOptics.identityoperator(a::CavityWaveguideOperator)
+function QuantumOpticsBase.identityoperator(a::CavityWaveguideOperator)
     identityoperator(a.basis_l)
 end
-function QuantumOptics.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:CavityWaveguideOperator}
+function QuantumOpticsBase.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:CavityWaveguideOperator}
     @assert b1==b2
     identityoperator(b1)
 end
@@ -339,7 +344,7 @@ function is_destroy(data,basis::CompositeBasis)
     for k = 1:N
         ind .= 0
         ind[k] = 1
-        if isequal(data,tensor([i == 0 ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+        if isequal(data,tensor([ (i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
             return k
         end
     end
@@ -351,7 +356,7 @@ function is_create(data,basis::CompositeBasis)
     for k = 1:N
         ind .= 0
         ind[k] = 1
-        if isequal(data,tensor([i == 0 ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+        if isequal(data,tensor([(i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
             return k
         end
     end
@@ -416,41 +421,62 @@ end
     
 Fast in-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a [`CavityWaveguideOperator`](@ref).
 """
+
 function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     dims = basis(result).shape
     i,j = a.loc[1],a.loc[2]
+    beta1 = beta
+    if iszero(beta)
+        fill!(result.data,beta)
+        beta1 = one(beta)
+    end
     if length(dims) == 2
-        loop_destroy_ax!(result.data,a,b.data,alpha,beta,a.indexing)
+        loop_destroy_ax!(result.data,a,b.data,alpha,beta1,a.indexing)
+        #=
         a.indexing.idx_vec1[j] = dims[j]
         li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
-        rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)            
+        if iszero(beta)
+            fill!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
+        elseif !isone(beta)
+            rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
+        end=#                        
     elseif length(dims) == 3
-        loop_destroy_third_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)     
+        loop_destroy_third_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1)     
         a.indexing.idx_vec1[j] = dims[j]
-        loop_rmul_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
+        loop_rmul_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1)
     else
-        iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_destroy_third_axis!)
+        iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_destroy_third_axis!)
         a.indexing.idx_vec1[j] = dims[j]
-        iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_rmul_axis!)
+        iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_rmul_axis!)
     end
     return result
 end
 function mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     dims = basis(result).shape
     i,j = a.loc[1],a.loc[2]
+    beta1 = beta
+    if iszero(beta)
+        fill!(result.data,beta)
+        beta1 = one(beta)
+    end
     if length(dims) == 2
-        loop_create_ax!(result.data,a,b.data,alpha,beta,a.indexing)
+        loop_create_ax!(result.data,a,b.data,alpha,beta1,a.indexing)
+        #=
         a.indexing.idx_vec1[j] = 1
         li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
-        rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)            
+        if iszero(beta)
+            fill!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
+        elseif !isone(beta)
+            rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
+        end=#         
     elseif length(dims) == 3
-        loop_create_third_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
+        loop_create_third_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1)
         a.indexing.idx_vec1[j] = 1
-        loop_rmul_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
+        #loop_rmul_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
     else
-        iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_create_third_axis!)
+        iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_create_third_axis!)
         a.indexing.idx_vec1[j] = 1
-        iterate_over_iter!(result.data,a,b.data,alpha,beta,a.indexing,1,loop_rmul_axis!)
+        iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_rmul_axis!)
     end
     return result
 end

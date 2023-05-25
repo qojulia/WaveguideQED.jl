@@ -134,12 +134,12 @@ set_waveguidetimeindex!(detector::Detector,index) = set_waveguidetimeindex!(dete
 
 function mul!(result::LazyTensorKet{B},detector::Detector{B},input::LazyTensorKet{B},alpha,beta) where {B}
     for i in eachindex(detector.operators)
-        mul!(result.kets[i],detector.operators[i],input.kets[i],alpha,beta)
+        mul!(result.kets[i],detector.operators[i],input.factor*input.kets[i],alpha,beta)
     end
 end
 function mul!(result::LazySumKet{B,F},detector::Detector{B},input::LazySumKet{B,F},alpha,beta) where {B,F}
     for i in eachindex(result.kets)
-        mul!(result.kets[i],detector,input.kets[i],alpha,beta)
+        mul!(result.kets[i],detector,input.kets[i],input.factors[i]*alpha,beta)
     end
 end
 function get_waveguide_operators(x::Detector)

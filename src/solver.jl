@@ -23,26 +23,29 @@ Integrate time-dependent Schroedinger equation to evolve states or compute propa
 """
 function waveguide_evolution(times,psi,H;fout=nothing)
     ops = get_waveguide_operators(H)
-    dt = times[2] - times[1]
-    tend = times[end]
-    nsteps = length(times)
+    dt = get_dt(H.basis_l)
+    nsteps = get_nsteps(H.basis_l)
+    #Note that dt is added to the last input time to ensure that  
+    tend = min(times[end],(nsteps)*dt)+dt
+    times_sim = 0:dt:tend
+    
     function get_hamiltonian(time,psi) 
-        tidx = min(round(Int,time/dt,RoundUp)+1,nsteps)
+        tidx = min(round(Int,time/dt,RoundDown) + 1,nsteps)
         set_waveguidetimeindex!(ops,tidx)
         return H
     end
     function eval_last_element(time,psi)
-        if time == tend
+        if time >= tend
             return psi
         else
             return 0
         end
     end
     if fout === nothing
-        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=eval_last_element)
+        tout, ψ = timeevolution.schroedinger_dynamic(times_sim, psi, get_hamiltonian,fout=eval_last_element;d_discontinuities=times_sim)
         return ψ[end]
     elseif fout == 1
-        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian)
+        tout, ψ = timeevolution.schroedinger_dynamic(times_sim, psi, get_hamiltonian;d_discontinuities=times_sim)
         return ψ 
     else
         function feval(time,psi)
@@ -52,8 +55,8 @@ function waveguide_evolution(times,psi,H;fout=nothing)
                 return (0,fout(time,psi)...)
             end
         end
-        tout, ψ = timeevolution.schroedinger_dynamic(times, psi, get_hamiltonian,fout=feval)
-        return (ψ[end][1], [[ψ[i][j] for i in 1:length(times)] for j in 2:length(ψ[1])]...)
+        tout, ψ = timeevolution.schroedinger_dynamic(times_sim, psi, get_hamiltonian,fout=feval;d_discontinuities=times_sim)
+        return (ψ[end][1], [[ψ[i][j] for i in 1:length(times_sim)-1] for j in 2:length(ψ[1])]...)
     end
 end
     

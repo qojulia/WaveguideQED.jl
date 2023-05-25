@@ -153,10 +153,10 @@ end
 
 Return identityoperator(a.basis_l).
 """
-function QuantumOptics.identityoperator(a::WaveguideOperator)
+function QuantumOpticsBase.identityoperator(a::WaveguideOperator)
     identityoperator(a.basis_l)
 end
-function QuantumOptics.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:WaveguideOperator}
+function QuantumOpticsBase.identityoperator(::Type{T}, b1::Basis, b2::Basis) where {T<:WaveguideOperator}
     @assert b1==b2
     identityoperator(b1)
 end
@@ -283,40 +283,49 @@ end
 
 #Destroy 1 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{B,B,1,idx},b,alpha,beta) where {B,idx}
-    if !isone(beta)
-        rmul!(result,beta)
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
     end
-    add_zerophoton_onephoton!(result,b,alpha*a.factor,a.timeindex+(idx-1)*a.basis_l.nsteps)
+    @inbounds result[1] += alpha*a.factor*b[a.timeindex+(idx-1)*a.basis_l.nsteps+1]
     return
 end
 #Destroy 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,1},b,alpha,beta) where {B<:SingleWaveguideBasis}
-    if !isone(beta)
-        rmul!(result,beta)
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
     end
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
-    add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex)
-    twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,nsteps+1)
-    axpy!(alpha*a.factor,twophotonview,view(result,2:1:nsteps+1))
+    @inbounds result[1] += alpha*a.factor*b[timeindex+1]
+    #twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,nsteps+1)
+    #axpy!(alpha*a.factor,twophotonview,view(result,2:1:nsteps+1))
+    twophoton_destroy!(view(result,2:1:nsteps+1),b,alpha*a.factor,timeindex,nsteps,nsteps+1)
     return
 end
 #Destroy 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,idx},b,alpha,beta) where {B<:MultipleWaveguideBasis,idx}
-    if !isone(beta)
-        rmul!(result,beta)
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
     end
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
     Nw  = get_number_of_waveguides(a.basis_l)
-    add_zerophoton_onephoton!(result,b,alpha*a.factor,timeindex+(idx-1)*nsteps)
-    twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
-    axpy!(alpha*a.factor,twophotonview,view(result,2+(idx-1)*nsteps:1:idx*nsteps+1))
-    @simd for k in filter(x -> x != idx, 1:Nw)
+    @inbounds result[1] += alpha*a.factor*b[timeindex+(idx-1)*a.basis_l.nsteps+1]
+    #twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
+    #axpy!(alpha*a.factor,twophotonview,view(result,2+(idx-1)*nsteps:1:idx*nsteps+1))
+    twophoton_destroy!(view(result,2+(idx-1)*nsteps:1:idx*nsteps+1),b,alpha*a.factor,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
+    for k in filter(x -> x != idx, 1:Nw)
         i,j = min(k,idx),max(k,idx)
         index = (i-1)*Nw + j - (i*(i+1))÷2
-        twophotonview = TwoWaveguideTimestepView(b,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
-        axpy!(alpha*a.factor,twophotonview,view(result,2+(k-1)*nsteps:1:k*nsteps+1))
+        #twophotonview = TwoWaveguideTimestepView(b,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
+        #axpy!(alpha*a.factor,twophotonview,view(result,2+(k-1)*nsteps:1:k*nsteps+1))
+        twowaveguide_destroy!(view(result,2+(k-1)*nsteps:1:k*nsteps+1),b,alpha*a.factor,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
     end
     return
 end
@@ -324,53 +333,105 @@ end
 
 #Create 1 waveguide photon 
 function waveguide_mul!(result,a::WaveguideCreate{B,B,1,idx},b,alpha,beta) where {B,idx}
-    if !isone(beta)
-        rmul!(result,beta)
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
     end
-    add_onephoton_zerophoton!(result,b,alpha*a.factor,a.timeindex+(idx-1)*a.basis_l.nsteps)
+    @inbounds result[a.timeindex+(idx-1)*a.basis_l.nsteps+1] += alpha*a.factor*b[1]
     return
 end
 #Create 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideCreate{B,B,2,1},b,alpha,beta) where {B<:SingleWaveguideBasis}
-    if !isone(beta)
-        rmul!(result,beta)
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
     end
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
-    add_onephoton_zerophoton!(result,b,alpha*a.factor,timeindex)
-    twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,nsteps+1)
-    axpy!(alpha*a.factor,view(b,2:1:nsteps+1),twophotonview)
+    @inbounds result[timeindex+1] += alpha*a.factor*b[1]
+    #twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,nsteps+1)
+    #axpy!(alpha*a.factor,view(b,2:1:nsteps+1),twophotonview)
+    twophoton_create!(result,view(b,2:1:nsteps+1),alpha*a.factor,timeindex,nsteps,nsteps+1)
     return
 end
 #Create 2 waveguide photon
 function waveguide_mul!(result,a::WaveguideCreate{B,B,2,idx},b,alpha,beta) where {B<:MultipleWaveguideBasis,idx}
-    if !isone(beta)
-        rmul!(result,beta)
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
     end
     timeindex = a.timeindex
     nsteps = a.basis_l.nsteps
     Nw  = get_number_of_waveguides(a.basis_l)
-    add_onephoton_zerophoton!(result,b,alpha*a.factor,timeindex+(idx-1)*nsteps)
-    twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
-    axpy!(alpha*a.factor,view(b,2+(idx-1)*nsteps:1:idx*nsteps+1),twophotonview)
+    @inbounds result[timeindex+(idx-1)*a.basis_l.nsteps+1] += alpha*a.factor*b[1]
+    #twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
+    #axpy!(alpha*a.factor,view(b,2+(idx-1)*nsteps:1:idx*nsteps+1),twophotonview)
+    twophoton_create!(result,view(b,2+(idx-1)*nsteps:1:idx*nsteps+1),alpha*a.factor,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
     @simd for k in filter(x -> x != idx, 1:Nw)
         i,j = min(k,idx),max(k,idx)
         index = (i-1)*Nw + j - (i*(i+1))÷2
-        twophotonview = TwoWaveguideTimestepView(result,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
-        axpy!(alpha*a.factor,view(b,2+(k-1)*nsteps:1:k*nsteps+1),twophotonview)
+        #twophotonview = TwoWaveguideTimestepView(result,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
+        #axpy!(alpha*a.factor,view(b,2+(k-1)*nsteps:1:k*nsteps+1),twophotonview)
+        twowaveguide_create!(result,view(b,2+(k-1)*nsteps:1:k*nsteps+1),alpha*a.factor,timeindex,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx)
     end
     return
 end
 
-
-
-
-function add_zerophoton_onephoton!(a,b,alpha,timeindex::Int)
-    a[1] += alpha*b[timeindex+1]
+function twophoton_create!(result,b,alpha,timeindex,nsteps,offset)
+    @simd for i in 1:timeindex-1
+        @inbounds result[offset + twophoton_index(i,nsteps,timeindex)] += alpha*b[i] 
+    end
+    @simd for i in timeindex+1:lastindex(b)
+        @inbounds result[offset + twophoton_index(timeindex,nsteps,i)] += alpha*b[i] 
+    end
+    @inbounds result[offset + twophoton_index(timeindex,nsteps,timeindex)] += sqrt(2)*alpha*b[timeindex]
+end
+function twophoton_destroy!(result,b,alpha,timeindex,nsteps,offset)
+    @simd for i in 1:timeindex-1
+        @inbounds result[i]  += alpha*b[offset + twophoton_index(i,nsteps,timeindex)]
+    end
+    @simd for i in timeindex+1:lastindex(result)
+        @inbounds result[i]  += alpha*b[offset + twophoton_index(timeindex,nsteps,i)]
+    end
+    @inbounds result[timeindex] += sqrt(2)*alpha*b[offset + twophoton_index(timeindex,nsteps,timeindex)]
 end
 
-function add_onephoton_zerophoton!(a,b,alpha,timeindex::Int)
-    a[1+timeindex] += alpha*b[1]
+function twowaveguide_create!(result,b,alpha,timeindex,nsteps,offset,order)
+    if order
+        @simd for i in eachindex(b)
+            @inbounds result[offset + (i-1)*nsteps + timeindex] += alpha*b[i] 
+        end
+    else
+        @simd for i in eachindex(b)
+            @inbounds result[offset + (timeindex-1)*nsteps + i] += alpha*b[i] 
+        end
+    end
+end
+function twowaveguide_destroy!(result,b,alpha,timeindex,nsteps,offset,order)
+    if order
+        @simd for i in eachindex(result)
+            @inbounds result[i]  += alpha*b[offset + (i-1)*nsteps + timeindex]
+        end
+    else
+        @simd for i in eachindex(result)
+            @inbounds result[i]  += alpha*b[offset + (timeindex-1)*nsteps + i]
+        end
+    end
+end
+
+
+
+
+
+@inline function add_zerophoton_onephoton!(a,b,alpha,timeindex::Int)
+    @inbounds a[1] += alpha*b[timeindex+1]
+end
+
+@inline function add_onephoton_zerophoton!(a,b,alpha,timeindex::Int)
+    @inbounds a[1+timeindex] += alpha*b[1]
 end
 
 function add_twophoton_onephoton!(a,b,alpha)

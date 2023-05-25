@@ -67,16 +67,12 @@ end
 
 
 function QuantumOpticsBase.:⊗(a::Operator,b::LazyProduct)
-    btotal_l = a.basis_l ⊗ b.basis_l
-    btotal_r = a.basis_r ⊗ b.basis_r
-    ops = ([a ⊗ op op in b.operators]...,)
-    LazyProduct(btotal_l,btotal_r,b.factor,ops)
+    ops = ([a ⊗ op for op in b.operators]...,)
+    LazyProduct(ops,b.factor)
 end
 function QuantumOpticsBase.:⊗(a::LazyProduct,b::Operator)
-    btotal_l = a.basis_l ⊗ b.basis_l
-    btotal_r = a.basis_r ⊗ b.basis_r
-    ops = ([op ⊗ b op in a.operators]...,)
-    LazyProduct(btotal_l,btotal_r,a.factor,ops)
+    ops = ([op ⊗ b for op in a.operators]...,)
+    LazyProduct(ops,a.factor)
 end
 
 function QuantumOpticsBase.:⊗(a::AbstractOperator,b::LazyTensor)

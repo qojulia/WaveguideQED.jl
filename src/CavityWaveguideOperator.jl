@@ -3,6 +3,7 @@ Abstract type used for operators on acting on a combined [`WaveguideBasis`](@ref
 """
 abstract type  CavityWaveguideOperator{BL,BR} <: AbstractOperator{BL,BR} end
 
+#TO DO: CLEAN UP
 #Indexing structure used to loop over state. Needs cleanup and can possible be removed with the addition of eachslice(a,dims=(1,3,...)) in julia 1.9
 struct WaveguideIndexing{N}
     ndims::Int
@@ -17,8 +18,6 @@ struct WaveguideIndexing{N}
         new{length(iter)}(length(strides),k_idx,end_idx,strides,idx_vec1,idx_vec2,range_idx,iter)
     end
 end
-
-
 function WaveguideIndexing(b::Basis,loc)
     dims = b.shape
     alldims = [1:length(dims)...]
@@ -414,14 +413,14 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
 end
 
 
-
+#TO DO: CLEAN UP
+#Currently indexing is very complicated using the CavityIndexing structure and could possible be done smoother and faster.
 """
     mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     
 Fast in-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a [`CavityWaveguideOperator`](@ref).
 """
-
 function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     dims = basis(result).shape
     i,j = a.loc[1],a.loc[2]
@@ -431,15 +430,7 @@ function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, be
         beta1 = one(beta)
     end
     if length(dims) == 2
-        loop_destroy_ax!(result.data,a,b.data,alpha,beta1,a.indexing)
-        #=
-        a.indexing.idx_vec1[j] = dims[j]
-        li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
-        if iszero(beta)
-            fill!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
-        elseif !isone(beta)
-            rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
-        end=#                        
+        loop_destroy_ax!(result.data,a,b.data,alpha,beta1,a.indexing)                     
     elseif length(dims) == 3
         loop_destroy_third_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1)     
         a.indexing.idx_vec1[j] = dims[j]
@@ -460,19 +451,10 @@ function mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, 
         beta1 = one(beta)
     end
     if length(dims) == 2
-        loop_create_ax!(result.data,a,b.data,alpha,beta1,a.indexing)
-        #=
-        a.indexing.idx_vec1[j] = 1
-        li1 = linear_index(a.indexing.ndims,a.indexing.idx_vec1,a.indexing.strides)
-        if iszero(beta)
-            fill!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
-        elseif !isone(beta)
-            rmul!(view(result.data,li1:a.indexing.strides[a.loc[1]]:li1+(a.indexing.end_idx-1)*a.indexing.strides[a.loc[1]]),beta)
-        end=#         
+        loop_create_ax!(result.data,a,b.data,alpha,beta1,a.indexing)      
     elseif length(dims) == 3
         loop_create_third_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1)
         a.indexing.idx_vec1[j] = 1
-        #loop_rmul_axis!(result.data,a,b.data,alpha,beta,a.indexing,1)
     else
         iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_create_third_axis!)
         a.indexing.idx_vec1[j] = 1

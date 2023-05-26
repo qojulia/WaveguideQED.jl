@@ -15,8 +15,9 @@ UnsafeArrays = "c4a57d5a-5b31-53a6-b365-19f8c011fbd6"
 
 [compat]
 Parameters = "0.12"
+PrecompileTools = "1"
 QuantumOptics = "1"
 QuantumOpticsBase = "0.3.9"
-Strided = "1.2"
+Strided = "1,2"
 UnsafeArrays = "1"
 julia = "1.8"

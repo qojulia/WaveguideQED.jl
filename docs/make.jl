@@ -24,7 +24,7 @@ pages = [
 "multiplewaveguides.md",
 "Examples" => ["Scattering on two level system" => "example_lodahl.md"],
 "API" => "API.md",
-"References" => "references.md",
+"References and suggested readings" => "references.md",
 ]
 )
 

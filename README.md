@@ -1,12 +1,12 @@
 # WaveguideQED.jl
 <a href="https://qojulia.github.io/WaveguideQED.jl/dev/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Documentation of latest stable version"></a> 
-<a href="https://codecov.io/gh/mabuni1998/WaveguideQED.jl"><img src="https://img.shields.io/codecov/c/gh/mabuni1998/WaveguideQED.jl?label=codecov" alt="Test coverage from codecov"></a>
+<a href="https://codecov.io/gh/qojulia/WaveguideQED.jl"><img src="https://img.shields.io/codecov/c/gh/qojulia/WaveguideQED.jl?label=codecov" alt="Test coverage from codecov"></a>
 
 
-A julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). Package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where basises and operators from WaveguideQED.jl can be used together with operators and basises from QuantumOpics.jl. 
+A Julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). The package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where bases and operators from WaveguideQED.jl can be used together with operators and bases from QuantumOpics.jl. 
 
 ### Example of usage:
-Define a waveguide basis, containing a two photon wavepacket for a time interval 0 to 20 with 0.2 timesteps:
+Define a waveguide basis, containing a two-photon wavepacket for a time interval from 0 to 20 with timesteps of 0.2:
 
 
 ```julia
@@ -32,7 +32,7 @@ wda = a ⊗ wd
 adw = ad ⊗ w
 ```
 
-Finally, we can define an initial twophoton gaussian wavepacket state with view_twophoton and zero photons in the cavity, an Hamiltonian, and simulate the evolution:
+Finally, we can define an initial two-photon Gaussian wavepacket state with view_twophoton and zero photons in the cavity, a Hamiltonian, and simulate the evolution:
 
 
 ```julia
@@ -44,7 +44,7 @@ H = im*sqrt(1/dt)*(adw-wda)
 ψ = waveguide_evolution(times, psi, H)
 ```
 
-Plotting the twophoton state is also simple:
+Plotting the two-photon state is also simple:
 
 
 ```julia

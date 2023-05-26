@@ -93,7 +93,7 @@ end
 nothing #hide
 ```
 
-Finally, we can plot the scattered wavefunctions, and we note that this matches Fig. 3 in Ref. ^[1]:
+Finally, we can plot the scattered wavefunctions, and we note that this matches Fig. 3 in Ref.[^1]:
 
 ```@example lodahl
 using PyPlot; #hide

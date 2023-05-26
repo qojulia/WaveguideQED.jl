@@ -174,12 +174,27 @@ function mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, be
     b_data = Base.ReshapedArray(b.data, QuantumOpticsBase._comp_size(basis(b)), ())
     result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
 
-    tp_ops = (tuple(( (isa(op,DataOperator) ? op.data : op) for op in a.operators)...), a.indices)
-    iso_ops = QuantumOpticsBase._explicit_isometries(a.indices, a.basis_l, a.basis_r)
+    tp_ops = QuantumOpticsBase._tpops_tuple(a)
+    iso_ops = QuantumOpticsBase._explicit_isometries(eltype(a), a.indices, a.basis_l, a.basis_r)
 
     QuantumOpticsBase._tp_sum_matmul!(result_data, tp_ops, iso_ops, b_data, alpha * a.factor, beta)
     result
 end
+
+function QuantumOpticsBase._tpops_tuple(a::LazyTensor{B1,B2,F,I,T}; shift=0, op_transform=identity)  where {B1<:Basis,B2<:Basis, F,I,T<:Tuple{Vararg{AbstractOperator}}}
+    length(a.operators) == 0 == length(a.indices) && return ()
+    op_pairs = tuple((((isa(op,DataOperator) ? op_transform(op.data) : op_transform(op)), i + shift) for (op, i) in zip(a.operators, a.indices))...)
+
+    # Filter out identities:
+    # This induces a non-trivial cost only if _is_square_eye is not inferrable.
+    # This happens if we have Eyes that are not SquareEyes.
+    # This can happen if the user constructs LazyTensor operators including
+    # explicit identityoperator(b,b).
+    filtered = filter(p->!QuantumOpticsBase._is_square_eye(p[1]), op_pairs)
+    return filtered
+end
+QuantumOpticsBase._is_square_eye(a::AbstractOperator) = false
+
 
 #Called from _tp_sum_matmul!
 #Makes sure operator works on correct part of tensor.

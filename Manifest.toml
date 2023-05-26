@@ -2,7 +2,7 @@
 
 julia_version = "1.9.0"
 manifest_format = "2.0"
-project_hash = "223688a101f8a9d7186d2b2c1de1b4a7a04b14df"
+project_hash = "4dde56137bf92cdd4b71288bb369d001941db81e"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -780,15 +780,15 @@ version = "0.1.0"
 
 [[deps.QuantumOptics]]
 deps = ["Arpack", "DiffEqBase", "DiffEqCallbacks", "FFTW", "ForwardDiff", "IterativeSolvers", "LinearAlgebra", "LinearMaps", "OrdinaryDiffEq", "QuantumOpticsBase", "Random", "RecursiveArrayTools", "Reexport", "SparseArrays", "StochasticDiffEq", "WignerSymbols"]
-git-tree-sha1 = "81d7cf56eddb8b7c6b65c9da638d10bf2f10d7c2"
+git-tree-sha1 = "ff110fa403b1cd68b97527e42fb1333ab0b67969"
 uuid = "6e0679c1-51ea-5a7c-ac74-d61b76210b0c"
-version = "1.0.9"
+version = "1.0.10"
 
 [[deps.QuantumOpticsBase]]
-deps = ["Adapt", "FFTW", "LRUCache", "LinearAlgebra", "QuantumInterface", "Random", "SparseArrays", "Strided", "UnsafeArrays"]
-git-tree-sha1 = "c0fe25d57ffe78ec8a56f831e1631d448e5973d0"
+deps = ["Adapt", "FFTW", "FillArrays", "LRUCache", "LinearAlgebra", "QuantumInterface", "Random", "SparseArrays", "Strided", "UnsafeArrays"]
+git-tree-sha1 = "0d916919aa637558cc8e146dfaffa60130219db7"
 uuid = "4f57444f-1401-5e15-980d-4471b28d5678"
-version = "0.3.12"
+version = "0.4.0"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]

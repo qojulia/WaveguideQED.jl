@@ -724,6 +724,7 @@ end
 - `norm::Bool=true`: normalize the resulting wavepacket.
 """
 twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Matrix;norm=true) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,norm=norm)
+twophoton(b::WaveguideBasis{1,Nw},args...;norm=true) where {Nw} = throw(ArgumentError("The input basis b only contains onephoton and I can't create twophotons. Create a new basis containing two-photons using WaveguideBasis(2,times)"))
 
 """
     twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Function,times,args...;norm=true) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,times,args...,norm=norm)

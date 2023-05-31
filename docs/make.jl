@@ -29,5 +29,5 @@ pages = [
 )
 
 deploydocs(
-    repo = "github.com/mabuni1998/WaveguideQED.jl.git"
+    repo = "github.com/qojulia/WaveguideQED.jl.git"
 )

@@ -37,7 +37,7 @@ Finally, we can define an initial two-photon Gaussian wavepacket state with view
 
 ```julia
 ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
-ψ_cw = twophoton(bw,ξfun,times,1,1,5)
+ψ_cw = twophoton(bw,ξfun,1,1,5)
 psi = fockstate(bc,0) ⊗ ψ_cw
 dt = times[2] - times[1]
 H = im*sqrt(1/dt)*(adw-wda)

@@ -58,8 +58,8 @@ We can now study how single or two-photon states scatter on the atom. We define 
 ξ₂(t1,t2,σ1,σ2,t0) = ξ₁(t1,σ1,t0) * ξ₁(t2,σ2,t0) 
 w = 1
 t0 = 5
-ψ1 = onephoton(bw,1,ξ₁,times,w,t0) ⊗ fockstate(be,0)
-ψ2 = twophoton(bw,1,ξ₂,times,w,w,t0) ⊗ fockstate(be,0)
+ψ1 = onephoton(bw,1,ξ₁,w,t0) ⊗ fockstate(be,0)
+ψ2 = twophoton(bw,1,ξ₂,w,w,t0) ⊗ fockstate(be,0)
 ψScat1 = waveguide_evolution(times,ψ1,H)
 ψScat2 = waveguide_evolution(times,ψ2,H)
 nothing #hide
@@ -93,7 +93,7 @@ end
 nothing #hide
 ```
 
-Finally, we can plot the scattered wavefunctions, and we note that this matches Fig. 3 in Ref. ^[1]:
+Finally, we can plot the scattered wavefunctions, and we note that this matches Fig. 3 in Ref.[^1]:
 
 ```@example lodahl
 using PyPlot; #hide

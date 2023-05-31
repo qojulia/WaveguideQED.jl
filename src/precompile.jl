@@ -22,6 +22,7 @@ function _precompile_()
     ξvec = ξfun.(times,1,5)
 
     ψ_cw = onephoton(bw,ξvec)
+    ψ_cw = onephoton(bw,ξfun,1,5)
     psi = fockstate(bc,0) ⊗  ψ_cw 
 
     #Run solvers.
@@ -67,15 +68,10 @@ function apply_all_op(oplist)
     end
 end
 
-using SnoopPrecompile
+using PrecompileTools
 
-# precompilation causes allocation performance bugs for <v1.8 https://github.com/JuliaLang/julia/issues/35972
-VERSION > v"1.8" && @precompile_setup begin
-    # Putting some things in `setup` can reduce the size of the
-    # precompile file and potentially make loading faster.
-    @precompile_all_calls begin
-        # all calls in this block will be precompiled, regardless of whether
-        # they belong to your package or not (on Julia 1.8 and higher)
+@setup_workload begin
+    @compile_workload begin
         _precompile_()
     end
 end

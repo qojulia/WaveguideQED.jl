@@ -12,10 +12,10 @@ bw = sys.bw
 be = sys.be
 
 ξfun(t,σ,t0) = complex(sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))
-psi_a_1 = onephoton(bw,ξfun,param.times,1,15) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,1)
+psi_a_1 = onephoton(bw,ξfun,1,15) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,1)
 psi_b_1 = zerophoton(bw) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,2)
 psi_a_2 = zerophoton(bw) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,2)
-psi_b_2 = onephoton(bw,ξfun,param.times,1,15) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,1)
+psi_b_2 = onephoton(bw,ξfun,1,15) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,1)
 proj_up = zerophoton(bw) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,2)
 proj_down = zerophoton(bw) ⊗ fockstate(bc,0) ⊗ nlevelstate(be,1)
 

@@ -1,3 +1,38 @@
+#=
+#Indexing structure used to loop over state. Needs cleanup and can possible be removed with the addition of eachslice(a,dims=(1,3,...)) in julia 1.9
+struct WaveguideStride
+    looplength::Int
+    arraylength::Int
+    s1::Int
+    s2::Int
+end
+
+function WaveguideStride(b::Basis,loc)
+    dims = b.shape
+    alldims = [1:length(dims)...]
+    i = loc[1]
+    exclude_dims = [i]
+    otherdims = setdiff(alldims, exclude_dims)
+    looplength = prod(dims[otherdims])
+    arraylength = dims[i]
+    
+    s1 = 1
+    s2 = 1
+    for k in 1:i-1
+        s1 *= dims[k]
+    end
+    for k in 1:i
+        s2 *= dims[k]
+    end
+    return WaveguideStride(looplength,arraylength,s1,s2)
+end
+    st::WaveguideStride
+    function WaveguideInteraction(basis_l::B1,basis_r::B2,factor::ComplexF64,op1::AbstractOperator,op2::AbstractOperator,loc) where{B1,B2}
+        new{B1,B2}(basis_l,basis_r,factor,op1,op2,loc,WaveguideStride(basis_l,loc))
+    end
+
+=#
+
 mutable struct WaveguideInteraction{B1,B2} <: AbstractOperator{B1,B2}
     basis_l::B1
     basis_r::B2
@@ -30,12 +65,12 @@ Base.:*(b::WaveguideInteraction,a::Number)=*(a,b)
 function QuantumOpticsBase.:+(a::WaveguideInteraction,b::WaveguideInteraction)
     @assert a.basis_l == b.basis_l
     @assert a.basis_r == b.basis_r
-    LazySum(a,b)
+    LazySum(a) + LazySum(b)
 end
 function QuantumOpticsBase.:-(a::WaveguideInteraction,b::WaveguideInteraction)
     @assert a.basis_l == b.basis_l
     @assert a.basis_r == b.basis_r
-    LazySum([1,-1],[a,b])
+    LazySum(a) -  LazySum(b)
 end
 
 function set_waveguidetimeindex!(op::WaveguideInteraction,timeindex)
@@ -67,7 +102,6 @@ end
 
 function mul!(result::Ket{B1}, a::WaveguideInteraction{B1,B2}, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
     dims = basis(result).shape
-    
     alldims = [1:length(dims)...]
     i = a.loc[1]
     exclude_dims = [i]
@@ -89,9 +123,22 @@ function mul!(result::Ket{B1}, a::WaveguideInteraction{B1,B2}, b::Ket{B2}, alpha
         end_idx = dims[i]
         waveguide_interaction_mul!(view(result.data,li1:stride:li1+(end_idx-1)*stride),a.op1,a.op2,view(b.data,li1:stride:li1+(end_idx-1)*stride),alpha,beta)            
     else
-        iterate_over_interaction!(result.data,b.data,a,a.factor*alpha,beta,iter,idx_vec1,range_idx,1,stride,dims[i],dims)
+        iterate_over_interaction!(result.data,b.data,a,alpha,beta,iter,idx_vec1,range_idx,1,stride,dims[i],dims)
     end
+    #=
+    #println(a.st.looplength)
+    #println(a.st.arraylength)
+    #println(a.st.s1)
+    #println(a.st.s2)
 
+    for i in 1:a.st.looplength
+        idx = 1+(i-1)*a.st.s2
+        println(idx)
+        #println(idx+(a.st.arraylength-1)*a.st.s2)
+        #println(length(view(result.data,idx:a.st.s1:idx+(a.st.arraylength)*a.st.s1-1)))
+        waveguide_interaction_mul!(view(result.data,idx:a.st.s1:idx+(a.st.arraylength-1)*a.st.s1),a.op1,a.op2,view(b.data,idx:a.st.s1:idx+(a.st.arraylength-1)*a.st.s1),alpha*a.factor,beta)    
+    end
+    =#
     return result
 end
 
@@ -101,7 +148,7 @@ function iterate_over_interaction!(result,b,a,alpha,beta,iter::Tuple,idx_vec1,ra
             @inbounds idx_vec1[range_idx[idx]] = i
             li1 = linear_index(dims,idx_vec1)
             @uviews result b begin
-            waveguide_interaction_mul!(view(result,li1:stride:li1+(end_idx-1)*stride),a.op1,a.op2,view(b,li1:stride:li1+(end_idx-1)*stride),alpha,beta)            
+            waveguide_interaction_mul!(view(result,li1:stride:li1+(end_idx-1)*stride),a.op1,a.op2,view(b,li1:stride:li1+(end_idx-1)*stride),alpha*a.factor,beta)            
             end
         end
     else
@@ -116,10 +163,12 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,1,idx1},bop:
     if !isone(beta)
         rmul!(result,beta)
     end
-    timeindex = a.timeindex
+    timeindex_a = a.timeindex
+    timeindex_b = bop.timeindex
     nsteps = a.basis_l.nsteps
-    
-    @inbounds result[1+(idx1-1)*nsteps+timeindex] += alpha*a.factor*bop.factor*b[1+(idx2-1)*nsteps+timeindex] 
+    if timeindex_a>0 && timeindex_b>0
+        @inbounds result[1+(idx1-1)*nsteps+timeindex_a] += alpha*a.factor*bop.factor*b[1+(idx2-1)*nsteps+timeindex_b] 
+    end
     result
 end
 

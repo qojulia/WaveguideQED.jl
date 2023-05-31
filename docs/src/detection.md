@@ -26,7 +26,7 @@ $$\begin{align*}
 &= \frac{1}{2} \left ( W_c^\dagger(\xi_a) W_c^\dagger(\xi_b) \ket{0}_c - W_d^\dagger(\xi_a) W_d^\dagger(\xi_b) \ket{0}_d + \int_{t_0}^{t_{end}} \mathrm{d}t \int_{t_0}^{t_{end}} \mathrm{d}t' \left [ \xi_a(t)\xi_b(t') - \xi_a(t')\xi_b(t) \right] \ket{1}_c\ket{1}_d \right)
 \end{align*}$$
 
-where we introduced $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d} = int_{t_0}^{t_{end}} \mathrm{d}t \int_{t_0}^{t_{end}} \mathrm{d}t' \xi_a(t)\xi_b(t') w_{c/d}^\dagger(t) w_{c/d}^\dagger(t') \ket{0}_{c/d}$$. $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d}$$ thus corresponds to both photons going into the same direction. It is also evident that if $$\xi_a(t)\xi_b(t') - \xi_a(t')\xi_b(t) \right = 0$$ then we will have no photons in waveguide c and d simultaneously. This condition is exactly fulfilled if the photon in waveguide a is indistinguishable from the photon in waveguide b. This also means that if the photons ARE distinguishable, we will start to see photon occurring in waveguide c and d simultaneously. All this and more can be simulated in the code, and in the next section, we walk through how to set the above example up in the code.
+where we introduced $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d} = int_{t_0}^{t_{end}} \mathrm{d}t \int_{t_0}^{t_{end}} \mathrm{d}t' \xi_a(t)\xi_b(t') w_{c/d}^\dagger(t) w_{c/d}^\dagger(t') \ket{0}_{c/d}$$. $$W_{c/d}^\dagger(\xi_a) W_{c/d}^\dagger(\xi_b) \ket{0}_{c/d}$$ thus corresponds to both photons going into the same direction. It is also evident that if $$\xi_a(t)\xi_b(t') - \xi_a(t')\xi_b(t) = 0$$ then we will have no photons in waveguide c and d simultaneously. This condition is exactly fulfilled if the photon in waveguide a is indistinguishable from the photon in waveguide b. This also means that if the photons ARE distinguishable, we will start to see photons occurring in waveguides c and d simultaneously. All this and more can be simulated in the code, and in the next section, we walk through how to set the above example up in the code.
 
 ## Beamsplitter and detection in WaveguideQED.jl
 
@@ -38,8 +38,8 @@ using QuantumOptics #hide
 times = 0:0.1:20
 bw = WaveguideBasis(1,times)
 ξfun(t,σ,t0) = complex(sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))
-waveguide_a = onephoton(bw,ξfun,times,1,10)
-waveguide_b = onephoton(bw,ξfun,times,1,10)
+waveguide_a = onephoton(bw,ξfun,1,10)
+waveguide_b = onephoton(bw,ξfun,1,10)
 wa = destroy(bw)
 wb = destroy(bw)
 nothing #hide
@@ -60,7 +60,7 @@ Dminus = Detector(wa/sqrt(2),-wb/sqrt(2))
 nothing #hide
 ``` 
 
-The [`Detector`](@ref) applies the first operator (`wa/sqrt(2)`) to the first `Ket` in LazyTensorKet (`waveguide_a`) and the second operator (L`$\pm$ wb/sqrt(2)`) to the second `Ket` in `LazyTensorKet` (waveguide_b). The probability of detecting a photon in the detectors can then be calculated by:
+The [`Detector`](@ref) applies the first operator (`wa/sqrt(2)`) to the first `Ket` in LazyTensorKet (`waveguide_a`) and the second operator ($$\pm $$ `wb/sqrt(2)`) to the second `Ket` in `LazyTensorKet` (waveguide_b). The probability of detecting a photon in the detectors can then be calculated by:
 
 ```@repl detection
 p_plus = Dplus * ψ_total
@@ -84,8 +84,8 @@ p_minus_plus = Dminus * Dplus * ψ_total
 As expected, the resulting probabilities are zero. If we instead displace the photons in time so that one is centered around $t = 5$ and another around $t = 15$ we get:
 
 ```@repl detection
-waveguide_a = onephoton(bw,ξfun,times,1,5);
-waveguide_b = onephoton(bw,ξfun,times,1,15);
+waveguide_a = onephoton(bw,ξfun,1,5);
+waveguide_b = onephoton(bw,ξfun,1,15);
 ψ_total = LazyTensorKet(waveguide_a,waveguide_b);
 p_plus_plus = Dplus * Dplus * ψ_total
 p_minus_minus = Dminus * Dminus * ψ_total

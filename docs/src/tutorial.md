@@ -18,7 +18,7 @@ bc = FockBasis(1)
 nothing #hide
 ```
 
-Next, we want to create the Hamiltonian for the system. The interaction between the waveguide and cavity is at timestep k given by[^1] $$H_k = i \hbar \sqrt{\gamma / \Delta t}( a^\dagger w_k - a w_k^\dagger)$$, where $$a$$ ($$a^\dagger$$) is the cavity annihilation (creation) operator, $$w_k$$($$w_k^\dagger$$) is the waveguide annihilation (creation) operator, $$\gamma$$ is the leakage rate of the cavity, and `\Delta t = times[2]-times[1]` is the width of the time-bin. `WaveguideQED.jl` follows the same syntax as [`QuantumOptics.jl`](https://qojulia.org/), and operators are defined from a basis. Operators of different Hilbert spaces are then combined using ⊗ (``\otimes``) or `tensor`:
+Next, we want to create the Hamiltonian for the system. The interaction between the waveguide and cavity is at timestep k given by[^1] $$H_k = i \hbar \sqrt{\gamma / \Delta t}( a^\dagger w_k - a w_k^\dagger)$$, where $$a$$ ($$a^\dagger$$) is the cavity annihilation (creation) operator, $$w_k$$($$w_k^\dagger$$) is the waveguide annihilation (creation) operator, $$\gamma$$ is the leakage rate of the cavity, and $$\Delta t = \mathrm{times[2]}-\mathrm{times[1]}$$ is the width of the time-bin. `WaveguideQED.jl` follows the same syntax as [`QuantumOptics.jl`](https://qojulia.org/), and operators are defined from a basis. Operators of different Hilbert spaces are then combined using ⊗ (`\otimes`) or `tensor`:
 
 ```@example tutorial
 a = destroy(bc)
@@ -36,7 +36,7 @@ With this, we can now simulate the scattering of a single photon with a Gaussian
 ```@example tutorial
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 σ,t0 = 1,5
-ψ_waveguide = onephoton(bw,ξ,times,σ,t0)
+ψ_waveguide = onephoton(bw,ξ,σ,t0)
 nothing #hide
 ```
 
@@ -77,7 +77,7 @@ nothing #hide
 ```
 ![alt text](scat_onephoton.svg)
 
-We see that the wavefunction has changed after the interaction with the cavity. More specifically, we see how the pulse gets absorbed into the cavity leading and a corresponding phase change of the wave. This phase change also leads to destructive interference between the photon being emitted from the cavity and the reflection of the incoming photon. This leads to a dip in the photon wavefunction after the interaction.
+We see that the wavefunction has changed after the interaction with the cavity. More specifically, we see how the pulse gets absorbed into the cavity leading to a phase change in the wavefunction. This phase change also leads to destructive interference between the photon being emitted from the cavity and the reflection of the incoming photon. This leads to a dip in the photon wavefunction after the interaction.
 
 ## Expectation values
 

@@ -138,9 +138,11 @@ function test_multiplewaveguides(b,Nw,idx,order,wda1,adw1)
     nsteps = length(times)
     dt = times[2] - times[1]
     ξfun(t1) = 1
-    psi = tensor([i == bw_idx ? onephoton(b.bases[i],idx,ξfun,times) : i==bc_idx ? fockstate(b.bases[i],1) : fockstate(b.bases[i],0) for i in 1:3]...)
+    psi = tensor([i == bw_idx ? onephoton(b.bases[i],idx,ξfun) : i==bc_idx ? fockstate(b.bases[i],1) : fockstate(b.bases[i],0) for i in 1:3]...)
     tmp = copy(psi)
+    tmp2 = copy(psi)
     
+
     testvec1 = ones(nsteps) .* 1/sqrt(get_nsteps(psi.basis))   
 
     
@@ -155,8 +157,8 @@ function test_multiplewaveguides(b,Nw,idx,order,wda1,adw1)
         return false
     end
 
-    mul!(tmp,adw1,tmp,1,0)
-    one = OnePhotonView(tmp,idx,first_idx)
+    mul!(tmp2,adw1,tmp,1,0)
+    one = OnePhotonView(tmp2,idx,first_idx)
     if !isapprox(one,testvec2)
         return false
     end
@@ -170,7 +172,7 @@ function test_multiplewaveguides(b,Nw,idx,order,wda1,adw1)
     psi_view = view_waveguide(tmp,ground_idx)
 
     for k in filter(x -> x != idx, 1:Nw)
-        psi = tensor([i == bw_idx ? onephoton(b.bases[i],k,ξfun,times) : i==bc_idx ? fockstate(b.bases[i],1) : fockstate(b.bases[i],0) for i in 1:3]...)
+        psi = tensor([i == bw_idx ? onephoton(b.bases[i],k,ξfun) : i==bc_idx ? fockstate(b.bases[i],1) : fockstate(b.bases[i],0) for i in 1:3]...)
         mul!(tmp,wda1,psi,1,0)
         i,j = min(k,idx),max(k,idx)
         index = (i-1)*Nw + j - (i*(i+1))÷2
@@ -197,7 +199,7 @@ function test_interaction(b,Nw,idx1,idx2,order,wd2w1)
     nsteps = length(times)
     dt = times[2] - times[1]
     ξfun(t1) = 1
-    psi = tensor([i == bw_idx ? onephoton(b.bases[i],idx1,ξfun,times) : fockstate(b.bases[i],0) for i in 1:3]...)
+    psi = tensor([i == bw_idx ? onephoton(b.bases[i],idx1,ξfun) : fockstate(b.bases[i],0) for i in 1:3]...)
     tmp = copy(psi)
     
     testvec2 = ones(nsteps) .* sqrt(2)/get_nsteps(psi.basis)
@@ -210,7 +212,7 @@ function test_interaction(b,Nw,idx1,idx2,order,wd2w1)
     end
 
     ξfun(t1,t2) = 1
-    psi = tensor([i == bw_idx ? twophoton(b.bases[i],idx1,ξfun,times) : fockstate(b.bases[i],0) for i in 1:3]...)
+    psi = tensor([i == bw_idx ? twophoton(b.bases[i],idx1,ξfun) : fockstate(b.bases[i],0) for i in 1:3]...)
     tmp = copy(psi)
     
     mul!(tmp,wd2w1,psi,1,0)

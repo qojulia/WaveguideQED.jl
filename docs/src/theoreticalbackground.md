@@ -2,7 +2,7 @@
 In this section, we go over the necessary theory to work with continuous fockstates in the **WaveguideQED.jl**
 
 
-## continuous Fock States
+## Continuous Fock States
 
 The single photon continuous fock state can be defined as:
 
@@ -10,7 +10,7 @@ $$\begin{equation*}
     \ket{\psi} = W^\dagger(\xi) \ket{0} = \int_{t_0}^{t_{end}} \mathrm{d}t \ \xi(t) w^\dagger(t) \ket{\emptyset}
 \end{equation*}$$
 
-here $W^\dagger(\xi)$ creates a photon with the wavefunction $\xi(t)$. $w^\dagger(t)$ is the creation operator for a photon at time $t$, and it obeys the commutation relation: $\left[w(t),w(t')\right ] = \delta(t-t')$. The probability of observing a photon at time $t$ is given by: $\bra{0} w(t) \ket{\psi} = |\xi(t)|^2$. The wavefunction $\xi(t)$ thus describes the temporal distribution of the photon.
+here $W^\dagger(\xi)$ creates a photon with the wavefunction $\xi(t)$. $w^\dagger(t)$ is the creation operator for a photon at time $t$, and it obeys the commutation relation: $\left[w(t),w(t')\right ] = \delta(t-t')$. The probability of observing a photon at time $t$ is given by: $\bra{\psi} w^\dagger(t) w(t) \ket{\psi} = |\xi^{(1)}(t)|^2$. The interpretation of the wavefunction $\xi^{(1)}(t)$. The wavefunction $\xi(t)$ thus describes the temporal distribution of the photon.
 
 The heart of the photon time-binning is discretizing the continuous fock state into time-bins of width $\Delta t$. The interaction with the emitter/cavity is then assumed to span only one time-bin at a time, corresponding to a spectrally flat interaction between the waveguide and emitter/cavity. We thus discretize the annihilation and creation operators by taking[^1]:
 
@@ -18,14 +18,14 @@ $$\begin{equation*}
     w(t_k) = w(k \Delta t) \rightarrow  \frac{w_k}{\sqrt{\Delta t}} \ \ \  \text{with} \ \left[ w_j, w_k^\dagger \right ] = \delta_{jk}
 \end{equation*}$$
 
-where $w_k$ is the descritized operator and the factor of $1/\sqrt{\Delta t}$ assures the commutator relation in the limit of $\Delta t \rightarrow 0$. We denote the action of the discretized creation operator as: $w_k\dagger \ket{\emptyset} = \ket{1_k}$ meaning a single photon in time-bin $k$. This means that the single photon continuous fock state becomes:
+where $w_k$ is the descritized operator and the factor of $1/\sqrt{\Delta t}$ assures the commutator relation in the limit of $\Delta t \rightarrow 0$. We denote the action of the discretized creation operator as: $w_k^\dagger \ket{\emptyset} = \ket{1_k}$ meaning a single photon in time-bin $k$. This means that the single photon continuous fock state becomes:
 
 $$\begin{equation*}
     \ket{\psi} = \int_{t_0}^{t_{end}} \mathrm{d}t \ \xi(t) w^\dagger(t) \ket{\emptyset} \rightarrow 
 \sum_{k=1}^N \sqrt{\Delta t} \xi(t_k) w_k^\dagger \ket{\emptyset}
 \end{equation*}$$
 
-In `WaveguideQED.jl, the time-bins above are represented as elements in arrays corresponding to each time-bin:
+In `WaveguideQED.jl`, the time-bins above are represented as elements in arrays corresponding to each time-bin:
 
 ![Alt text](./illustrations/onephoton_array.png)
 
@@ -38,12 +38,12 @@ bw = WaveguideBasis(1,times)
 nothing #hide
 ```
 
-Notice that the input for WaveguideBasis is `1` and `times`. `1` denotes the maximum excitation number of fockstates (currently can only be 1 or 2), and `times` the is the time interval over which the continuous fock state is defined. To define the continuous fockstate, we need to define a wavefunction $\xi$. In the following, we define a Gaussian wavefunction located around $t=5$ with a width of $\sigma = 1$:
+Notice that the input for WaveguideBasis is `1` and `times`. `1` denotes the maximum excitation number of fockstates (currently can only be 1 or 2), and `times` the is the time interval over which the continuous fockstate is defined. To define the continuous fockstate, we need to define a wavefunction $\xi$. In the following, we define a Gaussian wavefunction located around $t=5$ with a width of $\sigma = 1$:
 
 ```@example theory
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 σ,t0 = 1,5
-ψ = onephoton(bw,ξ,times,σ,t0)
+ψ = onephoton(bw,ξ,σ,t0)
 nothing #hide
 ```
 
@@ -99,7 +99,7 @@ This is also seen if we plot the creation operator acting on the vacuum:
 ψ = wd*zerophoton(bw)
 viewed_state = OnePhotonView(ψ)
 fig,ax = subplots(1,1,figsize=(9,4.5))
-ax.plot(times,viewed_state,"r-");
+ax.plot(times,real.(viewed_state),"r-");
 ax.set_xlabel("Time [a.u]")
 ax.set_ylabel(L"$\xi(t)$")
 plt.tight_layout()
@@ -145,15 +145,15 @@ We can define a two-photon basis and corresponding operator by:
 
 ```@example theory
 bw = WaveguideBasis(2,times)
+w = destroy(bw)
 wd = create(bw)
-println(pwd())
 nothing #hide
 ```
 The creation operator can then be visualized by acting on [`onephoton`](@ref) filled with ones. This is seen in the following. Note that the state is visualized as a contour plot mirrored around the diagonal.
 
 ```@example theory
 set_waveguidetimeindex!(wd,50)
-psi_plot = wd*onephoton(bw,x->1,times)
+psi_plot = wd*onephoton(bw,x->1)
 fig,ax = subplots(1,1,figsize=(4.5,4.5))
 plot_twophoton!(ax,psi_plot,times)
 plt.savefig("twophoton_created.svg") #hide
@@ -168,7 +168,7 @@ If we want to create a two-photon Gaussian state, we instead do:
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
 σ,t0 = 1,5
-ψ = twophoton(bw,ξ2,times,σ,t0)
+ψ = twophoton(bw,ξ2,σ,t0)
 nothing #hide
 ```
 

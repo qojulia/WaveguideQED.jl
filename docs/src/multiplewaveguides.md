@@ -34,17 +34,17 @@ Similarly, initializing one or two-photon states in the first or second waveguid
 ```@example multiple
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
-ψ_single_1 = onephoton(bw,1,ξ,times,2,5)
-ψ_double_1 = twophoton(bw,1,ξ2,times,2,5)
-ψ_single_2 = onephoton(bw,2,ξ,times,2,5)
-ψ_double_2 = twophoton(bw,2,ξ2,times,2,5)
+ψ_single_1 = onephoton(bw,1,ξ,2,5)
+ψ_double_1 = twophoton(bw,1,ξ2,2,5)
+ψ_single_2 = onephoton(bw,2,ξ,2,5)
+ψ_double_2 = twophoton(bw,2,ξ2,2,5)
 nothing #hide
 ``` 
 
 If we want to describe a simultaneous excitation in both waveguides (states like $\ket{1_i}_\mathrm{1}\ket{1_j }_\mathrm{2}$ where the subscript $$\ket{1_i}_\mathrm{i}$ means waveguide i) we specify both indices of the waveguides:
 
 ```@example multiple
-ψ_single_1_and_2 = twophoton(bw,[1,2],ξ2,times,2,5)
+ψ_single_1_and_2 = twophoton(bw,[1,2],ξ2,2,5)
 nothing #hide
 ``` 
 

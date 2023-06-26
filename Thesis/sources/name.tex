@@ -1,0 +1,116 @@
+
+\begin{equation}
+    \begin{pmatrix}
+0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 \\
+1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 \\
+\end{pmatrix} \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 0 \\ 1 \\ 0 \\ 0  \end{pmatrix}
+\end{equation}
+
+\begin{equation}
+    w_3^\dagger \ket{\emptyset} = \ket{1_3}
+\end{equation}
+
+\begin{equation}
+    H(t) = \sqrt{\gamma/dt} \left( a^\dagger w(t) - a w^\dagger(t) \right)
+\end{equation}
+
+\begin{equation}
+    \ket{\psi} = \textcolor{blue}{ \ket{2}} \otimes \textcolor{red}{ \sum_{k=1}^N \sqrt{\Delta t} \xi(t_k) w_k^\dagger \ket{\emptyset} }
+\end{equation}
+
+\begin{equation}
+    \ket{\psi} = \textcolor{blue}{\begin{pmatrix}
+        0 \\ 0 \\ 1
+    \end{pmatrix}} \otimes \textcolor{red}{\begin{pmatrix}
+        0 \\ \xi(t_1) \\ \xi(t_2) \\ \xi(t_3) \\ \xi(t_4) \\ \xi(t_5)
+    \end{pmatrix}} = \begin{pmatrix}
+        0 \\ \vdots \\ \xi(t_1) \\ \xi(t_2) \\ \xi(t_3) \\ \xi(t_4) \\ \xi(t_5)
+    \end{pmatrix}
+\end{equation}
+
+
+\begin{equation}
+    \frac{\partial}{\partial t} \ket{\psi} = - i \hbar H \ket{\psi}
+\end{equation}
+
+\begin{equation}
+a^\dagger \otimes w = \begin{pmatrix}
+0\cdot w & 1\cdot w & 0\cdot w\\
+0\cdot w & 0\cdot w & \sqrt{2}\cdot w\\
+0\cdot w & 0\cdot w & 0\cdot w\\
+\end{pmatrix}
+\end{equation}
+
+\begin{equation}
+    H_1 = \begin{pmatrix}
+H_{11} & \cdots & H_{1n} \\
+\vdots & \ddots & \vdots \\
+H_{n1} & \cdots & H_{nn} \\
+\end{pmatrix}.
+\end{equation}
+\begin{equation}
+    H_2 = \begin{pmatrix}
+H_{11} & \cdots & H_{1n} \\
+\vdots & \ddots & \vdots \\
+H_{n1} & \cdots & H_{nn} \\
+\end{pmatrix}.
+\end{equation}
+\begin{equation}
+    H_3 = \begin{pmatrix}
+H_{11} & \cdots & H_{1n} \\
+\vdots & \ddots & \vdots \\
+H_{n1} & \cdots & H_{nn} \\
+\end{pmatrix}.
+\end{equation}
+\begin{equation}
+    H_4 = \begin{pmatrix}
+H_{11} & \cdots & H_{1n} \\
+\vdots & \ddots & \vdots \\
+H_{n1} & \cdots & H_{nn} \\
+\end{pmatrix}.
+\end{equation}
+\begin{equation}
+    H_5 = \begin{pmatrix}
+H_{11} & \cdots & H_{1n} \\
+\vdots & \ddots & \vdots \\
+H_{n1} & \cdots & H_{nn} \\
+\end{pmatrix}.
+\end{equation}
+\begin{equation}
+    H_6 = \begin{pmatrix}
+H_{11} & \cdots & H_{1n} \\
+\vdots & \ddots & \vdots \\
+H_{n1} & \cdots & H_{nn} \\
+\end{pmatrix}.
+\end{equation}
+
+
+
+\begin{equation}
+    \ket{\psi} = \begin{pmatrix}
+        \psi_1 \\ \psi_2 \\ \vdots \\ \psi_n
+    \end{pmatrix}
+\end{equation}
+
+
+
+
+
+Introduce waveguides with continuous single photon fockstates.
+
+Photon time-binning.
+
+Single photon interacting with cavity derivation of differential equations. 
+
+Introduce numerical framework:
+ - Operators
+ - Show code
+Show results and convergence
+
+Go to twophoton states.
+
+Illustrate complexity

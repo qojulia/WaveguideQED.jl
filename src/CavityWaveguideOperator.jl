@@ -88,6 +88,13 @@ Base.:*(x::CavityWaveguideOperator{BL,BR},y::CavityWaveguideOperator{BL,BR}) whe
 Base.:*(x::CavityWaveguideOperator{BL,BR},y::WaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 Base.:*(x::WaveguideOperator{BL,BR},y::CavityWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 
+Base.:*(x::Operator{BL,BR},y::CavityWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),y.factor)
+Base.:*(x::CavityWaveguideOperator{BL,BR},y::Operator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor)
+
+Base.:*(x::Operator{BL,BR},y::WaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),y.factor)
+Base.:*(x::WaveguideOperator{BL,BR},y::Operator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor)
+
+
 const WaveguideOperatorT = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{Union{WaveguideDestroy,WaveguideCreate}}}
 
 #Method for multiplying, which updates factor in the operator.

@@ -3,7 +3,8 @@ module WaveguideQED
 using QuantumOptics
 using Strided
 using UnsafeArrays
-import LinearAlgebra: axpy!, dot, mul!, rmul!
+using FFTW
+import LinearAlgebra: axpy!, dot, mul!, rmul!,I
 import QuantumOpticsBase: create, dagger, destroy, expect, identityoperator, tensor
 
 export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,TwoWaveguideView,
@@ -11,9 +12,11 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
     WaveguideOperator,WaveguideDestroy,WaveguideCreate,
     CavityWaveguideAbsorption,CavityWaveguideEmission,emission,absorption,
     WaveguideInteraction,
-    waveguide_evolution,waveguide_montecarlo,CavityWaveguideOperator,
+    waveguide_evolution,waveguide_montecarlo,fast_unitary,
+    CavityWaveguideOperator,
     detect_single_click,detect_single_click!,LazyTensorKet,LazyTensorBra,LazySumKet,get_all_projectors,detect_double_click,detect_double_click!,Detector,
     plot_twophoton!,
+    WaveguideTransform,
     destroy,create,tensor,⊗,dagger,identityoperator,expect
 
 include("view.jl")
@@ -21,8 +24,10 @@ include("basis.jl")
 include("WaveguideOperator.jl")
 include("CavityWaveguideOperator.jl")
 include("WaveguideInteraction.jl")
+include("upstream.jl")
 include("solver.jl")
 include("detection.jl")
 include("plotting.jl")
+include("InputOutput.jl")
 include("precompile.jl")
 end

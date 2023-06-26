@@ -1,0 +1,248 @@
+\documentclass[10pt,oneside,a4paper,english]{report}
+\usepackage[T1]{fontenc}
+\usepackage[latin2]{inputenc}
+\usepackage[margin=2.25cm,headheight=26pt,includeheadfoot]{geometry}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage[framed, numbered]{matlab-prettifier}
+\usepackage{changepage}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{caption}
+\usepackage{tocloft}
+\usepackage{setspace}
+\usepackage{multirow}
+\usepackage{titling}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{booktabs}
+\usepackage{lscape}
+\usepackage{booktabs,caption}
+\usepackage[flushleft]{threeparttable}
+\usepackage[english]{nomencl}
+\usepackage{xcolor}
+\usepackage{lipsum}
+\usepackage{subfig}
+\usepackage{physics}
+\usepackage[toc,page]{appendix}
+\usepackage{minted}
+\usepackage{xcolor} % to access the named colour LightGray
+\definecolor{LightGray}{gray}{0.9}
+
+\renewcommand{\listingscaption}{Code Sample}
+
+\newcommand{\code}[1]{{\fontfamily{pcr}\selectfont #1}}
+
+% --- set footer and header ---
+\pagestyle{fancy}
+\fancyhf{}
+
+\setlength\parindent{0pt}
+\title{Master's Thesis} % to reference as \title, dont use \maketitle
+\makeatletter\let\Title\@title\makeatother
+
+
+
+\lstset{language=Matlab,
+style=Matlab-editor,
+basicstyle=\normalsize\mlttfamily,
+numbers=left,
+numberstyle={\scriptsize\color{black}},			% size of the numbers
+numbersep=0.5cm											
+}
+
+\newlist{steps}{enumerate}{1}
+\setlist[steps, 1]{leftmargin=1.5cm,label = Step \arabic*:}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+
+
+%\lhead{\Title}
+\rhead{\nouppercase{\rightmark}}
+\lhead{\Title}
+\rfoot{\includegraphics[height=1.25cm]{root/logo.pdf}} % right header logo
+\setlength\headheight{16pt}
+\setlength{\footskip}{50pt}
+\lhead{\Title} %rightH title
+\cfoot{\thepage}
+
+\fancypagestyle{plain}{% % <-- this is new
+ \fancyhf{} 
+\renewcommand{\footrulewidth}{1pt}
+\renewcommand{\headrulewidth}{0pt}
+
+
+%\lhead{\Title}
+\rfoot{\includegraphics[height=1.25cm]{root/logo.pdf}} % right header logo
+\setlength\headheight{0pt}
+\setlength{\footskip}{50pt}
+\fancyfoot[C]{Page \thepage\ of \pageref{endOfDoc}}
+}
+
+% --- End of page settings ---
+
+
+
+\begin{document}
+\pagenumbering{arabic}
+\fancyfoot[C]{Page \thepage\ of \pageref{endOfDoc}}
+\input{sources/0_frontpage.tex}
+
+\newpage
+\input{sources/abstract}
+
+
+
+\newpage
+\doublespacing
+%\addcontentsline{toc}{section}{Table of Contents}
+\renewcommand{\baselinestretch}{1}\normalsize
+\tableofcontents
+\renewcommand{\baselinestretch}{1}\normalsize
+%\singlespacing
+\thispagestyle{fancy} % force page style
+
+\newpage
+
+\chapter{Introduction}
+\input{sources/1_introduction.tex} \label{ch1} 
+
+\chapter{Waveguide Quantum Electrodynamics}\label{ch2}
+
+\input{sources/2_Theory.tex}
+
+\chapter{WaveguideQED.jl \label{ch3}}
+\input{sources/3_numerical.tex}
+
+\chapter{Multiple waveguides}
+\input{sources/4_multiple_vs2}
+%Introduce multiple waveguides mathematically
+
+%Beamsplitter example
+
+%Lodahl scattering example
+
+%Barrett and Kok introduction. 
+
+%Simulate using waveguideQED full method.
+
+%Simulate using detectors instead and confirm same results.
+
+%Understand fidelity. 
+
+%\chapter{Entanglement of qubits}
+%\input{sources/5_entanglement}
+
+\chapter{Waveguides with feedback}
+\input{sources/6_feedback}
+
+\chapter{Conclusion and outlook}
+\input{sources/7_Conclusion}
+
+\newpage
+\appendix
+\begin{appendices}
+\chapter{Analytical derivations} \label{app:A}
+\input{sources/AppendixA}
+\chapter{Code} \label{app:B}
+\section{Two-photon routine \label{app:twophotonroutine}}
+The following shows the two-photon annihilation routine. Lines 1-9 are equivalent to the one-photon routine to perform actions like $w_k \ket{1_k} = \ket{\emptyset}$. Line 10 calls, \code{twophoton\_destroy!}, which in lines 14-16 loop horizontally over the two-photon state (see fig. \ref{fig:twophoton_representation}). Similarly, lines 17-19 loop vertically, while lines 21-22 treat the special case of the diagonal, where a factor of $\sqrt{2}$ has to be applied.  
+
+\begin{listing}[H]
+\begin{minted}[
+frame=lines,
+framesep=2mm,
+baselinestretch=1.2,
+bgcolor=LightGray,
+fontsize=\small,
+linenos,
+escapeinside=||,
+mathescape=true
+]{julia}
+function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,1},b,alpha,beta) where {B}
+    if iszero(beta)
+        fill!(result, beta)
+    elseif !isone(beta)
+        rmul!(result, beta)
+    end
+    timeindex = a.timeindex
+    nsteps = a.basis_l.nsteps
+    @inbounds result[1] += alpha*a.factor*b[timeindex+1]
+    twophoton_destroy!(view(result,2:1:nsteps+1),b,alpha*a.factor,timeindex,nsteps,nsteps+1)
+    return
+end
+function twophoton_destroy!(result,b,alpha,timeindex,nsteps,offset)
+    @simd for i in 1:timeindex-1
+        @inbounds result[i]  += alpha*b[offset + twophoton_index(i,nsteps,timeindex)]
+    end
+    @simd for i in timeindex+1:lastindex(result)
+        @inbounds result[i]  += 
+        alpha*b[offset + twophoton_index(timeindex,nsteps,i)]
+    end
+    @inbounds result[timeindex] += sqrt(2)*alpha*b[offset +
+    twophoton_index(timeindex,nsteps,timeindex)]
+end
+\end{minted}
+\caption{Code for the two-photon annihilation multiplication routine. }
+\label{ls:twophoton_routine}
+\end{listing}
+
+\section{Lazy Tensor routine \label{app:lazytensor}}
+The following recursive loop shows the main principle behind how the LazyTensor routine is run. 
+\begin{listing}[H]
+\begin{minted}[
+frame=lines,
+framesep=2mm,
+baselinestretch=1.2,
+bgcolor=LightGray,
+fontsize=\small,
+linenos,
+escapeinside=||,
+mathescape=true
+]{julia}
+function recursive_tensor(result,op,input,alpha,beta,N,dim,i_operator,I,strides,shape)
+    if dim<N+1
+        if dim != i_operator
+            for j in 1:shape[dim]
+                J += strides[dim]*(j-1)
+                return recursive_tensor(result,op,input,N,dim+1,i_operator,I,strides,shape)
+            end
+        return recursive_tensor(result,op,input,alpha,beta,N,dim+1,i_operator,I,strides,shape)
+    end
+    mul!(view(result,I:strides[i_k]:I+strides[i_k]*(shape[i_k]-1)),
+    op.operators[i_operator],
+    view(input,I:strides[i_k]:I+strides[i_k]*(shape[i_k]-1)),alpha,beta)
+end 
+\end{minted}
+\caption{Code that demonstrates the main principle of the LazyTensor recursive loop. }
+\label{ls:lazy_routine}
+\end{listing}
+The counter \code{dim} keeps track of the current dimension and is incremented throughout the recursive loop, to go over all dimensions. When we have looped over all dimensions \code{dim = N+1}, and we proceed to the last part of the code, where the multiplication is performed. \code{i\_operator} is the index of the operator applied being applied. \code{shape} contains the sizes of the sub-Hilbert spaces
+
+\section{Convergence of two-photon scattering \label{app:twophoton_convergence}}
+In sec. \ref{sec:twophoton_emitter_vs_cavity}, we consider scattering of a two-photon pulse on a cavity and emitter. For the scattering of the cavity, we can confirm the numerical results by doing a convergence study between the equations of motion in eq. \eqref{eq:twophotonEOM} and the numerical approach. The equations of motion in eq. \eqref{eq:twophotonEOM} are also discretized because the two-time functions $\psi_1^{(0)}(t_m,t_n)$ and $\psi_1^{(1)}(t_m,t_n)$ has to be solved for each $t_m = 0$, $t_m = \Delta t$, $t_m = 2\Delta t$, and so on. If we choose the same discretization $\Delta t$ for the equations of motion and the numerical approach, we see in Fig. \ref{fig:twophoton_convergence} that the two methods already agree very well for large $\Delta t$'s (probably because they are both discretized), but as $\Delta t$ the error decreases even further.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5 \linewidth]{figures/twophoton_convergence.pdf}
+    \caption{Relative error between the scattered two-photon wavefunction $\xi_N$ and equations of motions wavefunction $\xi_{EOM}$ for different values of $\Delta t$. We here defined the norm: $|f|_2 = \int dt \int dt' f(t,t')$.}
+    \label{fig:twophoton_convergence}
+\end{figure}
+
+
+
+
+\end{appendices}
+
+\bibliography{references}
+\bibliographystyle{ieeetr}
+\label{endOfDoc}
+
+\end{document}

@@ -20,11 +20,12 @@ pages = [
 "WaveguideQED.jl" => "index.md",
 "theoreticalbackground.md",
 "tutorial.md",
-"detection.md",
-"multiplewaveguides.md",
-"Examples" => ["Scattering on two level system" => "example_lodahl.md"],
+"multiplewaveguides_v2.md",
+"time_delay.md",
+#"Examples" => ["Scattering on two level system" => "example_lodahl.md"],
 "API" => "API.md",
 "References and suggested readings" => "references.md",
+"Experimental or Outdated functionalities" => ["detection.md"]
 ]
 )
 

@@ -1,4 +1,4 @@
-# Theoretical Background
+# [Theoretical Background](@id theory)
 In this section, we go over the necessary theory to work with continuous fockstates in the **WaveguideQED.jl**
 
 

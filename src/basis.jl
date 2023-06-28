@@ -285,7 +285,8 @@ onephoton(b::WaveguideBasis{T,Nw},ξ::AbstractArray;norm=true) where {T,Nw} = th
 
 
 
-
+# TO DO:
+# Add check for the waveguide state containing two-photons.
 """
     TwophotonView{T} <: AbstractMatrix{T}
 
@@ -523,7 +524,8 @@ end
 
 
 
-
+# TO DO:
+# Add check for the waveguide basis containing two-photons.
 """
 Create a twophoton wavepacket of the form ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{j}}^\\dagger(t') |\\emptyset \\rangle`` where ``i`` and ``j`` are the indeces of the waveguide and return it as a `Ket`.
 

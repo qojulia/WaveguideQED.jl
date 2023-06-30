@@ -13,7 +13,7 @@ The following is a list of approaches that are trying to solve problems that can
 ### Papers where we reproduce results from
 * The theoretical results in [DynamicalPhotonLodahl2022](@cite) are reproduced in [Scattering on a two-level system](@ref lodahl).
 * The semi-infinite waveguide with feedback considered in is considered in [HughesWQEDMPP2021](@cite) and we reproduce the results in [Waveguide and Mirror](@ref feedback)
-
+* The fano transport studied in [Joanesarson2020](@cite) and input-output relations formulated in [Xu2016](@cite) are described and studied in [Input-Output Relations](@ref input)
 
 # References
 ```@bibliography

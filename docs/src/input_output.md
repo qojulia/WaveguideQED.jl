@@ -1,4 +1,4 @@
-# Input-Output Relations
+# [Input-Output Relations](@id input)
 
 ## Theory
 In waveguide QED systems, the waveguide modes themselves can often also interact. This interaction can happen due to e.g. a partially transmitting and reflecting element that scatters one waveguide mode into another. In the input-output formalism, this is described by a coupling matrix $\mathbf{C}$. A perfectly balanced beamsplitter would thus have the coupling matrix $\mathbf{C} = 1/\sqrt{2}\begin{pmatrix} 1 & - i \\ -i & 1 \end{pmatrix}$ which relates the input waveguide modes with the output modes (output here referring to the mode after the interaction) by the following relation:

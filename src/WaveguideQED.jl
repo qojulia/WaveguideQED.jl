@@ -16,7 +16,7 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
     CavityWaveguideOperator,
     detect_single_click,detect_single_click!,LazyTensorKet,LazyTensorBra,LazySumKet,get_all_projectors,detect_double_click,detect_double_click!,Detector,
     plot_twophoton!,
-    WaveguideTransform,
+    WaveguideTransform,effective_hamiltonian,fftket,
     destroy,create,tensor,⊗,dagger,identityoperator,expect
 
 include("view.jl")
@@ -24,7 +24,6 @@ include("basis.jl")
 include("WaveguideOperator.jl")
 include("CavityWaveguideOperator.jl")
 include("WaveguideInteraction.jl")
-include("upstream.jl")
 include("solver.jl")
 include("detection.jl")
 include("plotting.jl")

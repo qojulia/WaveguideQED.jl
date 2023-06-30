@@ -4,7 +4,7 @@ using Documenter
 using DocumenterCitations
 using WaveguideQED
 
-DocMeta.setdocmeta!(WaveguideQED, :DocTestSetup, :(using WaveguideQED; using PyPlot); recursive=true)
+DocMeta.setdocmeta!(WaveguideQED, :DocTestSetup, :(using WaveguideQED); recursive=true)
 
 bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"))
 

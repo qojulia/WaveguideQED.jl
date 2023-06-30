@@ -1422,7 +1422,7 @@ version = "0.2.0"
 deps = ["FFTW", "LinearAlgebra", "Parameters", "PrecompileTools", "QuantumOptics", "QuantumOpticsBase", "SparseArrays", "Strided", "UnsafeArrays"]
 path = ".."
 uuid = "c4555495-0e8d-488d-8e6a-965ecefe9055"
-version = "0.2.0"
+version = "0.2.1"
 
 [[deps.WignerSymbols]]
 deps = ["HalfIntegers", "LRUCache", "Primes", "RationalRoots"]

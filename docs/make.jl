@@ -21,6 +21,7 @@ pages = [
 "theoreticalbackground.md",
 "tutorial.md",
 "multiplewaveguides_v2.md",
+"input_output.md",
 "time_delay.md",
 #"Examples" => ["Scattering on two level system" => "example_lodahl.md"],
 "API" => "API.md",

@@ -1,4 +1,4 @@
-# Multiple Waveguides
+# [Multiple Waveguides](@id multiple)
 
 In the [tutorial](@ref tutorial), we considered one waveguide containing one or two waveguides. In **WaveguideQED**, we can also consider problems where we have multiple waveguides or equivalently multiple waveguide modes. We can create a waveguide basis containing two photons and two waveguides with:
 

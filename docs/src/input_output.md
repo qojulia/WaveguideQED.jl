@@ -157,7 +157,7 @@ Vs = 0:0.3:2
 G = [sqrt(γ/dt),sqrt(γ/dt)]
 for (i,V) in enumerate(Vs)
 
-    C_sweep,_ = WaveguideQED.io_relations_from_V(V,G)
+    C_sweep,_ = WaveguideQED.io_relations_from_V([0 V;V 0],G)
     H_sweep = effective_hamiltonian(bw,be,C,G)
 
     psi_in = zerophoton(bw) ⊗ fockstate(be,1)

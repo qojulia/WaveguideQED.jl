@@ -96,7 +96,7 @@ Return the effective Hamiltonian for a waveguide system with basis `bw` coupled 
 `C` and `G` here determine the input output relations of the coupling such that:
 `` \\frac{d}{d t} a=-i\\left[a, H_{\\mathrm{c}}\\right]-\\Sigma a+\\mathbf{k}^T \\mathbf{W}_{\\mathrm{in}}``, and
 `` \\mathbf{W}_{\\text {out }}(t)=\\mathbf{C} \\mathbf{W}_{\\mathrm{in}}(t)+a(t)\\mathbf{d}``. 
-Here ``\\Tilde{\\mathbf{d}} =  \\Tilde{\\mathbf{k}} = -i \\left(\\left(\\mathbf{I}+\\frac{i}{2} \\mathbf{V}\\right)^{-1} \\right) \\mathbf{\\Gamma}``, where ``\\mathbf{\\Gamma}`` is determined by the vector `G` with a length equal to the number of waveguide in `bw`.
+Here ``\\tilde{\\mathbf{d}} =  \\tilde{\\mathbf{k}} = -i \\left(\\left(\\mathbf{I}+\\frac{i}{2} \\mathbf{V}\\right)^{-1} \\right) \\mathbf{\\Gamma}``, where ``\\mathbf{\\Gamma}`` is determined by the vector `G` with a length equal to the number of waveguide in `bw`.
 ``\\mathbf{C}`` is here given by `C` which is of dimensions (nw,nw) with nw being the number of waveguides in `bw`.
 
 The resulting state ``\\ket{\\tilde{\\psi}}_{\\mathrm{out}}`` from simulating with this Hamiltonian needs to be transformed using

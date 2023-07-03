@@ -15,12 +15,12 @@ The left and right propagating modes are here symmetrical [HughesWQEDMPP2021](@c
 With this mental picture, there is only one propagating mode, and we describe the interaction through the Hamiltonian [Whalen2019](@cite):
 
 $$\begin{equation}
-H_k = \mathrm{e}^{i \phi} \sqrt{\gamma/2\Delta t} \left( \sigma^\dagger w_{k} + \sigma w_{k}^\dagger \right) + \sqrt{\gamma/2\Delta t} \left( \sigma^\dagger w_{k+\Tilde{\tau}} + \sigma w_{k+\Tilde{\tau}}^\dagger \right)
+H_k = \mathrm{e}^{i \phi} \sqrt{\gamma/2\Delta t} \left( \sigma^\dagger w_{k} + \sigma w_{k}^\dagger \right) + \sqrt{\gamma/2\Delta t} \left( \sigma^\dagger w_{k+\tilde{\tau}} + \sigma w_{k+\tilde{\tau}}^\dagger \right)
 \end{equation}$$
 
-where $\Tilde{\tau} = \tau/\Delta t$ is the index necessary to introduce a time-delay of $\tau$ between the emission and reabsorption. Note that it is the operator $w_{k+\Tilde{\tau}}$ that never "sees" the emitted photon again (thus corresponding to the left propagating mode in the first figure, whereas the operator $w_{k}$ experiences the emitted photon from $\Tilde{\tau}$ time steps ago (and thus corresponds to the right propagating mode).  $w_{k}^\dagger$ and $w_{k}$ thus carry the phase factor $\mathrm{e}^{i \phi}$ from the mirror.
+where $\tilde{\tau} = \tau/\Delta t$ is the index necessary to introduce a time-delay of $\tau$ between the emission and reabsorption. Note that it is the operator $w_{k+\tilde{\tau}}$ that never "sees" the emitted photon again (thus corresponding to the left propagating mode in the first figure, whereas the operator $w_{k}$ experiences the emitted photon from $\tilde{\tau}$ time steps ago (and thus corresponds to the right propagating mode).  $w_{k}^\dagger$ and $w_{k}$ thus carry the phase factor $\mathrm{e}^{i \phi}$ from the mirror.
 
-This type of Hamiltonian is easily described in the **WaveguideQED** framework. We can here create "delayed" operators that address time bins at a delayed time, thus corresponding to $w_{k+\Tilde{\tau}}$. This can be done with the keyword `delay` when creating the operator that determines how many bins the delay should be. The value `delay` should therefore be an integer corresponding to $\Tilde{\tau} = \tau/\Delta t$. In the following, we define $w_{k+\Tilde{\tau}}$ as `w_delayed`:
+This type of Hamiltonian is easily described in the **WaveguideQED** framework. We can here create "delayed" operators that address time bins at a delayed time, thus corresponding to $w_{k+\tilde{\tau}}$. This can be done with the keyword `delay` when creating the operator that determines how many bins the delay should be. The value `delay` should therefore be an integer corresponding to $\tilde{\tau} = \tau/\Delta t$. In the following, we define $w_{k+\tilde{\tau}}$ as `w_delayed`:
 
 ```@example timedelay
 using WaveguideQED #hide

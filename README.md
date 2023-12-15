@@ -11,14 +11,14 @@ Define a waveguide basis, containing a two-photon wavepacket for a time interval
 
 ```julia
 using WaveguideQED
-times = 0:0.1:20
+times = 0:0.1:10
 bw =  WaveguideBasis(2,times)
 ```
 Define waveguide creation and annihilation operators from this basis:
 
 ```julia
-w =  destroy(bw)
-w =  create(bw)
+w = destroy(bw)
+wd = create(bw)
 ```
 
 Combine with QuantumOptics.jl operators:
@@ -36,7 +36,7 @@ Finally, we can define an initial two-photon Gaussian wavepacket state with view
 
 
 ```julia
-ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
+ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1) * (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)*(log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
 ψ_cw = twophoton(bw,ξfun,1,1,5)
 psi = fockstate(bc,0) ⊗ ψ_cw
 dt = times[2] - times[1]
@@ -48,7 +48,7 @@ Plotting the two-photon state is also simple:
 
 
 ```julia
-ψ_double = view_twophoton(ψ);
+ψ_double = TwoPhotonView(ψ);
 using PyPlot
 fig,ax = subplots(1,1,figsize=(9,4.5))
 plot_twophoton!(ax,ψ_double,times)

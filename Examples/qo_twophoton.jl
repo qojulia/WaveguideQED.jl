@@ -34,7 +34,7 @@ H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
 #Define input twophoton state shape
 ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
 
-ψ_cw = twophoton(bw,ξfun,param.times,param.σ,param.σ,param.t0)
+ψ_cw = twophoton(bw,ξfun,param.σ,param.σ,param.t0)
 psi = fockstate(bc,0) ⊗ ψ_cw
 
 ψ = waveguide_evolution(param.times, psi, H)

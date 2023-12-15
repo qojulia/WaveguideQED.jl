@@ -76,6 +76,10 @@ mutable struct CavityWaveguideEmission{B1,B2} <: CavityWaveguideOperator{B1,B2}
     end
 end
 
+@inline function set_time!(o::CavityWaveguideOperator, t::Number)
+    set_time!(o.op,t)
+end
+
 function Base.:eltype(x::CavityWaveguideOperator) typeof(x.factor) end
 function Base.:copy(x::CavityWaveguideEmission)
     CavityWaveguideEmission(x.basis_l,x.basis_r,x.factor,x.op,x.loc)

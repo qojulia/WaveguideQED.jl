@@ -47,6 +47,12 @@ function Base.:copy(x::WaveguideInteraction)
     WaveguideInteraction(x.basis_l,x.basis_r,x.factor,x.op1,x.op2,x.loc)
 end
 
+@inline function set_time!(o::WaveguideInteraction, t::Number)
+    set_time!(o.op1,t)
+    set_time!(o.op2,t)
+    return o
+end
+
 Base.:*(x::WaveguideInteraction{BL,BR},y::WaveguideInteraction{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 
 identityoperator(x::WaveguideInteraction) = identityoperator(x.basis_l)

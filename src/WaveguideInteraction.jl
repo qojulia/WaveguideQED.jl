@@ -326,19 +326,26 @@ function zerophoton_projector(b::CompositeBasis)
     tensor([zerophoton_projector(b.bases[i]) for i in 1:length(b.bases)]...)
 end
 
-function expect(a::T,psi::Ket) where T<:Union{WaveguideOperator,WaveguideInteraction,TensorWaveguideInteraction,WaveguideSum,CavityWaveguideOperator}
+function expect(a::T,psi::Ket) where T<:Union{WaveguideOperator,WaveguideInteraction,TensorWaveguideInteraction,CavityWaveguideOperator}
     out = 0
     tmp_ket = Ket(psi.basis)
     projector = zerophoton_projector(psi)
     set_waveguidetimeindex!(a,1)
-    mul!(tmp_ket,a,psi,1,0)
-    zero_part = expect(projector,tmp_ket)
+    mul!(tmp_ket,a,psi,a.factor,0)
+    zero_part = dot(psi.data,(projector*tmp_ket).data)
     out += dot(psi.data,tmp_ket.data)
     for i in 2:get_nsteps(basis(a))
         set_waveguidetimeindex!(a,i)
-        mul!(tmp_ket,a,psi,1,0)
+        mul!(tmp_ket,a,psi,a.factor,0)
         out += (dot(psi.data,tmp_ket.data) - zero_part)
     end
     out
 end
 
+function expect(a::T,psi::Ket) where T<:Union{WaveguideSum}
+    out = 0
+    for (i,O) in enumerate(a.operators)
+        out +=  expect(O,psi)*a.factors[i]  
+    end
+    out
+end

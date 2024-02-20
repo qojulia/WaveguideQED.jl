@@ -64,6 +64,13 @@ function Base.:/(a::WaveguideOperator,b::Number)
 end
 Base.:-(a::WaveguideOperator) = *(-1,a)
 
+Base.:+(a::WaveguideOperator{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2} = LazySum(a) + LazySum(b)
+Base.:-(a::WaveguideOperator{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2} = LazySum(a) - LazySum(b)
+Base.:+(a::WaveguideOperator{B1,B2},b::LazySum{B1,B2}) where {B1,B2} = LazySum(a) + LazySum(b)
+Base.:+(a::LazySum{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2} = LazySum(a) + LazySum(b)
+Base.:-(a::WaveguideOperator{B1,B2},b::LazySum{B1,B2}) where {B1,B2}= LazySum(a) - LazySum(b)
+Base.:-(a::LazySum{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2}= LazySum(a) - LazySum(b)
+
 """
     destroy(basis::WaveguideBasis{Np,1}) where {Np}
     destroy(basis::WaveguideBasis{Np,Nw},i::Int) where {Np,Nw}

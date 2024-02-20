@@ -22,7 +22,7 @@ include("helper_functions.jl")
     wd = create(bw);
     wda = a ⊗ wd
     adw = ad ⊗ w
-    H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda) + param.x3/4*(n*n+n)
+    H = param.δ*n + im*sqrt(param.γ/dt)*(adw-wda)
     #Define input twophoton state shape
     ξfun(t,σ,t0) = complex( sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))
     ξvec = ξfun.(param.times,param.σ,param.t0)

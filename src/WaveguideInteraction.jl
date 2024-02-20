@@ -299,7 +299,7 @@ function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,Np,idx1},bo
 end
 
 
-function Base.:*(a::WaveguideCreate{B1,B2,Np,idx1},b::WaveguideDestroy{B1,B2,Np,idx2}) where {B1,B2,Np,idx1,idx2}
+function Base.:*(a::O1,b::O2) where {O1 <: WaveguideOperator,O2 <: WaveguideOperator}
     WaveguideInteraction(basis(a),basis(a),complex(1.0),a,b,1)
 end
 function Base.:*(a::T1,b::T2) where {T1<: WaveguideOperatorT,T2<: WaveguideOperatorT}
@@ -307,17 +307,45 @@ function Base.:*(a::T1,b::T2) where {T1<: WaveguideOperatorT,T2<: WaveguideOpera
     WaveguideInteraction(basis(a),basis(a),a.factor*b.factor,a.operators[1],b.operators[1],a.indices[1])
 end
 
-const TensorWaveguideInteraction = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{WaveguideInteraction}}
+const TensorWaveguideInteraction = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{Vararg{Union{WaveguideInteraction,WaveguideOperator,CavityWaveguideOperator}}}}
+const WaveguideSum = LazySum{B,B,F,T} where {B,F,T<:Tuple{Vararg{Union{WaveguideInteraction,WaveguideOperator,CavityWaveguideOperator}}}}
 
+function zerophoton_projector(psi::Ket)
+    zerophoton_projector(basis(psi))
+end
 
-function expect(a::T,psi::Ket) where T<:Union{WaveguideInteraction,TensorWaveguideInteraction}
+function zerophoton_projector(basis::WaveguideBasis)
+    dm(zerophoton(basis))
+end
+
+function zerophoton_projector(basis::Basis)
+    identityoperator(basis)
+end
+
+function zerophoton_projector(b::CompositeBasis)
+    tensor([zerophoton_projector(b.bases[i]) for i in 1:length(b.bases)]...)
+end
+
+function expect(a::T,psi::Ket) where T<:Union{WaveguideOperator,WaveguideInteraction,TensorWaveguideInteraction,CavityWaveguideOperator}
     out = 0
     tmp_ket = Ket(psi.basis)
-    for i in 1:get_nsteps(basis(a))
+    projector = zerophoton_projector(psi)
+    set_waveguidetimeindex!(a,1)
+    mul!(tmp_ket,a,psi,a.factor,0)
+    zero_part = dot(psi.data,(projector*tmp_ket).data)
+    out += dot(psi.data,tmp_ket.data)
+    for i in 2:get_nsteps(basis(a))
         set_waveguidetimeindex!(a,i)
-        mul!(tmp_ket,a,psi,1,0)
-        out += dot(psi.data,tmp_ket.data)
+        mul!(tmp_ket,a,psi,a.factor,0)
+        out += (dot(psi.data,tmp_ket.data) - zero_part)
     end
     out
 end
 
+function expect(a::T,psi::Ket) where T<:Union{WaveguideSum}
+    out = 0
+    for (i,O) in enumerate(a.operators)
+        out +=  expect(O,psi)*a.factors[i]  
+    end
+    out
+end

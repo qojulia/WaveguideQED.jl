@@ -1,7 +1,7 @@
 name = "WaveguideQED"
 uuid = "c4555495-0e8d-488d-8e6a-965ecefe9055"
 authors = ["Matias Bundgaard-Nielsen <mabuni1998@gmail.com>, Mikkel Heuck <mheu@dtu.dk>, and Stefan Krastanov <stefankr@mit.edu>"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"

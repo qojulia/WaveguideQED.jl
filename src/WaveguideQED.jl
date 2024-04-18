@@ -8,7 +8,7 @@ import LinearAlgebra: axpy!, dot, mul!, rmul!,I
 import QuantumOpticsBase: create, dagger, destroy, expect, identityoperator, tensor,set_time!
 
 export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,TwoWaveguideView,
-    WaveguideBasis,zerophoton,onephoton,twophoton,view_waveguide,get_waveguidetimeindex,set_waveguidetimeindex!,get_dt,get_nsteps,get_waveguide_location,get_waveguide_basis,get_number_of_waveguides,get_waveguide_operators,
+    WaveguideBasis,zerophoton,onephoton,twophoton,view_waveguide,get_waveguidetimeindex,set_waveguidetimeindex!,get_dt,get_nsteps,get_waveguide_location,get_waveguide_basis,get_number_of_waveguides,get_waveguide_operators,expect_waveguide,
     WaveguideOperator,WaveguideDestroy,WaveguideCreate,
     CavityWaveguideAbsorption,CavityWaveguideEmission,emission,absorption,
     WaveguideInteraction,
@@ -17,7 +17,7 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
     detect_single_click,detect_single_click!,LazyTensorKet,LazyTensorBra,LazySumKet,get_all_projectors,detect_double_click,detect_double_click!,Detector,
     plot_twophoton!,
     WaveguideTransform,effective_hamiltonian,fftket,
-    destroy,create,tensor,⊗,dagger,identityoperator,expect,set_time!
+    destroy,create,tensor,⊗,dagger,identityoperator,set_time!
 
 include("view.jl")
 include("basis.jl")

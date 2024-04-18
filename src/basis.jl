@@ -830,5 +830,3 @@ Returns [`WaveguideBasis`](@ref) from `CompositeBasis.bases`
 function get_waveguide_basis(basis::CompositeBasis)
     basis.bases[findall(x->typeof(x)<:WaveguideBasis,basis.bases)]
 end
-
-

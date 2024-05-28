@@ -98,13 +98,13 @@ If we also want to know the number of photons in the waveguide state as a functi
 n = (ad*a) ⊗ identityoperator(bw)
 n_w = identityoperator(bc) ⊗ (create(bw)*destroy(bw))
 function exp_na_and_nw(time,psi)
-    (expect(n,psi),expect(n_w,psi))
+    (expect(n,psi),expect_waveguide(n_w,psi))
 end
 ψ_out,na,nw = waveguide_evolution(times,ψ_in,H,fout=exp_na_and_nw)
 nothing #hide
 ```
 
-Where `expect(n_w,psi)` calculates the expectation value of all times of the pulse at each timestep: $\mathrm{expect(n_w,psi)} = \bra{\psi} \sum_k  I \otimes w_k^\dagger w_k  \ket{\psi}$
+Where `expect_waveguide(n_w,psi)` calculates the expectation value of all times of the pulse at each timestep: $\mathrm{expect_waveguide(n_w,psi)} = \bra{\psi} \sum_k  I \otimes w_k^\dagger w_k  \ket{\psi}$
 
 This can be plotted as:
 

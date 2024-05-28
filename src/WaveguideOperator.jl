@@ -71,6 +71,8 @@ Base.:+(a::LazySum{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2} = LazySum(a
 Base.:-(a::WaveguideOperator{B1,B2},b::LazySum{B1,B2}) where {B1,B2}= LazySum(a) - LazySum(b)
 Base.:-(a::LazySum{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2}= LazySum(a) - LazySum(b)
 
+Base.:*(a::WaveguideOperator{B1,B2},b::LazyProduct{B1,B2}) where {B1,B2} = LazyProduct(a) * b
+Base.:*(a::LazyProduct{B1,B2},b::WaveguideOperator{B1,B2}) where {B1,B2} = a * LazyProduct(b)
 """
     destroy(basis::WaveguideBasis{Np,1}) where {Np}
     destroy(basis::WaveguideBasis{Np,Nw},i::Int) where {Np,Nw}
@@ -177,6 +179,27 @@ function identityoperator(::Type{T},::Type{ComplexF64}, b1::Basis, b2::Basis) wh
     @assert b1==b2
     identityoperator(b1)
 end
+
+"""
+    expect_waveguide(O, psi)
+
+Returns the sum of expectation values of O over waveguide time indeces. This is usefull to extract information from waveguide states.
+For example the number of photons can be computed as: `expect_waveguide(create(bw)*destroy(bw), psi, times)`, where BW is the waveguidebasis. Mathematically this is equivalent to ``sum_n \\langle \\psi | O(t_n) | \\psi \\rangle``.
+For ``O(t_k) = w_k^\\dagger w_k`` acting on a single photon state ``|\\psi \\rangle = \\sum_k \\xi(t_k) w_k^\\dagger |0\\rangle``, one would therefore have: ``\\langle O \\rangle = \\sum_k |\\xi(t_k)|^2 = 1``, where the last follows from ``\\xi(t)`` being normalized.
+"""
+function expect_waveguide(O,psi)
+    psi_c = copy(psi)
+    expval = 0
+    ops = get_waveguide_operators(O)
+    for i in 1:get_nsteps(basis(O))
+        set_waveguidetimeindex!(ops,i)
+        mul!(psi_c, O, psi)
+        expval += dot(psi_c.data,psi.data)
+    end
+    return expval
+end
+
+
 
 """
     mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, beta)

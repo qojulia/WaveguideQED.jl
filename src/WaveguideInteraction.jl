@@ -55,6 +55,45 @@ end
 
 Base.:*(x::WaveguideInteraction{BL,BR},y::WaveguideInteraction{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 
+
+
+
+function Base.:*(a::O1,b::O2) where {O1 <: WaveguideOperator,O2 <: WaveguideOperator}
+    WaveguideInteraction(basis(a),basis(a),complex(1.0),a,b,1)
+end
+
+function Base.:*(a::O1,b::O2) where {O1 <: WaveguideInteraction,O2 <: WaveguideOperator}
+    LazyProduct((a,b),a.factor*b.factor)
+end
+function Base.:*(a::O1,b::O2) where {O1 <: WaveguideOperator,O2 <: WaveguideInteraction}
+    LazyProduct((a,b),a.factor*b.factor)
+end
+
+function Base.:*(a::T1,b::T2) where {T1<: WaveguideOperatorT,T2<: WaveguideOperatorT}
+    @assert a.indices[1] == b.indices[1]
+    WaveguideInteraction(basis(a),basis(a),a.factor*b.factor,a.operators[1],b.operators[1],a.indices[1])
+end
+
+const TensorWaveguideInteraction = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{Vararg{Union{WaveguideInteraction,WaveguideOperator,CavityWaveguideOperator}}}}
+const WaveguideSum = LazySum{B,B,F,T} where {B,F,T<:Tuple{Vararg{Union{WaveguideInteraction,WaveguideOperator,CavityWaveguideOperator}}}}
+
+function zerophoton_projector(psi::Ket)
+    zerophoton_projector(basis(psi))
+end
+
+function zerophoton_projector(basis::WaveguideBasis)
+    dm(zerophoton(basis))
+end
+
+function zerophoton_projector(basis::Basis)
+    identityoperator(basis)
+end
+
+function zerophoton_projector(b::CompositeBasis)
+    tensor([zerophoton_projector(b.bases[i]) for i in 1:length(b.bases)]...)
+end
+
+
 identityoperator(x::WaveguideInteraction) = identityoperator(x.basis_l)
 function identityoperator(::Type{T},::Type{ComplexF64}, b1::Basis, b2::Basis) where {T<:WaveguideInteraction}
     @assert b1==b2
@@ -296,56 +335,4 @@ function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,Np,idx1},bo
     @inbounds result[1] = alpha*a.factor*bop.factor*b[1]
     @inbounds result[1+(idx1-1)*nsteps+timeindex] += alpha*a.factor*bop.factor*b[1+(idx2-1)*nsteps+timeindex] 
     result
-end
-
-
-function Base.:*(a::O1,b::O2) where {O1 <: WaveguideOperator,O2 <: WaveguideOperator}
-    WaveguideInteraction(basis(a),basis(a),complex(1.0),a,b,1)
-end
-function Base.:*(a::T1,b::T2) where {T1<: WaveguideOperatorT,T2<: WaveguideOperatorT}
-    @assert a.indices[1] == b.indices[1]
-    WaveguideInteraction(basis(a),basis(a),a.factor*b.factor,a.operators[1],b.operators[1],a.indices[1])
-end
-
-const TensorWaveguideInteraction = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{Vararg{Union{WaveguideInteraction,WaveguideOperator,CavityWaveguideOperator}}}}
-const WaveguideSum = LazySum{B,B,F,T} where {B,F,T<:Tuple{Vararg{Union{WaveguideInteraction,WaveguideOperator,CavityWaveguideOperator}}}}
-
-function zerophoton_projector(psi::Ket)
-    zerophoton_projector(basis(psi))
-end
-
-function zerophoton_projector(basis::WaveguideBasis)
-    dm(zerophoton(basis))
-end
-
-function zerophoton_projector(basis::Basis)
-    identityoperator(basis)
-end
-
-function zerophoton_projector(b::CompositeBasis)
-    tensor([zerophoton_projector(b.bases[i]) for i in 1:length(b.bases)]...)
-end
-
-function expect(a::T,psi::Ket) where T<:Union{WaveguideOperator,WaveguideInteraction,TensorWaveguideInteraction,CavityWaveguideOperator}
-    out = 0
-    tmp_ket = Ket(psi.basis)
-    projector = zerophoton_projector(psi)
-    set_waveguidetimeindex!(a,1)
-    mul!(tmp_ket,a,psi,a.factor,0)
-    zero_part = dot(psi.data,(projector*tmp_ket).data)
-    out += dot(psi.data,tmp_ket.data)
-    for i in 2:get_nsteps(basis(a))
-        set_waveguidetimeindex!(a,i)
-        mul!(tmp_ket,a,psi,a.factor,0)
-        out += (dot(psi.data,tmp_ket.data) - zero_part)
-    end
-    out
-end
-
-function expect(a::T,psi::Ket) where T<:Union{WaveguideSum}
-    out = 0
-    for (i,O) in enumerate(a.operators)
-        out +=  expect(O,psi)*a.factors[i]  
-    end
-    out
 end

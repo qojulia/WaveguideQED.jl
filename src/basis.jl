@@ -582,9 +582,16 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where 
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
+    offset = nsteps+1
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+        for m in 1:nsteps
+            if l<m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            elseif l == m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            else
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            end
         end
     end
     if norm
@@ -605,9 +612,16 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=true) where {T}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
+    offset = nsteps+1
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ[l,m]*b.dt
+        for m in 1:nsteps
+            if l<m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  1/sqrt(2)*ξ[l,m]*b.dt
+            elseif l == m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ[l,m]*b.dt
+            else
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ[l,m]*b.dt
+            end
         end
     end
     if norm
@@ -630,9 +644,16 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=true
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i)
+    offset = viewed_data.offset
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+        for m in 1:nsteps
+            if l<m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            elseif l == m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            else
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            end
         end
     end
     if norm
@@ -654,9 +675,16 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=true) where {T
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i)
+    offset = viewed_data.offset
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ[l,m]*b.dt
+        for m in 1:nsteps
+            if l<m
+                state.data[offset + twophoton_index(l,nsteps,m)] += ξ[l,m]*b.dt
+            elseif l == m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ[l,m]*b.dt
+            else
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ[l,m]*b.dt
+            end
         end
     end
     if norm
@@ -830,5 +858,3 @@ Returns [`WaveguideBasis`](@ref) from `CompositeBasis.bases`
 function get_waveguide_basis(basis::CompositeBasis)
     basis.bases[findall(x->typeof(x)<:WaveguideBasis,basis.bases)]
 end
-
-

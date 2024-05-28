@@ -583,8 +583,8 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where 
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+        for m in 1:nsteps
+            viewed_data[l,m] += ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
         end
     end
     if norm
@@ -606,8 +606,8 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=true) where {T}
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ[l,m]*b.dt
+        for m in 1:nsteps
+            viewed_data[l,m] += ξ[l,m]*b.dt
         end
     end
     if norm
@@ -631,8 +631,8 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=true
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i)
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+        for m in 1:nsteps
+            viewed_data[l,m] += ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
         end
     end
     if norm
@@ -655,8 +655,8 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=true) where {T
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i)
     for l in 1:nsteps
-        for m in l:nsteps
-            viewed_data[l,m] = ξ[l,m]*b.dt
+        for m in 1:nsteps
+            viewed_data[l,m] += ξ[l,m]*b.dt
         end
     end
     if norm

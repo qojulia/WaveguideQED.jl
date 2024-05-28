@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Beamsplitters · WaveguideQED.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">WaveguideQED.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">WaveguideQED.jl</a></li><li><a class="tocitem" href="../theoreticalbackground/">Theoretical Background</a></li><li><a class="tocitem" href="../tutorial/">Tutorials</a></li><li><a class="tocitem" href="../multiplewaveguides_v2/">Multiple Waveguides</a></li><li class="is-active"><a class="tocitem" href>Beamsplitters</a><ul class="internal"><li><a class="tocitem" href="#hom"><span>Hong Ou Mandel with twophotons</span></a></li></ul></li><li><a class="tocitem" href="../input_output/">Input-Output Relations</a></li><li><a class="tocitem" href="../time_delay/">Non-Markovian dynamics</a></li><li><a class="tocitem" href="../API/">API</a></li><li><a class="tocitem" href="../references/">References and suggested readings</a></li><li><span class="tocitem">Experimental or Outdated functionalities</span><ul><li><a class="tocitem" href="../detection/">Detection and Projections</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Beamsplitters</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Beamsplitters</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/qojulia/WaveguideQED.jl/blob/main/docs/src/beamsplitter.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Beamsplitter"><a class="docs-heading-anchor" href="#Beamsplitter">Beamsplitters</a><a id="Beamsplitter-1"></a><a class="docs-heading-anchor-permalink" href="#Beamsplitter" title="Permalink"></a></h1><p>Having introduced multiple waveguides in <a href="@id multiple">Multiple Waveguides</a>, it is natural to implement the beamsplitter operation and consider some of the common measurements one would make on states having undergone a beamsplitter transformation.</p><p>We start by introducing how a beamsplitter can be implemented using two waveguides that interact. For simplicity, we start by considering only a single photon in one waveguide. First we create the basis, operators of the multiple waveguides and an initial single photon state with a gaussian wavefunction residing in waveguide 1:</p><pre><code class="language-julia hljs">times = 0:0.1:10
+dt = times[2] - times[1]
+NPhotons = 2
+NWaveguides = 2
+bw = WaveguideBasis(NPhotons,NWaveguides,times)
+w1 = destroy(bw,1)
+wd1 = create(bw,1)
+w2 = destroy(bw,2)
+wd2 = create(bw,2)
+
+
+ξ(t, t0=5, σ=1) = complex(√(2/σ)*(log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))
+psi = onephoton(bw,1, ξ)</code></pre><p>We now want to consider the following beamsplitter transformation: <span>$w_{k,1} \rightarrow \cos(V) w_{k,1} - i \sin(V) w_{k,2}$</span> and equivalently for waveguide 2: <span>$w_{k,2} \rightarrow - i \sin(V) w_{k,2} + \cos(V) w_{k,1}$</span>. Having access to our initial Gaussian wavefunction we could just create the transformed state as:</p><pre><code class="language-julia hljs">V = pi/4
+psi_trans_manual = cos(V) * onephoton(bw,1, ξ) -im*sin(V)*onephoton(bw,2, ξ)</code></pre><p>A more automatic and equivalent method is, however, instead to let the waveguide state undergo evolution under the Hamiltonian: <span>$H = V( w_{k,1}^\dagger w_{k,2} + w_{k,2}^\dagger w_{k,1})$</span>, which performs the same transformation. See <a href="https://github.com/qojulia/WaveguideQED.jl/blob/main/Thesis/Master_s_thesis__Modeling_Tools_For_Quantum_Networks%20(9).pdf">Section 4.3</a> for details of the derivation. We can confirm this by:</p><pre><code class="language-julia hljs">Vs = 0:pi/32:pi
+reflection = zeros(length(Vs))
+transmission = zeros(length(Vs))
+n1 = wd1 *w1
+n2 = wd2 *w2
+psi = onephoton(bw,1, ξ)
+for (i,V) in enumerate(Vs)
+    H  = V/dt*(wd1 * w2 + wd2*w1)
+
+    psi_trans = waveguide_evolution(times,psi,H)
+
+    transmission[i] = expect_waveguide(n1,psi_trans)
+    reflection[i] = expect_waveguide(n2,psi_trans)
+end
+fig,ax = subplots(1,1,figsize=(9,4.5))
+ax.plot(Vs/pi,reflection,&quot;b-&quot;,label=&quot;Waveguide a&quot;)
+ax.plot(Vs/pi,transmission,&quot;r-&quot;,label=&quot;Waveguide b&quot;)
+ax.set_xlabel(L&quot;V [$\pi$]&quot;)
+ax.set_ylabel(&quot;Population&quot;)
+plt.tight_layout()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌ Warning: No working GUI backend found for matplotlib
+└ @ PyPlot ~/.julia/packages/PyPlot/H01LC/src/init.jl:153</code></pre><p><img src="../beamsplitter_trans.svg" alt="beamsplitter"/></p><p>Here we see this population of waveguide 1 and 2 after the transformation vary as cosines and sines as we change the interaction parameter V. Thus, we confirm that we are applying the desired transformation. For an even beamsplitter, we thus choose <span>$V=\pi/4$</span> </p><h2 id="hom"><a class="docs-heading-anchor" href="#hom">Hong Ou Mandel with twophotons</a><a id="hom-1"></a><a class="docs-heading-anchor-permalink" href="#hom" title="Permalink"></a></h2><p>As a more advanced example, we now consider a Hong Ou Mandel setup, where we have one photon in each waveguide impinging on a beamsplitter. If the two photons equivalent, we will see the Hong Ou Mandel effect and thus expect no photons in both waveguide simultanouesly after the transformation. As a measure of this, we calcuate the chance of having a coincedence count where one photon is in waveguide 1 while the other is in waveguide 2. This calculated using the two projection operators:</p><p class="math-container">\[P_1 = \int_0^T dt w_1^\dagger(t) |0\rangle\langle0| w_1(t) \qquad P_2 = \int_0^T dt w_2^\dagger(t) |0\rangle\langle0| w_2(t)\]</p><p>where <span>$w_1(t)$</span> and <span>$w_2(t)$</span> are lowering operators for two waveguides. The chance of coincidence count is computed by <span>$\langle\psi|P_1 P_2 |\psi\rangle$</span>. </p><p>To compute the councidence count expectation we create our own custom expectation value function:</p><pre><code class="language-julia hljs">n1 = wd1*w1
+n2 = wd2*w2
+expval_op = n1*n2
+using LinearAlgebra
+function expect_waveguide2(O,psi,times)
+  psi_c = copy(psi)
+  expval = 0
+  for i in eachindex(times)
+      set_waveguidetimeindex!(n1,i)
+      for j in eachindex(times)
+          set_waveguidetimeindex!(n2,j)
+          mul!(psi_c, O, psi)
+          expval += dot(psi_c.data,psi.data)
+      end
+  end
+  return expval
+end</code></pre><p>Here we evaluate <span>$w_1^\dagger(t) w_1(t)$</span> at one timeidex <code>i</code>, while we evaluate <span>$w_2^\dagger(t) w_2(t)$</span> at another timeidex <code>j</code>. Together this gives us the total coincedence count chance. In the following, we use the Hamiltonian from the previous section with <span>$V=\pi/4$</span> and consider two Gaussian photons in each their waveguide with different centers of time <span>$t_0$</span>. By changing the difference in <span>$t_0$</span>, we can see the transition from a perfect overlap meaning no coincedence count, to no overlap meaning that the two photons never interact. In this case, the two photons will split up randomly and <span>$1/4$</span> of the time they will end up in waveguide 1, similarly <span>$1/4$</span> of the time they will end up in waveguide 2, and the remaining <span>$1/2$</span> time they will end up in each of their waveguides. Thus, we expect a coincedence count of <span>$1/2$</span> when the two pulses are fully seperated. Note that in the above function, we can just use the waveguide operators as projectors as we never have twophotons in both waveguides. </p><pre><code class="language-julia hljs">taus = 0:0.2:4
+ξ_twophoton(t1, t2, t01, t02) = ξ(t1, t01) * ξ(t2, t02)
+V = pi/4
+H  = V/dt*(wd1*w2 + wd2*w1)
+coincedences = zeros(length(taus))
+t01 = 5
+for (i, τ) in enumerate(taus)
+  t02 = 5 + τ
+  psi_pre = twophoton(bw, [1,2], ξ_twophoton, t01,t02)
+  ψ = waveguide_evolution(times,psi_pre,H)
+  coincedences[i] = expect_waveguide2(expval_op, ψ,times)
+end
+
+fig, ax = subplots(1,1, figsize=(6,4))
+ax.plot(taus, coincedences)
+ax.set_xlabel(L&quot;Delay between pules $\tau$&quot;)
+ax.set_ylabel(&quot;Coincedence chance&quot;)
+tight_layout()</code></pre><p><img src="../hom.svg" alt="hom_plot"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../multiplewaveguides_v2/">« Multiple Waveguides</a><a class="docs-footer-nextpage" href="../input_output/">Input-Output Relations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Tuesday 28 May 2024 13:06">Tuesday 28 May 2024</span>. Using Julia version 1.10.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

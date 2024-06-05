@@ -40,7 +40,9 @@ With this, we can now simulate the scattering of a single photon with a Gaussian
 nothing #hide
 ```
 
-Assuming the cavity is empty, the combined initial state is then:
+Note that the wavefunction $$\xi(t)$$ is assumed to be normalized: $$\int_0^\infty \xi(t) dt = 1$$ when creating waveguide states. If one wants to use a non-normalized function, the keyword `norm=true` can be passed to [`onephoton`](@ref) to ensure normalization.
+
+Considering an initially empty cavity, the combined initial state is then:
 
 ```@example tutorial
 ψ_in = fockstate(bc,0) ⊗ ψ_waveguide
@@ -148,17 +150,19 @@ H_twophoton = im*sqrt(γ/dt)*( ad ⊗ w_twophoton - a ⊗ wd_twophoton  )
 nothing #hide
 ```
 
-If we want an initial two-photon state, we instead use the function [`twophoton`](@ref) to create a two-photon state $\frac{1}{\sqrt{2}}\left[W^\dagger(\xi)\right]^2|0\rangle = \frac{1}{\sqrt{2}} \int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $ (see [Theoretical Background](@ref theory) for details). In the following, we define the two-photon wavefunction $\xi^{(2)}(t,t') = \xi^{(1)}(t)\xi^{(1)}(t')$ which is thus a product state of two single-photons. 
+If we want an initial two-photon state, we instead use the function [`twophoton`](@ref) to create a two-photon state $\frac{1}{\sqrt{2}}\left[W^\dagger(\xi)\right]^2|0\rangle = \frac{1}{\sqrt{2}} \int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $ (see [`Theoretical Background`](@ref theory) for details). In the following, we define the two-photon wavefunction $\xi^{(2)}(t,t') = \xi^{(1)}(t)\xi^{(1)}(t')$ which is thus a product state of two single-photons. 
 
 ```@example tutorial
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
 σ,t0 = 1,5
-ψ_twophoton = twophoton(bw,ξ2,σ,t0)
+ψ_twophoton = 1/sqrt(2)*twophoton(bw,ξ2,σ,t0)
 ψ_in_twophoton = fockstate(bc,0) ⊗ ψ_twophoton
 nothing #hide
 ```
 
-Notice the structure of `ξ2(t1,t2,σ,t0)`, it now has two time-arguments and the remaining arguments are parameters. If we wanted to allow for two different widths of the single-photon states in the product state, we could have also defined: `ξ2(t1,t2,σ1,σ2,t0) = ξ(t1,σ1,t0)*ξ(t2,σ2,t0)`. In the following, we consider the more simple case of equivalent photons. We solve the two-photon scattering in the following.
+Notice the structure of `ξ2(t1,t2,σ,t0)`, it now has two time-arguments and the remaining arguments are parameters. If we wanted to allow for two different widths of the single-photon states in the product state, we could have also defined: `ξ2(t1,t2,σ1,σ2,t0) = ξ(t1,σ1,t0)*ξ(t2,σ2,t0)`. Another important detail is the normalization. [`twophoton`](@ref) only creates $$\int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $$ and we thus need the factor of $$1/\sqrt(2)$$ for the state to be normalized. 
+
+In the following, we consider the more simple case of equivalent photons. We solve the two-photon scattering in the following.
 
 ```@example tutorial
 ψ_out = waveguide_evolution(times,ψ_in_twophoton,H_twophoton)

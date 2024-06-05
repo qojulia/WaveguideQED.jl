@@ -210,14 +210,14 @@ OnePhotonView(ψ,2) == ones(length(times))
 function onephoton end
 
 """
-    onephoton(b::WaveguideBasis{T,1},ξ::Function,args...,norm=True) where {T}
+    onephoton(b::WaveguideBasis{T,1},ξ::Function,args...,norm=false) where {T}
     
 * Since `b` only contains a single waveguide, the index of the waveguide is not needed. 
 * `ξ` should be broadcastable as ξ.(times,args...), where `times  = 0:b.dt:(b.nsteps-1)*b.dt` (the times used to define the waveguidebasis)
 * `args...`: additional arguments to be passed to ξ if it is a function.
-* `norm::Bool=true`: If true normalize the resulting wavepacket.
+* `norm::Bool=false`: If true normalize the resulting wavepacket.
 """
-function onephoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where {T}
+function onephoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=false) where {T}
     state = Ket(b)
     view = OnePhotonView(state)
     view .= ξ.(0:b.dt:(b.nsteps-1)*b.dt,args...)*sqrt(b.dt)
@@ -228,13 +228,13 @@ function onephoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where 
 end
 
 """
-    onephoton(b::WaveguideBasis{T,1},ξ::AbstractArray;norm=true) where {T}
+    onephoton(b::WaveguideBasis{T,1},ξ::AbstractArray;norm=false) where {T}
 
 * Since `b` only contains a single waveguide, the index of the waveguide is not needed. 
 * `ξ` should be `AbstractArray` with length(ξ) == b.nsteps 
-* `norm::Bool=true`: If true normalize the resulting wavepacket.
+* `norm::Bool=false`: If true normalize the resulting wavepacket.
 """
-function onephoton(b::WaveguideBasis{T,1},ξ::AbstractArray;norm=true) where {T}
+function onephoton(b::WaveguideBasis{T,1},ξ::AbstractArray;norm=false) where {T}
     state = Ket(b)
     view = OnePhotonView(state)
     view .= ξ*sqrt(b.dt)
@@ -245,15 +245,15 @@ function onephoton(b::WaveguideBasis{T,1},ξ::AbstractArray;norm=true) where {T}
 end
 
 """
-    onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...; norm=true) where {T,Nw}
+    onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...; norm=false) where {T,Nw}
     
 * Since `b` contains `Nw` waveguides, the index of the waveguide needed.
 * `i` is the index of the waveguide at which the onephoton wavepacket is created in
 * `ξ` should be broadcastable as ξ.(times,args...), where `times  = 0:b.dt:(b.nsteps-1)*b.dt` (the times used to define the waveguidebasis)
 * `args...`: additional arguments to be passed to ξ if it is a function.
-* `norm::Bool=true`: If true normalize the resulting wavepacket.
+* `norm::Bool=false`: If true normalize the resulting wavepacket.
 """
-function onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...; norm=true) where {T,Nw}
+function onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...; norm=false) where {T,Nw}
     state = Ket(b)
     view = OnePhotonView(state,i)
     view .= ξ.(0:b.dt:(b.nsteps-1)*b.dt,args...)*sqrt(b.dt)
@@ -264,14 +264,14 @@ function onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...; norm=tru
 end
 
 """
-    onephoton(b::WaveguideBasis{T,Nw},i,ξvec;norm=true) where {T,Nw}
+    onephoton(b::WaveguideBasis{T,Nw},i,ξvec;norm=false) where {T,Nw}
 
 * Since `b` contains a `Nw` waveguides, the index of the waveguide needed.
 * `i` is the index of the waveguide at which the onephoton wavepacket is created in
 * `ξ` should be `AbstractArray` with length(ξ) == b.nsteps
-* `norm::Bool=true`: If true normalize the resulting wavepacket.    
+* `norm::Bool=false`: If true normalize the resulting wavepacket.    
 """
-function onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::AbstractArray;norm=true) where {T,Nw}
+function onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::AbstractArray;norm=false) where {T,Nw}
     state = Ket(b)
     view = OnePhotonView(state,i)
     view .= ξ*sqrt(b.dt)
@@ -280,8 +280,8 @@ function onephoton(b::WaveguideBasis{T,Nw},i::Int,ξ::AbstractArray;norm=true) w
     end
     return state
 end
-onephoton(b::WaveguideBasis{T,Nw},ξ::Function,args...;norm=true) where {T,Nw} = throw(ArgumentError("WaveguideBasis contains multiple waveguides. Please provide the index of the waveguide in which the excitation should be created."))
-onephoton(b::WaveguideBasis{T,Nw},ξ::AbstractArray;norm=true) where {T,Nw} = throw(ArgumentError("WaveguideBasis contains multiple waveguides. Please provide the index of the waveguide in which the excitation should be created."))
+onephoton(b::WaveguideBasis{T,Nw},ξ::Function,args...;norm=false) where {T,Nw} = throw(ArgumentError("WaveguideBasis contains multiple waveguides. Please provide the index of the waveguide in which the excitation should be created."))
+onephoton(b::WaveguideBasis{T,Nw},ξ::AbstractArray;norm=false) where {T,Nw} = throw(ArgumentError("WaveguideBasis contains multiple waveguides. Please provide the index of the waveguide in which the excitation should be created."))
 
 
 
@@ -569,16 +569,16 @@ bw = WaveguideBasis(2,3,times)
 function twophoton end
 
 """
-    twophoton(b::WaveguideBasis{T,1},ξ::Function,args...,norm=True) where {T}
+    twophoton(b::WaveguideBasis{T,1},ξ::Function,args...,norm=false) where {T}
  
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains only one waveguide and no index needed.
 -  ξ given as a function should follow  `ξ(t1,t2,args...)`,  where `t1` and `t2` are the input times.
 - `args...`: additional arguments to be passed to ξ if it is a function.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-function twophoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where {T}
+function twophoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=false) where {T}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
@@ -586,11 +586,11 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where 
     for l in 1:nsteps
         for m in 1:nsteps
             if l<m
-                state.data[offset + twophoton_index(l,nsteps,m)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+                state.data[offset + twophoton_index(l,nsteps,m)] += ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
             elseif l == m
-                state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+                state.data[offset + twophoton_index(l,nsteps,m)] += sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
             else
-                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
             end
         end
     end
@@ -601,14 +601,14 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Function,args...;norm=true) where 
 end
 
 """
-    twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=true) where {T}
+    twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=false) where {T}
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains only one waveguide and no index needed.
 -  ξ given as a matrix of dimension `(b.nsteps, b.nsteps)`.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-function twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=true) where {T}
+function twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=false) where {T}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state.data,nsteps,nsteps+1)
@@ -616,11 +616,11 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=true) where {T}
     for l in 1:nsteps
         for m in 1:nsteps
             if l<m
-                state.data[offset + twophoton_index(l,nsteps,m)] +=  1/sqrt(2)*ξ[l,m]*b.dt
-            elseif l == m
                 state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ[l,m]*b.dt
+            elseif l == m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  sqrt(2)*ξ[l,m]*b.dt
             else
-                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ[l,m]*b.dt
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  ξ[l,m]*b.dt
             end
         end
     end
@@ -631,16 +631,16 @@ function twophoton(b::WaveguideBasis{T,1},ξ::Matrix;norm=true) where {T}
 end
 
 """
-    twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=true) where {T,Nw}  
+    twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=false) where {T,Nw}  
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains multiple waveguides and index i is need.
 - `i` denotes the index of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{i}}^\\dagger(t') |\\emptyset \\rangle``.
 -  ξ given as a function should follow  `ξ(t1,t2,args...)` where `t1` and `t2` are the input times.
 - `args...`: additional arguments to be passed to ξ.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=true) where {T,Nw}
+function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=false) where {T,Nw}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i)
@@ -648,11 +648,11 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=true
     for l in 1:nsteps
         for m in 1:nsteps
             if l<m
-                state.data[offset + twophoton_index(l,nsteps,m)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
-            elseif l == m
                 state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+            elseif l == m
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
             else
-                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
+                state.data[offset + twophoton_index(m,nsteps,l)] +=  ξ((l-1)*b.dt,(m-1)*b.dt,args...)*b.dt
             end
         end
     end
@@ -663,15 +663,15 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Function,args...;norm=true
 end
 
 """
-    twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=true) where {T,Nw}
+    twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=false) where {T,Nw}
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains multiple waveguides and index i is need.
 - `i` denotes the index of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{i}}^\\dagger(t') |\\emptyset \\rangle``.
 -  ξ given as a matrix of dimension `(b.nsteps, b.nsteps)`.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=true) where {T,Nw}
+function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=false) where {T,Nw}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i)
@@ -681,9 +681,9 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=true) where {T
             if l<m
                 state.data[offset + twophoton_index(l,nsteps,m)] += ξ[l,m]*b.dt
             elseif l == m
-                state.data[offset + twophoton_index(l,nsteps,m)] +=  ξ[l,m]*b.dt
+                state.data[offset + twophoton_index(l,nsteps,m)] +=  sqrt(2)*ξ[l,m]*b.dt
             else
-                state.data[offset + twophoton_index(m,nsteps,l)] +=  1/sqrt(2)*ξ[l,m]*b.dt
+                state.data[offset + twophoton_index(m,nsteps,l)] += ξ[l,m]*b.dt
             end
         end
     end
@@ -694,7 +694,7 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,ξ::Matrix;norm=true) where {T
 end
 
 """
-    twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Function,args...;norm=true) where {T,Nw}
+    twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Function,args...;norm=false) where {T,Nw}
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains multiple waveguides and index i is need.
@@ -702,9 +702,9 @@ end
 - `j` denotes the index of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{j}}^\\dagger(t') |\\emptyset \\rangle``.
 -  ξ given as a function should follow  `ξ(t1,t2,args...)` where `t1` and `t2` are the input times.
 - `args...`: additional arguments to be passed to ξ.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Function,args...;norm=true) where {T,Nw}
+function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Function,args...;norm=false) where {T,Nw}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i,j)
@@ -720,16 +720,16 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Function,args...;no
 end
 
 """
-    twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Matrix;norm=true) where {T,Nw}
+    twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Matrix;norm=false) where {T,Nw}
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains multiple waveguides and index i is need.
 - `i` denotes the index of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{j}}^\\dagger(t') |\\emptyset \\rangle``.
 - `j` denotes the index of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{j}}^\\dagger(t') |\\emptyset \\rangle``.
 -  ξ given as a matrix of dimension `(b.nsteps, b.nsteps)`.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Matrix;norm=true) where {T,Nw}
+function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Matrix;norm=false) where {T,Nw}
     state = Ket(b)
     nsteps = get_nsteps(b)
     viewed_data = TwoPhotonView(state,i,j)
@@ -745,19 +745,19 @@ function twophoton(b::WaveguideBasis{T,Nw},i::Int,j::Int,ξ::Matrix;norm=true) w
 end
 
 """
-    twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Matrix;norm=true) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}}
+    twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Matrix;norm=false) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}}
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains multiple waveguides and index i is need.
 - `I[1]` denotes the index ``i`` of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{j}}^\\dagger(t') |\\emptyset \\rangle``.
 - `I[2]` denotes the index ``j`` of the waveguide in the twophoton state: ``\\int_{t_0}^{t_{end}} dt' \\int_{t_0}^{t_{end}} dt  \\xi(t,t') w_{\\mathrm{i}}^\\dagger(t)w_{\\mathrm{j}}^\\dagger(t') |\\emptyset \\rangle``.
 -  ξ given as a matrix of dimension `(b.nsteps, b.nsteps)`.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Matrix;norm=true) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,norm=norm)
-twophoton(b::WaveguideBasis{1,Nw},args...;norm=true) where {Nw} = throw(ArgumentError("The input basis b only contains onephoton and I can't create twophotons. Create a new basis containing two-photons using WaveguideBasis(2,times)"))
+twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Matrix;norm=false) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,norm=norm)
+twophoton(b::WaveguideBasis{1,Nw},args...;norm=false) where {Nw} = throw(ArgumentError("The input basis b only contains onephoton and I can't create twophotons. Create a new basis containing two-photons using WaveguideBasis(2,times)"))
 
 """
-    twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Function,times,args...;norm=true) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,times,args...,norm=norm)
+    twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Function,times,args...;norm=false) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,times,args...,norm=norm)
 
 # Arguments
 - `b::WaveguideBasis{T,Nw}` contains multiple waveguides and index i is need.
@@ -766,9 +766,9 @@ twophoton(b::WaveguideBasis{1,Nw},args...;norm=true) where {Nw} = throw(Argument
 -  ξ given as a function should follow  `ξ(times[l],times[m],args...)`.
 - `times`: A vector or range of length(times) = b.nsteps.
 - `args...`: additional arguments to be passed to ξ.
-- `norm::Bool=true`: normalize the resulting wavepacket.
+- `norm::Bool=false`: Toggles whether to normalize the resulting wavepacket.
 """
-twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Function,times,args...;norm=true) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,times,args...,norm=norm)
+twophoton(b::WaveguideBasis{T,Nw},idx::I,ξ::Function,times,args...;norm=false) where {T,Nw,I<:Union{Vector{Int64},Tuple{Vararg{Int64}}}} = twophoton(b,idx[1],idx[2],ξ,times,args...,norm=norm)
 
 """
     get_waveguide_location(basis::WaveguideBasis)

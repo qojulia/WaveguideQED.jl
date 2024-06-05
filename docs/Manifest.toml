@@ -1425,10 +1425,10 @@ uuid = "19fa3120-7c27-5ec5-8db8-b0b0aa330d6f"
 version = "0.2.0"
 
 [[deps.WaveguideQED]]
-deps = ["FFTW", "LinearAlgebra", "Parameters", "PrecompileTools", "QuantumOptics", "QuantumOpticsBase", "SparseArrays", "Strided", "UnsafeArrays"]
+deps = ["FFTW", "LinearAlgebra", "Parameters", "PrecompileTools", "QuantumOptics", "QuantumOpticsBase", "SparseArrays", "Strided", "Test", "UnsafeArrays"]
 path = ".."
 uuid = "c4555495-0e8d-488d-8e6a-965ecefe9055"
-version = "0.2.4"
+version = "0.2.5"
 
 [[deps.WignerSymbols]]
 deps = ["HalfIntegers", "LRUCache", "Primes", "RationalRoots"]

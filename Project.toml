@@ -1,7 +1,7 @@
 name = "WaveguideQED"
 uuid = "c4555495-0e8d-488d-8e6a-965ecefe9055"
 authors = ["Matias Bundgaard-Nielsen <mabuni1998@gmail.com>, Mikkel Heuck <mheu@dtu.dk>, and Stefan Krastanov <stefankr@mit.edu>"]
-version = "0.2.4"
+version = "0.2.5"
 
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
@@ -12,6 +12,7 @@ QuantumOptics = "6e0679c1-51ea-5a7c-ac74-d61b76210b0c"
 QuantumOpticsBase = "4f57444f-1401-5e15-980d-4471b28d5678"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Strided = "5e0ebb24-38b0-5f93-81fe-25c709ecae67"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnsafeArrays = "c4a57d5a-5b31-53a6-b365-19f8c011fbd6"
 
 [compat]

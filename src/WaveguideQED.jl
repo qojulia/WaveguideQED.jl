@@ -4,6 +4,7 @@ using QuantumOptics
 using Strided
 using UnsafeArrays
 using FFTW
+using Test
 import LinearAlgebra: axpy!, dot, mul!, rmul!,I
 import QuantumOpticsBase: create, dagger, destroy, expect, identityoperator, tensor,set_time!
 

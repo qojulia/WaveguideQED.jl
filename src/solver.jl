@@ -29,6 +29,8 @@ function waveguide_evolution(times,psi,H;fout=nothing,kwargs...)
     tend = min(times[end],(nsteps)*dt)+dt
     times_sim = 0:dt:tend
     
+    isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
+
     function get_hamiltonian(time,psi) 
         tidx = min(round(Int,time/dt,RoundDown) + 1,nsteps)
         set_waveguidetimeindex!(ops,tidx)
@@ -70,6 +72,9 @@ function waveguide_montecarlo(times,psi,H,J;fout=nothing,kwargs...)
     dt = times[2] - times[1]
     tend = times[end]
     Jdagger = dagger.(J)
+    
+    isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
+
     function get_hamiltonian(time,psi)
         set_waveguidetimeindex!(ops,round(Int,time/dt,RoundUp)+1)
         return (H,J,Jdagger)
@@ -107,13 +112,14 @@ function fast_unitary(times_eval,psi,H;order=2,fout=nothing)
         fout_type = QuantumOptics.pure_inference(fout)
         output_container = Array{fout_type}(undef,length(times_eval))
     end
+    isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
     dt = get_dt(H.basis_l)
     U = generate_unitary(H,dt,order)
     nsteps = min(get_nsteps(H.basis_l),round(Int,times_eval[end]/dt)+1)
     out = copy(psi)
     tmp = copy(psi)
     if (times_eval[2]-times_eval[1]) < dt
-        warn("Timestep of evaluation points is smaller than photon time binning dt. Dafaulting to sampling at every dt instead.")
+        @warn "Timestep of evaluation points is smaller than photon time binning dt. Dafaulting to sampling at every dt instead."
     end
     savefreq = round(Int,(times_eval[2]-times_eval[1])/dt)
     if fout === nothing

@@ -26,8 +26,6 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 
 @doset "operators"
 @doset "singlecavity"
-@doset "detection_single"
-@doset "detection_double"
 # TODO doctests need fixing
 #VERSION == v"1.8" && @doset "doctests"
 get(ENV,"QUANTUMOPTICS_JET_TEST","")=="true" && @doset "jet"

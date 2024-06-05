@@ -25,9 +25,14 @@ function _precompile_()
     ψ_cw = onephoton(bw,ξfun,1,5)
     psi = fockstate(bc,0) ⊗  ψ_cw 
 
+    bw = WaveguideBasis(2,2,times)
+    ξ2(t1, t2, t01, t02) = ξfun(t1,1,t01) * ξfun(t2,1,t02)
+    ξvec = ξ2.(times,times,5,5)
+    ψ = twophoton(bw, [1,2], ξ2, 5, 5)
+    ψ = twophoton(bw, 1, ξ2, 5, 5)
     #Run solvers.
-    ψ = waveguide_evolution(times, psi, H)
-    ψ = waveguide_montecarlo(times, psi, H,[destroy(bc) ⊗ identityoperator(bw)])
+    #ψ = waveguide_evolution(times, psi, H)
+    #ψ = waveguide_montecarlo(times, psi, H,[destroy(bc) ⊗ identityoperator(bw)])
 end
 
 function prep_order(Np::Int,Nw::Int,wint_destroy::Int,wint_create::Int,order::Vector)

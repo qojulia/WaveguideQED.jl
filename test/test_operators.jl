@@ -18,7 +18,7 @@ include("helper_functions.jl")
     adw = ad ⊗ w
 
     ξfun(t1,t2) = 1
-    input = twophoton(bw,ξfun)
+    input = twophoton(bw,ξfun,norm=true)
     psi = fockstate(bc,0) ⊗ input
     psi_out = copy(psi)
 
@@ -42,7 +42,7 @@ end
     adw = ad ⊗ w
 
     ξfun(t1) = 1
-    input = onephoton(bw,ξfun)
+    input = onephoton(bw,ξfun,norm=true)
     psi = fockstate(bc,1) ⊗  input
     psi_out = copy(psi)
     mul!(psi_out,wda,psi,1,0.0)
@@ -67,7 +67,7 @@ end
     adw = ad ⊗ w
 
     ξfun(t1) = 1
-    input = onephoton(bw,ξfun)
+    input = onephoton(bw,ξfun,norm=true)
     psi = fockstate(bc,0) ⊗  input
     wda_out_2 = copy(psi)
     adw_out_2 = copy(psi)
@@ -84,7 +84,7 @@ end
     wda = a ⊗ wd
     adw = ad ⊗ w
 
-    input = onephoton(bw,ξfun)
+    input = onephoton(bw,ξfun,norm=true)
     psi = fockstate(bc,0) ⊗  input
     adw_out_1 = copy(psi)
     wda_out_1 = copy(psi)

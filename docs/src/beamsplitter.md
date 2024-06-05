@@ -125,9 +125,11 @@ nothing #hide
 
 We could also have created this plot by performing the the beamsplitter operation by hand and instead initializing the state directly in this state. The initial state we consider is a single photon in each waveguide: $$|\psi \rangle = \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_1^\dagger(t_1) w_2^\dagger(t_2) \ket{\emptyset}$$, where $$\xi_1(t_1)$$ and $$\xi_2(t_2)$$  denote the wavefunction of the photon in waveguide 1 and 2, respectively. Notice that there is not factor of $$1/\sqrt(2)$$ in front of the initial state as the two photons occupy each their waveguide. If they initially occupied the same waveguide, we would need a factor of $$1/\sqrt(2)$$ for the state to be normalized. Performing the beamsplitter operation $w_1(t) \rightarrow 1/\sqrt(2) ( w_1(t) - i w_2(t))$ and $w_2(t) \rightarrow 1/\sqrt(2) ( - i w_1(t) + w_2(t))$, we arrive at the transformed state:
 
-$$\begin{equation*}
-|\psi \rangle_{BS} = \frac{1}{2}\left ( i \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_1^\dagger(t_1) w_1^\dagger(t_2) \ket{\emptyset} - i \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_2^\dagger(t_1) w_2^\dagger(t_2) \ket{\emptyset} + \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_1^\dagger(t_1) w_2^\dagger(t_2)\ket{\emptyset} \right - \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_2^\dagger(t_1) w_1^\dagger(t_2)\ket{\emptyset} \right )\end{equation*}$$
 
+$$\begin{align*}
+|\psi \rangle_{BS} &= \frac{1}{2}\left ( i \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_1^\dagger(t_1) w_1^\dagger(t_2) \ket{\emptyset} - i \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_2^\dagger(t_1) w_2^\dagger(t_2) \ket{\emptyset} \right . \\
+& + \left . \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_1^\dagger(t_1) w_2^\dagger(t_2)\ket{\emptyset} - \int \int dt_1 dt_2 \xi_1(t_1) \xi_2(t_2) w_2^\dagger(t_1) w_1^\dagger(t_2)\ket{\emptyset} \right )
+\end{align*}$$
 
 ```@example bs
 taus = -3:0.1:3

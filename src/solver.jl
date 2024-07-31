@@ -26,13 +26,13 @@ function waveguide_evolution(times,psi,H;fout=nothing,kwargs...)
     dt = get_dt(H.basis_l)
     nsteps = get_nsteps(H.basis_l)
     #Note that dt is added to the last input time to ensure that  
-    tend = min(times[end],(nsteps)*dt)+dt
+    tend = times[end]+dt
     times_sim = 0:dt:tend
     
     isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
 
     function get_hamiltonian(time,psi) 
-        tidx = min(round(Int,time/dt,RoundDown) + 1,nsteps)
+        tidx = round(Int,time/dt,RoundDown) + 1
         set_waveguidetimeindex!(ops,tidx)
         return H
     end

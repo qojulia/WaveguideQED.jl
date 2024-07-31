@@ -117,5 +117,143 @@ nothing #hide
 ```
 ![alt text](feedback_0.svg)
 
-For comparison, we here also plotted an exponential decay with the rate $\gamma$ which corresponds to an infinite delay time. We see that for $\phi=0$ we have constructive interference for the excitation going to the right and the population of the emitter decays faster than had there been no feedback. The photon thus experiences stimulated emission with itself!
+For comparison, we here also plotteds an exponential decay with the rate $\gamma$ which corresponds to an infinite delay time. We see that for $\phi=0$ we have constructive interference for the excitation going to the right and the population of the emitter decays faster than had there been no feedback.
 
+## [Spatially separated emitters](@id emitters)
+Another interesting configuration to investigate is two spatially seperated emitters. If the separation between the emitters $\tau$ is comparable to the emission time $1/\gamma$, then a full description of the waveguide state is necessary. A sketch of the considered system can be seen here:
+
+![alt text](./illustrations/emitters_delay.svg)
+
+
+An emission from emitter A thus arrives at emitter B via the waveguide after $\tau$ time and vice versa. We can represent this in the `Waveguide.jl` formalism as a looped conveyor belt, where the two emitters interact with the waveguide or conveyor belt at two different times/places. This is illustrated below:
+
+![alt text](./illustrations/emitters_circle.svg)
+
+We can create such a loop by using delayed operators. This way, the two emitters interact with the same waveguide in different time bins. The waveguide operators, per default, loop around themselves, and thus, by placing the delayed emitter exactly in the middle of the waveguide state, we recreate the loop above. This is also illustrated here:
+
+![alt text](./illustrations/emitters_delay_box.svg)
+
+Here, the looping mechanism is illustrated as "portals" that move the waveguide state's last box to the waveguide's beginning whenever the end is reached due to the progression of time. We thus create a waveguide basis with a length of $2 \tau$ and a set of waveguide operators which are delayed by $\tau$:
+
+```@example twoemitters
+using QuantumOptics #hide
+using WaveguideQED #hide
+using LinearAlgebra #hide
+using PyPlot #hide
+
+tau = 10
+dt = 0.1
+times = 0:dt:2*tau+dt
+bw = WaveguideBasis(1, times) #waveguide basis
+be = FockBasis(1) #emitter basis
+
+#Defining operators
+w = destroy(bw)
+wd = create(bw)
+w_tau = destroy(bw; delay=tau/dt+1)#Delay of tau
+wd_tau = create(bw; delay=tau/dt+1)#Delay of tau
+sd = create(be) #Emitter operator
+s = destroy(be) #Emitter operator
+Iw = identityoperator(bw) #Identityoperator
+Ie = identityoperator(be) #Identityoperator
+nothing #hide
+```
+
+We can then create the Hamiltonian, where emitter A interacts with the not-delayed operators and emitter B with the delayed operators. We also create the expectation value operators here: 
+
+```@example twoemitters
+γ = 1
+H_e1 = im*sqrt(γ/dt)*(sd⊗Ie⊗w - s⊗Ie⊗wd) 
+H_e2 = im*sqrt(γ/dt)*(Ie⊗sd⊗w_tau - Ie⊗s⊗wd_tau) 
+H = H_e1 + H_e2
+
+ne_a = (sd*s)⊗Ie⊗Iw
+ne_b = Ie⊗(sd*s)⊗Iw
+nw = Ie⊗Ie⊗(wd*w)
+function expval(time, psi)
+  expect(ne_a, psi), expect(ne_b, psi), expect_waveguide(nw, psi)
+end
+nothing #hide
+```
+
+Finally, we can simulate the emission of a photon from emitter A, which, after a delay, impinges on emitter B:
+
+```@example twoemitters
+times_sim = 0:dt:2*tau
+ψ = fockstate(be, 1) ⊗ fockstate(be, 0) ⊗ zerophoton(bw)
+ψ, e1, e2, ew = waveguide_evolution(times_sim, ψ, H, fout=expval)
+
+fig,ax = subplots(1,1,figsize=(9,4.5))
+ax.plot(times_sim, abs.(e1), label="Emitter A")
+ax.plot(times_sim, abs.(e2), label="Emitter B")
+ax.plot(times_sim, abs.(ew), label="Waveguide")
+ax.set_xlabel(L"Time [$1/\gamma$]")
+ax.set_ylabel("Population")
+tight_layout()
+ax.legend()
+savefig("e1_excited.svg") #hide
+```
+![alt text](e1_excited.svg)
+
+In the above, we see emitter A decay and emitter B absorps the emitted photon, albeit not entirely. In reality, part of the incoming pulse from emitter A will reflect, and part of it will be absorbed. This means that if we run the simulation for a longer period, we will see emitter A being excited before emitter B is finished emitting. We can show this by extending the simulation time to $6 \tau$:
+
+```@example twoemitters
+times_sim = 0:dt:8*tau
+ψ = fockstate(be, 1) ⊗ fockstate(be, 0) ⊗ zerophoton(bw)
+ψ, e1, e2, ew = waveguide_evolution(times_sim, ψ, H, fout=expval)
+
+fig,ax = subplots(1,1,figsize=(9,4.5))
+ax.plot(times_sim, abs.(e1), label="Emitter A")
+ax.plot(times_sim, abs.(e2), label="Emitter B")
+ax.plot(times_sim, abs.(ew), label="Waveguide")
+ax.set_xlabel(L"Time [$1/\gamma$]")
+ax.set_ylabel("Expectation Value")
+tight_layout()
+ax.legend()
+savefig("e1_excited_slushing.svg") #hide
+```
+![alt text](e1_excited_slushing.svg)
+
+Here, we see the pulse doing multiple roundtrips, and the excitation of the emitters gets more and more complicated as reflections and reflections of reflections interfere. We see that as more round trips are completed, there is a simultaneous excitation of emitter A and B, indicating the non-trivial nature of the feedback loop. This gets even more complicated if one considers a lifetime of the emitters $1/\gamma$ that is longer than the delay $1/\tau$.
+
+
+One could also consider both emitters being excited in the beginning. This is done by allowing the waveguide to have two photons in it and changing the initial state. However, if there is no difference between the emitters, we will just see a completely symmetric excitation of them both, as the photons bounce back and forth. In the following, we thus consider two different decay rates of the emitters:
+
+```@example twoemitters
+bw = WaveguideBasis(2, times) #waveguide basis with twophotons
+be = FockBasis(1) #hide
+wd = create(bw) #hide
+wd_tau = create(bw; delay=tau/dt+1) #hide
+w = destroy(bw) #hide
+w_tau = destroy(bw; delay=tau/dt+1) #hide
+Iw = identityoperator(bw) #hide
+ne_a = (sd*s)⊗Ie⊗Iw #hide
+ne_b = Ie⊗(sd*s)⊗Iw #hide
+nw = Ie⊗Ie⊗(wd*w) #hide
+function expval(time, psi) #hide
+  expect(ne_a, psi), expect(ne_b, psi), expect_waveguide(nw, psi) #hide
+end #hide
+
+γ = 1
+H_e1 = im*sqrt(γ/dt)*(sd⊗Ie⊗w - s⊗Ie⊗wd)
+H_e2 = im*sqrt(γ/dt/2)*(Ie⊗sd⊗w_tau - Ie⊗s⊗wd_tau)
+H = H_e1 + H_e2
+
+
+times_sim = 0:dt:6*tau
+ψ = fockstate(be, 1) ⊗ fockstate(be, 1) ⊗ zerophoton(bw)
+ψ, e1, e2, ew = waveguide_evolution(times_sim, ψ, H, fout=expval)
+
+fig,ax = subplots(1,1,figsize=(9,4.5))
+ax.plot(times_sim, abs.(e1), label="Emitter A")
+ax.plot(times_sim, abs.(e2), label="Emitter B")
+ax.plot(times_sim, abs.(ew), label="Waveguide")
+ax.set_xlabel(L"Time [$1/\gamma$]")
+ax.set_ylabel("Expectation Value")
+tight_layout()
+ax.legend()
+savefig("both_excited.svg") #hide
+```
+![alt text](both_excited.svg)
+
+Here, we see that emitter A, which has a larger decay rate than emitter B, quickly decays so that emitter B is reexcited before it is fully de-excited. Afterward, the evolution quickly grows complicated due to the multiple scattering events. 

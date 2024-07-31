@@ -141,8 +141,8 @@ using WaveguideQED #hide
 using LinearAlgebra #hide
 using PyPlot #hide
 
-tau = 5
-dt = 0.05
+tau = 10
+dt = 0.1
 times = 0:dt:2*tau+dt
 bw = WaveguideBasis(1, times) #waveguide basis
 be = FockBasis(1) #emitter basis
@@ -162,9 +162,9 @@ nothing #hide
 We can then create the Hamiltonian, where emitter A interacts with the not-delayed operators and emitter B with the delayed operators. We also create the expectation value operators here: 
 
 ```@example twoemitters
-γ = 5
-H_e1 = im*sqrt(γ/dt/2)*(sd⊗Ie⊗w - s⊗Ie⊗wd) 
-H_e2 = im*sqrt(γ/dt/2)*(Ie⊗sd⊗w_tau - Ie⊗s⊗wd_tau) 
+γ = 1
+H_e1 = im*sqrt(γ/dt)*(sd⊗Ie⊗w - s⊗Ie⊗wd) 
+H_e2 = im*sqrt(γ/dt)*(Ie⊗sd⊗w_tau - Ie⊗s⊗wd_tau) 
 H = H_e1 + H_e2
 
 ne_a = (sd*s)⊗Ie⊗Iw
@@ -187,7 +187,7 @@ fig,ax = subplots(1,1,figsize=(9,4.5))
 ax.plot(times_sim, abs.(e1), label="Emitter A")
 ax.plot(times_sim, abs.(e2), label="Emitter B")
 ax.plot(times_sim, abs.(ew), label="Waveguide")
-ax.set_xlabel("Time")
+ax.set_xlabel(L"Time [$1/\gamma$]")
 ax.set_ylabel("Population")
 tight_layout()
 ax.legend()
@@ -206,7 +206,7 @@ fig,ax = subplots(1,1,figsize=(9,4.5))
 ax.plot(times_sim, abs.(e1), label="Emitter A")
 ax.plot(times_sim, abs.(e2), label="Emitter B")
 ax.plot(times_sim, abs.(ew), label="Waveguide")
-ax.set_xlabel("Time")
+ax.set_xlabel(L"Time [$1/\gamma$]")
 ax.set_ylabel("Expectation Value")
 tight_layout()
 ax.legend()
@@ -234,9 +234,9 @@ function expval(time, psi) #hide
   expect(ne_a, psi), expect(ne_b, psi), expect_waveguide(nw, psi) #hide
 end #hide
 
-γ = 2
-H_e1 = im*sqrt(γ/dt/2)*(sd⊗Ie⊗w - s⊗Ie⊗wd)
-H_e2 = im*sqrt(γ/dt/4)*(Ie⊗sd⊗w_tau - Ie⊗s⊗wd_tau)
+γ = 1
+H_e1 = im*sqrt(γ/dt)*(sd⊗Ie⊗w - s⊗Ie⊗wd)
+H_e2 = im*sqrt(γ/dt/2)*(Ie⊗sd⊗w_tau - Ie⊗s⊗wd_tau)
 H = H_e1 + H_e2
 
 
@@ -248,7 +248,7 @@ fig,ax = subplots(1,1,figsize=(9,4.5))
 ax.plot(times_sim, abs.(e1), label="Emitter A")
 ax.plot(times_sim, abs.(e2), label="Emitter B")
 ax.plot(times_sim, abs.(ew), label="Waveguide")
-ax.set_xlabel("Time")
+ax.set_xlabel(L"Time [$1/\gamma$]")
 ax.set_ylabel("Expectation Value")
 tight_layout()
 ax.legend()

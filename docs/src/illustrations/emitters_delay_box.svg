@@ -408,7 +408,7 @@
     <g
        id="g52680"
        transform="translate(-93.313559,-99.066128)"
-       inkscape:export-filename="..\scripts\open_quantum_optics\WaveguideQED\docs\src\illustrations\horseshoe.svg"
+       inkscape:export-filename="..\scripts\open_quantum_optics\WaveguideQED\docs\src\illustrations\emitters_delay_box.svg"
        inkscape:export-xdpi="1000.59"
        inkscape:export-ydpi="1000.59">
       <rect
@@ -2124,7 +2124,7 @@
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300">
       <ellipse
-         style="mix-blend-mode:normal;fill:#000000;fill-opacity:1;stroke:#3da458;stroke-width:1.2577;stroke-opacity:1;filter:url(#filter121)"
+         style="mix-blend-mode:normal;fill:#000000;fill-opacity:1;stroke:#bd6021;stroke-width:1.2577;stroke-opacity:1;filter:url(#filter121)"
          id="ellipse44"
          cx="142.65512"
          cy="131.52335"
@@ -2162,7 +2162,7 @@
        id="g86"
        transform="matrix(-1,0,0,1,170.95569,-68.90602)">
       <ellipse
-         style="mix-blend-mode:normal;fill:#000000;fill-opacity:1;stroke:#3da458;stroke-width:1.2577;stroke-opacity:1;filter:url(#filter121-2)"
+         style="mix-blend-mode:normal;fill:#000000;fill-opacity:1;stroke:#c36322;stroke-width:1.2577;stroke-opacity:1;filter:url(#filter121-2)"
          id="ellipse85"
          cx="142.65512"
          cy="131.52335"

@@ -341,9 +341,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,1,idx},b,alpha,beta) wher
     end
     nsteps = a.basis_l.nsteps
     timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
-    if timeindex == 0 || timeindex > nsteps
-        timeindex = 1
-    end
+    
     @inbounds result[1] += alpha*a.factor*b[timeindex+(idx-1)*nsteps+1]
     return
 end
@@ -356,9 +354,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,1},b,alpha,beta) where 
     end
     nsteps = a.basis_l.nsteps
     timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
-    if timeindex == 0 || timeindex > nsteps
-        timeindex = 1
-    end
+    
     @inbounds result[1] += alpha*a.factor*b[timeindex+1]
     #twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,nsteps+1)
     #axpy!(alpha*a.factor,twophotonview,view(result,2:1:nsteps+1))
@@ -374,9 +370,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,idx},b,alpha,beta) wher
     end
     nsteps = a.basis_l.nsteps
     timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
-    if timeindex == 0 || timeindex > nsteps
-        timeindex = 1 
-    end
+    
     Nw  = get_number_of_waveguides(a.basis_l)
     @inbounds result[1] += alpha*a.factor*b[timeindex+(idx-1)*a.basis_l.nsteps+1]
     #twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)
@@ -402,9 +396,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,1,idx},b,alpha,beta) where
     end
     nsteps = a.basis_l.nsteps
     timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
-    if timeindex == 0 || timeindex > nsteps
-        timeindex = 1 
-    end
+    
     @inbounds result[timeindex+(idx-1)*nsteps+1] += alpha*a.factor*b[1]
     return
 end
@@ -417,9 +409,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,2,1},b,alpha,beta) where {
     end
     nsteps = a.basis_l.nsteps
     timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
-    if timeindex == 0 || timeindex > nsteps
-        timeindex = 1 
-    end
+    
     @inbounds result[timeindex+1] += alpha*a.factor*b[1]
     #twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,nsteps+1)
     #axpy!(alpha*a.factor,view(b,2:1:nsteps+1),twophotonview)
@@ -435,9 +425,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,2,idx},b,alpha,beta) where
     end
     nsteps = a.basis_l.nsteps
     timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
-    if timeindex == 0 || timeindex > nsteps
-        timeindex = 1 
-    end
+    
     Nw  = get_number_of_waveguides(a.basis_l)
     @inbounds result[timeindex+(idx-1)*a.basis_l.nsteps+1] += alpha*a.factor*b[1]
     #twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,Nw*nsteps+1+(idx-1)*(nsteps*(nsteps+1))÷2)

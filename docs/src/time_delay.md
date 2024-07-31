@@ -119,7 +119,7 @@ nothing #hide
 
 For comparison, we here also plotteds an exponential decay with the rate $\gamma$ which corresponds to an infinite delay time. We see that for $\phi=0$ we have constructive interference for the excitation going to the right and the population of the emitter decays faster than had there been no feedback.
 
-## [Two seperated emitters](@id emitters)
+## [Spatially separated emitters](@id emitters)
 Another interesting configuration to investigate is two spatially seperated emitters. If the separation between the emitters $\tau$ is comparable to the emission time $1/\gamma$, then a full description of the waveguide state is necessary. A sketch of the considered system can be seen here:
 
 ![alt text](./illustrations/emitters_delay.svg)

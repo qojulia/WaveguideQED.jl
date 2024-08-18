@@ -312,3 +312,47 @@ end
         @test test_interaction(right_1photon[1],3,c[1],c[2],[3,1,2],right_1photon[2][1])
     end
 end
+
+@testset "Waveguide Delay Interaction" begin
+    times = 0:1:10
+    dt = times[2] - times[1]
+
+    for i in 1:2
+        bw = WaveguideBasis(i,2,times)
+        
+        tau = 5
+
+        w1 = destroy(bw,1)
+        wd1 = create(bw,1);
+        w1_delay = destroy(bw,1;delay=tau/dt)
+        wd1_delay = create(bw,1;delay=tau/dt);
+
+        w2 = destroy(bw,2)
+        wd2 = create(bw,2);
+        w2_delay = destroy(bw,2;delay=tau/dt)
+        wd2_delay = create(bw,2;delay=tau/dt);
+        
+        ξfun(t1) = 1
+        input = Ket(bw)
+        input.data .= 1
+        normalize!(input)
+        temp1 = copy(input)
+        temp2 = copy(input)
+        
+        
+        operators = [w1, wd1, w1_delay, wd1_delay, w2, wd2,w2_delay, wd2_delay]
+        
+        for o1 in operators
+            for o2 in operators
+                c1  = o1*o2
+                c2 = LazyProduct([o1,o2])
+                
+                QuantumOptics.mul!(temp1,c1,input)
+                QuantumOptics.mul!(temp2,c2,input)
+
+                @test isapprox(temp1.data,temp2.data)
+            end
+        end
+    end
+    
+end

@@ -33,9 +33,9 @@ end
 Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps)
 
 #Type unions to dispatch on.
-const SingleWaveguideBasis{Np} = Union{CompositeBasis{Vector{Int64}, T},WaveguideBasis{Np,1}} where {T<:Tuple{Vararg{Union{NLevelBasis,FockBasis,WaveguideBasis{Np,1}}}},Np}
+const SingleWaveguideBasis{Np} = Union{CompositeBasis{Vector{Int64}, T},WaveguideBasis{Np,1}} where {T<:Tuple{Vararg{Union{SpinBasis,NLevelBasis,FockBasis,WaveguideBasis{Np,1}}}},Np}
 const SingleWaveguideKet = Ket{T, Vector{ComplexF64}} where T<:SingleWaveguideBasis
-const MultipleWaveguideBasis{Np,Nw} = Union{CompositeBasis{Vector{Int64},T},WaveguideBasis{Np,Nw},WaveguideBasis{Np,Nw}} where {T<:Tuple{Vararg{Union{NLevelBasis,FockBasis,WaveguideBasis{Np,Nw}}}},Np,Nw}
+const MultipleWaveguideBasis{Np,Nw} = Union{CompositeBasis{Vector{Int64},T},WaveguideBasis{Np,Nw},WaveguideBasis{Np,Nw}} where {T<:Tuple{Vararg{Union{SpinBasis,NLevelBasis,FockBasis,WaveguideBasis{Np,Nw}}}},Np,Nw}
 const MultipleWaveguideKet = Ket{T, Vector{ComplexF64}} where T<:MultipleWaveguideBasis
 
 

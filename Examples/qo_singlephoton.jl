@@ -23,6 +23,7 @@ bw = WaveguideBasis(1,param.times)
 a = destroy(bc)
 ad = create(bc);
 n = ad*a ⊗ identityoperator(bw)
+
 #$w†a and a†w efficient implementation$
 wda = emission(bc,bw)
 adw = absorption(bc,bw)
@@ -45,6 +46,8 @@ ref_sol = ξfun.(sol1.t,param.σ,param.t0)-sqrt(param.γ)*sol1
 
 #Plot single photon waveguide state 
 ψ_single = OnePhotonView(ψ)/sqrt(dt)
+
+
 
 fig,ax = subplots(1,1,figsize=(9,4.5))
 ax.plot(param.times,abs.(ξvec).^2,"g-",label="Input pulse")

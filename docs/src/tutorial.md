@@ -106,15 +106,15 @@ end
 nothing #hide
 ```
 
-Where `expect_waveguide(n_w,psi)` calculates the expectation value of all times of the pulse at each timestep: $\mathrm{expect_waveguide(n_w,psi)} = \bra{\psi} \sum_k  I \otimes w_k^\dagger w_k  \ket{\psi}$
+Where `expect_waveguide(n_w,psi)` calculates the expectation value of all times of the pulse at each timestep: $\mathrm{expect\_waveguide(n_w,psi)} = \bra{\psi} \sum_k  I \otimes w_k^\dagger w_k  \ket{\psi}$
 
 This can be plotted as:
 
 ```@example tutorial
 fig,ax = subplots(1,1,figsize=(9,4.5))
-ax.plot(times,na,"b-",label="na")
-ax.plot(times,nw,"r-",label="nw")
-ax.plot(times,nw+na,"g-",label="na+nw")
+ax.plot(times,real.(na),"b-",label="na")
+ax.plot(times,real.(nw),"r-",label="nw")
+ax.plot(times,real.(nw+na),"g-",label="na+nw")
 ax.set_xlabel("Time [a.u]")
 ax.set_ylabel("Population")
 ax.legend()
@@ -150,7 +150,7 @@ H_twophoton = im*sqrt(γ/dt)*( ad ⊗ w_twophoton - a ⊗ wd_twophoton  )
 nothing #hide
 ```
 
-If we want an initial two-photon state, we instead use the function [`twophoton`](@ref) to create a two-photon state $\frac{1}{\sqrt{2}}\left[W^\dagger(\xi)\right]^2|0\rangle = \frac{1}{\sqrt{2}} \int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $ (see [`Theoretical Background`](@ref theory) for details). In the following, we define the two-photon wavefunction $\xi^{(2)}(t,t') = \xi^{(1)}(t)\xi^{(1)}(t')$ which is thus a product state of two single-photons. 
+If we want an initial two-photon state, we instead use the function [`twophoton`](@ref) to create a two-photon state $\frac{1}{\sqrt{2}}\left[W^\dagger(\xi)\right]^2|0\rangle = \frac{1}{\sqrt{2}} \int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $ (see [Theoretical Background](@ref theory) for details). In the following, we define the two-photon wavefunction $\xi^{(2)}(t,t') = \xi^{(1)}(t)\xi^{(1)}(t')$ which is thus a product state of two single-photons. 
 
 ```@example tutorial
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)

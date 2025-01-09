@@ -167,11 +167,11 @@ If we want to create a two-photon Gaussian state, we instead do:
 ξ(t,σ,t0) = sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2)
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
 σ,t0 = 1,5
-ψ = twophoton(bw,ξ2,σ,t0)
+ψ = twophoton(bw,ξ2,σ,t0) / sqrt(2)
 nothing #hide
 ```
 
-Here, we defined the two-photon equivalent of our single-photon Gaussian state. When we visualize it, we now need two times, and we make a contour plot. This is easily done by viewing the two-photon state and using [`plot_twophoton!`](@ref): 
+Here, we defined the two-photon equivalent of our single-photon Gaussian state. Note the factor of $\sqrt{2}$ that is necessary for the state to be normalized. Alternatively, `twophoton(bw,ξ2,σ,t0;norm=true)` would return a normalized state. When we visualize it, we now need two times, and we make a contour plot. This is easily done by viewing the two-photon state and using [`plot_twophoton!`](@ref): 
 
 ```@example theory
 viewed_state = TwoPhotonView(ψ)

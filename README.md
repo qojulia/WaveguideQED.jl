@@ -5,6 +5,10 @@
 
 A Julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). The package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where bases and operators from WaveguideQED.jl can be used together with operators and bases from QuantumOpics.jl. 
 
+### Citing
+If you find the package usefull in your research. Please consider citing: [https://arxiv.org/abs/2412.13332](https://arxiv.org/abs/2412.13332).
+
+
 ### Example of usage:
 Define a waveguide basis, containing a two-photon wavepacket for a time interval from 0 to 20 with timesteps of 0.2:
 
@@ -37,7 +41,7 @@ Finally, we can define an initial two-photon Gaussian wavepacket state with view
 
 ```julia
 ξfun(t1,t2,σ1,σ2,t0) = sqrt(2/σ1) * (log(2)/pi)^(1/4)*exp(-2*log(2)*(t1-t0)^2/σ1^2)*sqrt(2/σ2)*(log(2)/pi)^(1/4)*exp(-2*log(2)*(t2-t0)^2/σ2^2)
-ψ_cw = twophoton(bw,ξfun,1,1,5)
+ψ_cw = twophoton(bw,ξfun,1,1,5)/sqrt(2)
 psi = fockstate(bc,0) ⊗ ψ_cw
 dt = times[2] - times[1]
 H = im*sqrt(1/dt)*(adw-wda)
@@ -50,7 +54,7 @@ Plotting the two-photon state is also simple:
 ```julia
 ψ_double = TwoPhotonView(ψ);
 using PyPlot
-fig,ax = subplots(1,1,figsize=(9,4.5))
+fig,ax = subplots(1,1,figsize=(4.5,4.5))
 plot_twophoton!(ax,ψ_double,times)
 ```
 

@@ -62,10 +62,10 @@ where `ψ_single_1` here denotes the state: $\ket{\psi}_1 = \sum_k \sqrt{\Delta 
 ```@example multiple
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
 w_idx = 1
-ψ_double_1 = twophoton(bw,w_idx,ξ2,2,5)
+ψ_double_1 = twophoton(bw,w_idx,ξ2,2,5)/sqrt(2)
 
 w_idx = 2
-ψ_double_2 = twophoton(bw,w_idx,ξ2,2,5)
+ψ_double_2 = twophoton(bw,w_idx,ξ2,2,5)/sqrt(2)
 nothing #hide
 ```
 
@@ -107,7 +107,7 @@ We can now study how single or two-photon states scatter on the emitter. We defi
 w = 1
 t0 = 5
 ψ1 = fockstate(be,0) ⊗ onephoton(bw,1,ξ₁,w,t0)
-ψ2 = fockstate(be,0) ⊗ twophoton(bw,1,ξ₂,w,t0)
+ψ2 = fockstate(be,0) ⊗ twophoton(bw,1,ξ₂,w,t0)/sqrt(2)
 ψScat1 = waveguide_evolution(times,ψ1,H)
 ψScat2 = waveguide_evolution(times,ψ2,H)
 nothing #hide

@@ -2,6 +2,10 @@
 
 WaveguideQED.jl is a package for simulating continuous fockstates in waveguides. It expands on [`QuantumOptics.jl`](https://qojulia.org/) by adding a custom basis and operators for efficiently representing time-binned photon states. 
 
+## Citing
+If you find the package usefull in your research. Please consider citing: [https://arxiv.org/abs/2412.13332](https://arxiv.org/abs/2412.13332).
+
+
 ## Dev docs
 Added functionalities:
 * [`WaveguideBasis`](@ref) for representing the waveguide Hilbert space and the related functions for generating states in this Hilbert space: [`zerophoton`](@ref), [`onephoton`](@ref), and [`twophoton`](@ref). Also see [`OnePhotonView`](@ref), [`TwoPhotonView`](@ref), and [`plot_twophoton!`](@ref) for viewing the waveguide states and plotting them. Note that [`WaveguideBasis`](@ref) can contain multiple waveguides.

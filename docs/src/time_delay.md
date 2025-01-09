@@ -27,7 +27,7 @@ using WaveguideQED #hide
 using QuantumOptics #hide
 times = 0:0.1:11
 dt = times[2]-times[1]
-bw = WaveguideBasis(1,1,times)
+bw = WaveguideBasis(1,times)
 
 delay_time = 1
 w_delayed = destroy(bw;delay=delay_time/dt)
@@ -39,7 +39,6 @@ The delayed operators are just normal WaveguideOperators addressing different ti
 
 ```@example timedelay
 be = FockBasis(1)
-bw = WaveguideBasis(1,1,times)
 sdw_delayed = create(be) ⊗ w_delayed
 wds_delayed = destroy(be) ⊗ wd_delayed
 nothing #hide
@@ -81,7 +80,7 @@ nothing #hide
 ```@example timedelay
 using PyPlot #hide
 fig,ax = subplots(1,1,figsize=(9,4.5))
-ax.plot(times,ne_pi,"r-")
+ax.plot(times,real.(ne_pi),"r-")
 ax.set_xlabel(L"time [$1/\gamma$]")
 ax.set_ylabel("Population")
 plt.tight_layout() #hide
@@ -105,9 +104,9 @@ This gives the plot:
 
 ```@example timedelay
 fig,ax = subplots(1,1,figsize=(9,4.5))
-ax.plot(times_sim,ne_pi[1:end-10],"r-",label=L"$\phi = \pi, \ \ \ \tau= 1$")
-ax.plot(times_sim,ne_0,"b-",label=L"$\phi = 0, \ \ \ \tau= 1$")
-ax.plot(times_sim,exp.(-times_sim),"k--",label=L"$\tau= \infty$")
+ax.plot(times_sim,real.(ne_pi[1:end-10]),"r-",label=L"$\phi = \pi, \ \ \ \tau= 1$")
+ax.plot(times_sim,real.(ne_0),"b-",label=L"$\phi = 0, \ \ \ \tau= 1$")
+ax.plot(times_sim,real.(exp.(-times_sim)),"k--",label=L"$\tau= \infty$")
 ax.set_xlabel(L"time [$1/\gamma$]")
 ax.set_ylabel("Population")
 ax.legend()
@@ -127,7 +126,7 @@ Another interesting configuration to investigate is two spatially seperated emit
 
 An emission from emitter A thus arrives at emitter B via the waveguide after $\tau$ time and vice versa. We can represent this in the `Waveguide.jl` formalism as a looped conveyor belt, where the two emitters interact with the waveguide or conveyor belt at two different times/places. This is illustrated below:
 
-![alt text](./illustrations/emitters_circle.svg)
+![alt text](./illustrations/emitters_circle.png)
 
 We can create such a loop by using delayed operators. This way, the two emitters interact with the same waveguide in different time bins. The waveguide operators, per default, loop around themselves, and thus, by placing the delayed emitter exactly in the middle of the waveguide state, we recreate the loop above. This is also illustrated here:
 

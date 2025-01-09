@@ -150,7 +150,7 @@ H_twophoton = im*sqrt(γ/dt)*( ad ⊗ w_twophoton - a ⊗ wd_twophoton  )
 nothing #hide
 ```
 
-If we want an initial two-photon state, we instead use the function [`twophoton`](@ref) to create a two-photon state $\frac{1}{\sqrt{2}}\left[W^\dagger(\xi)\right]^2|0\rangle = \frac{1}{\sqrt{2}} \int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $ (see [Theoretical Background](@ref theory) for details). In the following, we define the two-photon wavefunction $\xi^{(2)}(t,t') = \xi^{(1)}(t)\xi^{(1)}(t')$ which is thus a product state of two single-photons. 
+If we want an initial two-photon state, we instead use the function [`twophoton`](@ref) to create a two-photon state $\frac{1}{\sqrt{2}}\left[W^\dagger(\xi)\right]^2|0\rangle = \frac{1}{\sqrt{2}} \int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $ (see [Theory](@ref theory) for details). In the following, we define the two-photon wavefunction $\xi^{(2)}(t,t') = \xi^{(1)}(t)\xi^{(1)}(t')$ which is thus a product state of two single-photons. 
 
 ```@example tutorial
 ξ2(t1,t2,σ,t0) = ξ(t1,σ,t0)*ξ(t2,σ,t0)
@@ -160,7 +160,7 @@ If we want an initial two-photon state, we instead use the function [`twophoton`
 nothing #hide
 ```
 
-Notice the structure of `ξ2(t1,t2,σ,t0)`, it now has two time-arguments and the remaining arguments are parameters. If we wanted to allow for two different widths of the single-photon states in the product state, we could have also defined: `ξ2(t1,t2,σ1,σ2,t0) = ξ(t1,σ1,t0)*ξ(t2,σ2,t0)`. Another important detail is the normalization. [`twophoton`](@ref) only creates $$\int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger\left(t^{\prime}\right)|0\rangle $$ and we thus need the factor of $$1/\sqrt(2)$$ for the state to be normalized. 
+Notice the structure of `ξ2(t1,t2,σ,t0)`, it now has two time-arguments and the remaining arguments are parameters. If we wanted to allow for two different widths of the single-photon states in the product state, we could have also defined: `ξ2(t1,t2,σ1,σ2,t0) = ξ(t1,σ1,t0)*ξ(t2,σ2,t0)`. Another important detail is the normalization. [`twophoton`](@ref) only creates $$\int_{t_0}^{t_{end}} d t^{\prime} \int_{t_0}^{t_{end}} d t \ \xi^{(2)}(t,t') w^\dagger(t) w^\dagger \left( t^{\prime} \right) | 0 \rangle$$ and we thus need the factor of $$1/\sqrt{2}$$ for the state to be normalized. 
 
 In the following, we consider the more simple case of equivalent photons. We solve the two-photon scattering in the following.
 

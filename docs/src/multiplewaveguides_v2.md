@@ -76,6 +76,8 @@ We can even describe a simultaneous excitation in both waveguide states like $\k
 nothing #hide
 ``` 
 
+Note the absence of $$1/\sqrt{2}$$ when defining a state with one photon in each waveguide. 
+
 ## [Scattering on two-level system](@id lodahl)
 
 As an example of a system with multiple waveguide modes, we consider a two-level system coupled with two directional waveguide modes; a left and a right propagating mode. A sketch of the system can be seen below here:

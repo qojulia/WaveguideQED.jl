@@ -95,9 +95,14 @@ Base.:*(x::WaveguideOperator{BL,BR},y::CavityWaveguideOperator{BL,BR}) where {BL
 Base.:*(x::Operator{BL,BR},y::CavityWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),y.factor)
 Base.:*(x::CavityWaveguideOperator{BL,BR},y::Operator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor)
 
-Base.:*(x::Operator{BL,BR},y::WaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),y.factor)
-Base.:*(x::WaveguideOperator{BL,BR},y::Operator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor)
-
+function Base.:*(x::Operator{BL,BR},y::WaveguideOperator{BL,BR}) where {BL,BR} 
+    isa(x,QuantumOpticsBase.EyeOpType) && return y
+    LazyProduct((x,y),y.factor)
+end
+function Base.:*(x::WaveguideOperator{BL,BR},y::Operator{BL,BR}) where {BL,BR}
+    isa(y,QuantumOpticsBase.EyeOpType) && return x
+    LazyProduct((x,y),x.factor)
+end
 
 const WaveguideOperatorT = LazyTensor{B,B,F,V,T} where {B,F,V,T<:Tuple{Union{WaveguideDestroy,WaveguideCreate}}}
 

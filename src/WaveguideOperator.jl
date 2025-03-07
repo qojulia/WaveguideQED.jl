@@ -299,30 +299,29 @@ end
 
 #Called from _tp_matmul! and _tp_matmul_mid!
 #Calls waveguide_mul! on correct view of whole subsets of the state.
-function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray, a::WaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
+function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideOperator, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where{T,N1,AR1,N2,AR2}
     d_first = size(b, 1)
     d_rest = length(b)÷d_first
     bp = b.parent
     rp = result.parent
-    @uviews bp rp begin  # avoid allocations on reshape
-        br = reshape(bp, (d_first, d_rest))
-        result_r = reshape(rp, (size(a, 1), d_rest))
-        apply_first_op!(result_r,a,br,α,β)
-    end
+    br = reshape(bp, (d_first, d_rest))
+    result_r = reshape(rp, (size(a, 1), d_rest))
+    apply_first_op!(result_r,a,br,α,β)
     result
 end
 
 #Same as _tp_matmul_first! But indexed in another way.
-function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray, a::WaveguideOperator, b::Base.ReshapedArray, α::Number, β::Number)
+function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideOperator, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number)  where{T,N1,AR1,N2,AR2}
     d_last = size(b, ndims(b))
     d_rest = length(b)÷d_last
     bp = b.parent
     rp = result.parent
-    @uviews bp rp begin  # avoid allocations on reshape
-        br = reshape(bp, (d_rest, d_last))
-        result_r = reshape(rp, (d_rest, size(a, 1)))
-        apply_last_op!(result_r,a,br,α,β)
-    end
+    #println(result)
+    #println(typeof(result))
+
+    br = reshape(bp, (d_rest, d_last))
+    result_r = reshape(rp, (d_rest, size(a, 1)))
+    apply_last_op!(result_r,a,br,α,β)
     result
 end
 

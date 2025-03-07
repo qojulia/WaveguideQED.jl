@@ -5,6 +5,7 @@ using Strided
 using UnsafeArrays
 using FFTW
 using Test
+using CUDA
 import LinearAlgebra: axpy!, dot, mul!, rmul!,I
 import QuantumOpticsBase: create, dagger, destroy, expect, identityoperator, tensor,set_time!
 
@@ -23,6 +24,7 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
 include("view.jl")
 include("basis.jl")
 include("WaveguideOperator.jl")
+include("gpu_waveguideoperator.jl")
 include("CavityWaveguideOperator.jl")
 include("WaveguideInteraction.jl")
 include("solver.jl")

@@ -3,11 +3,9 @@
 function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideOperator, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
     T,
     N1,
-    N3,
-    AR1<:CuArray{T, N3, CUDA.DeviceMemory},
+    AR1<:CuArray,
     N2,
-    N4,
-    AR2<:CuArray{T, N4, CUDA.DeviceMemory},
+    AR2<:CuArray,
 }
     d_first = size(b, 1)
     d_rest = length(b)÷d_first
@@ -23,11 +21,9 @@ end
 function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideOperator, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
     T,
     N1,
-    N3,
-    AR1<:CuArray{T, N3, CUDA.DeviceMemory},
+    AR1<:CuArray,
     N2,
-    N4,
-    AR2<:CuArray{T, N4, CUDA.DeviceMemory},
+    AR2<:CuArray
 }
     d_last = size(b, ndims(b))
     d_rest = length(b)÷d_last

@@ -675,3 +675,6 @@ function gpu_waveguide_twophoton_create_first!(result, b,α, β,N, M,nsteps,time
 
     return
 end
+
+
+

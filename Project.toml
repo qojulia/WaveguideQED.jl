@@ -17,7 +17,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnsafeArrays = "c4a57d5a-5b31-53a6-b365-19f8c011fbd6"
 
 [compat]
-CUDA = "5.1.2"
+CUDA = "5"
 FFTW = "1"
 Parameters = "0.12"
 PrecompileTools = "1"

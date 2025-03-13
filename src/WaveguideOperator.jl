@@ -258,6 +258,7 @@ function QuantumOpticsBase.:_tp_matmul!(result, a::WaveguideOperator, loc::Integ
     end
     QuantumOpticsBase._tp_matmul_mid!(result, a, loc, b, α, β)
 end
+
 function QuantumOpticsBase._tp_matmul_mid!(result, a::WaveguideOperator, loc::Integer, b, α::Number, β::Number)
     sz_b_1 = 1
     for i in 1:loc-1

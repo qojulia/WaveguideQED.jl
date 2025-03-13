@@ -437,7 +437,7 @@ end
     
 Fast in-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a [`CavityWaveguideOperator`](@ref).
 """
-function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
+function mul!(result::Ket{B1,A1}, a::CavityWaveguideEmission, b::Ket{B2,A2}, alpha, beta) where {B1<:Basis,B2<:Basis, A1<:AbstractArray, A2<:AbstractArray}
     dims = basis(result).shape
     i,j = a.loc[1],a.loc[2]
     beta1 = beta
@@ -458,7 +458,7 @@ function mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, be
     end
     return result
 end
-function mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
+function mul!(result::Ket{B1,A1}, a::CavityWaveguideAbsorption, b::Ket{B2,A2}, alpha, beta) where {B1<:Basis,B2<:Basis, A1<:AbstractArray, A2<:AbstractArray}
     dims = basis(result).shape
     i,j = a.loc[1],a.loc[2]
     beta1 = beta

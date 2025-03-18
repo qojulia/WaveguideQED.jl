@@ -24,6 +24,7 @@ pages = [
 "beamsplitter.md",
 "input_output.md",
 "time_delay.md",
+"gpu_support.md",
 #"Examples" => ["Scattering on two level system" => "example_lodahl.md"],
 "API" => "API.md",
 "References and suggested readings" => "references.md",

@@ -169,12 +169,12 @@ function absorption(a::Operator,b::T) where T<: WaveguideOperatorT
     CavityWaveguideAbsorption(btotal,btotal,b.factor,b.operators[1],[b.indices[1]+1,1])
 end
 function absorption(a::T,b::Operator) where T<: WaveguideOperator
-    @assert isequal(b,create(basis(b)))
+    @assert _is_create(b)
     btotal = tensor(basis(a),basis(b))
     CavityWaveguideAbsorption(btotal,btotal,complex(1.0),a,[1,2])
 end
 function absorption(a::Operator,b::T) where T<: WaveguideOperator
-    @assert isequal(a,create(basis(a)))
+    @assert _is_create(a)
     btotal = tensor(basis(a),basis(b))
     CavityWaveguideAbsorption(btotal,btotal,complex(1.0),b,[2,1])
 end
@@ -218,12 +218,12 @@ function emission(a::Operator,b::T) where T<: WaveguideOperatorT
     CavityWaveguideEmission(btotal,btotal,b.factor,b.operators[1],[b.indices[1]+1,1])
 end
 function emission(a::T,b::Operator) where T<: WaveguideOperator
-    @assert isequal(b,destroy(basis(b)))
+    @assert _is_destroy(b)
     btotal = tensor(basis(a),basis(b))
     CavityWaveguideEmission(btotal,btotal,complex(1.0),a,[1,2])
 end
 function emission(a::Operator,b::T) where T<: WaveguideOperator
-    @assert isequal(a,destroy(basis(a)))
+    @assert _is_destroy(a)
     btotal = tensor(basis(a),basis(b))
     CavityWaveguideEmission(btotal,btotal,complex(1.0),b,[2,1])
 end
@@ -253,6 +253,21 @@ function QuantumOpticsBase.identityoperator(::Type{T}, b1::Basis, b2::Basis) whe
     identityoperator(b1)
 end
 
+_is_identity(a::Operator) = _is_identity(a.data,basis(a))
+_is_identity(a::AbstractArray,b::Basis) = isequal(a,identityoperator(b).data)
+_is_identity(a::CuArray,b::Basis) = _is_identity(Array(a),b)
+
+_is_destroy(a::Operator) = _is_destroy(a.data,basis(a))
+_is_destroy(a::AbstractArray,b::Basis) = isequal(a,destroy(b).data)
+_is_destroy(a::CuArray,b::Basis) = _is_destroy(Array(a),b)
+
+_is_create(a::Operator) = _is_create(a.data,basis(a))
+_is_create(a::AbstractArray,b::Basis) = isequal(a,create(b).data)
+_is_create(a::CuArray,b::Basis) = _is_create(Array(a),b)
+
+
+
+
 """
     tensor(a::AbstractOperator,b::CavityWaveguideAbsorption)
     tensor(a::CavityWaveguideAbsorption,b::AbstractOperator)
@@ -263,7 +278,7 @@ Methods for tensorproducts between QuantumOptics.jl operators and [`CavityWavegu
 """
 function tensor(a::AbstractOperator,b::CavityWaveguideAbsorption)
     btotal = tensor(a.basis_l,b.basis_r)
-    if isequal(a,identityoperator(basis(a)))
+    if _is_identity(a)
         CavityWaveguideAbsorption(btotal,btotal,b.factor,b.op,b.loc .+length(basis(a).shape))
     else
         sorted_idx = sortperm([1,b.loc[1]+1,b.loc[2]+1])
@@ -272,7 +287,7 @@ function tensor(a::AbstractOperator,b::CavityWaveguideAbsorption)
 end
 function tensor(a::CavityWaveguideAbsorption,b::AbstractOperator)
     btotal = tensor(a.basis_l,b.basis_r)
-    if isequal(b,identityoperator(basis(b)))
+    if _is_identity(b)
         CavityWaveguideAbsorption(btotal,btotal,a.factor,a.op,a.loc)
     else
         sorted_idx = sortperm([a.loc[1]+1,a.loc[2]+1,length(btotal.shape)])
@@ -281,7 +296,7 @@ function tensor(a::CavityWaveguideAbsorption,b::AbstractOperator)
 end
 function tensor(a::AbstractOperator,b::T) where {T<:CavityWaveguideEmission}
     btotal = tensor(a.basis_l,b.basis_r)
-    if isequal(a,identityoperator(basis(a)))
+    if _is_identity(a)
         CavityWaveguideEmission(btotal,btotal,b.factor,b.op,b.loc .+length(basis(a).shape))
     else
         sorted_idx = sortperm([1,b.loc[1]+1,b.loc[2]+1])
@@ -290,7 +305,7 @@ function tensor(a::AbstractOperator,b::T) where {T<:CavityWaveguideEmission}
 end
 function tensor(a::T,b::AbstractOperator) where {T<:CavityWaveguideEmission}
     btotal = tensor(a.basis_l,b.basis_r)
-    if isequal(b,identityoperator(basis(b)))
+    if _is_identity(b)
         CavityWaveguideEmission(btotal,btotal,a.factor,a.op,a.loc)
     else
         sorted_idx = sortperm([a.loc[1]+1,a.loc[2]+1,length(btotal.shape)])
@@ -298,36 +313,36 @@ function tensor(a::T,b::AbstractOperator) where {T<:CavityWaveguideEmission}
     end
 end
 function tensor(a::T,b::Operator{BL,BR,F}) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
-    if isequal(b,identityoperator(basis(b)))
+    if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
-    elseif isequal(b,destroy(basis(b)))
+    elseif _is_destroy(b)
         emission(a,b)
-    elseif isequal(b,create(basis(b)))
+    elseif _is_create(b)
         absorption(a,b)
     else
         a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
     end
 end
 function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
-    if isequal(a,identityoperator(basis(a)))
+    if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
-    elseif isequal(a,destroy(basis(a)))
+    elseif _is_destroy(a)
         emission(a,b)
-    elseif isequal(a,create(basis(a)))
+    elseif _is_destroy(b)
         absorption(a,b)
     else
         LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
     end
 end
 function tensor(a::T,b::Operator{BL,BR,F})  where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperator}
-    if isequal(b,identityoperator(basis(b)))
+    if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,(1,),(a,))
-    elseif isequal(b,destroy(basis(b)))
+    elseif _is_destroy(b)
         emission(a,b)
-    elseif isequal(b,create(basis(b)))
+    elseif _is_create(b)
         absorption(a,b)
     else
         btotal = basis(a) ⊗ basis(b)
@@ -335,12 +350,12 @@ function tensor(a::T,b::Operator{BL,BR,F})  where {BL<:FockBasis,BR<:FockBasis,F
     end
 end
 function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperator}
-    if isequal(a,identityoperator(basis(a)))
+    if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
-    elseif isequal(a,destroy(basis(a)))
+    elseif _is_destroy(a)
         emission(a,b)
-    elseif isequal(a,create(basis(a)))
+    elseif _is_create(a)
         absorption(a,b)
     else
         btotal = basis(a) ⊗ basis(b)
@@ -353,7 +368,7 @@ end
 
 #Used to construct CavityWaveguideOperators from LazyTensors or CompositeBasis
 
-function is_destroy(data,basis::CompositeBasis)
+function is_destroy(data::AbstractArray,basis::CompositeBasis)
     N = length(basis.shape)
     ind = zeros(N)
     for k = 1:N
@@ -365,7 +380,7 @@ function is_destroy(data,basis::CompositeBasis)
     end
     return 0
 end
-function is_create(data,basis::CompositeBasis)
+function is_create(data::AbstractArray,basis::CompositeBasis)
     N = length(basis.shape)
     ind = zeros(N)
     for k = 1:N
@@ -378,8 +393,34 @@ function is_create(data,basis::CompositeBasis)
     return 0
 end
 
+
+function is_destroy(data::CuArray,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        ind .= 0
+        ind[k] = 1
+        if isequal(Array(data),tensor([ (i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+            return k
+        end
+    end
+    return 0
+end
+function is_create(data::CuArray,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        ind .= 0
+        ind[k] = 1
+        if isequal(Array(data),tensor([(i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+            return k
+        end
+    end
+    return 0
+end
+
 function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
-    if isequal(b,identityoperator(basis(b)))
+    if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
     elseif (k = is_destroy(b.data,basis(b))) > 0
@@ -391,7 +432,7 @@ function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
     end
 end
 function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
-    if isequal(a,identityoperator(basis(a)))
+    if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
     elseif (k = is_destroy(a.data,basis(a))) > 0
@@ -404,7 +445,7 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
 end
 
 function tensor(a::T,b::Operator)  where {T<:WaveguideOperator}
-    if isequal(b,identityoperator(basis(b)))
+    if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,(1,),(a,))
     elseif (k = is_destroy(b.data,basis(b))) > 0
@@ -416,7 +457,7 @@ function tensor(a::T,b::Operator)  where {T<:WaveguideOperator}
     end
 end
 function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
-    if isequal(a,identityoperator(basis(a)))
+    if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
         LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
     elseif (k = is_destroy(a.data,basis(a))) > 0

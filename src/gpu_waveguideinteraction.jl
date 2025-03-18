@@ -155,15 +155,52 @@ function gpu_interaction_create_destroy_1photon_last!(
 end
 
 
+#STILL IN PROGRESS
 
+function apply_last_op_gpu!(
+    result,
+    a::WaveguideCreate{B1,B2,2,idx1},
+    bop::WaveguideDestroy{B1,B2,2,idx2},
+    b,
+    α,
+    β
+) where {B1,B2,idx1,idx2}
+
+    # Figure out shape:
+    N, M = size(result, 1), size(result, 2)
+
+    # read waveguide info
+    nsteps       = a.basis_l.nsteps
+    timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
+    timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
+
+    factor   = a.factor*bop.factor
+    
+    # Decide thread-block shape
+    blockx, blocky = 8, 32
+    gridx = cld(N, blockx)
+    gridy = cld(M, blocky)
+
+    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_create_destroy_2photon_last!(
+        result, b, α, β,
+        N, M,
+        nsteps,
+        timeindex_a,
+        timeindex_b,
+        factor,
+        idx1, idx2
+    )
+    return result
+end
 
 function gpu_interaction_create_destroy_2photon_last!(
     result, b, α, β,
     N, M,
     nsteps,
-    timeindex_a, timeindex_b,
-    idx1, idx2,
-    Nw
+    timeindex_a,
+    timeindex_b,
+    factor,
+    idx1, idx2
 )
     row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
     col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
@@ -182,25 +219,43 @@ function gpu_interaction_create_destroy_2photon_last!(
 
     offset_b   = Nw*nsteps + 1 + (idx2-1)*(nsteps*(nsteps+1)>>>1)    
     
+    i,j = min(idx1,idx2),max(idx1,idx2)
+    index = (i-1)*Nw + j - (i*(i+1))÷2
+    
+    offset_wgidx   = Nw*nsteps + 1 + (Nw-1)*(nsteps*(nsteps+1)>>>1) + (index-1)*nsteps^2   
+    
     # (B) single-photon part: if col == 1
-    if col ==  1 + (idx1-1)*nsteps + timeindex_a
-        @inbounds result[row,col] += α * factor_a * factor_b * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
+    
+
+    alpha_fac = α * factor
+
+    if col == 1 + (idx1-1)*nsteps + timeindex_a
+        @inbounds result[row, col] += alpha_fac * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
     
     elseif col-offset == twophoton_index(timeindex_a, nsteps, timeindex_a)
         colprime = col - offset - twophoton_index(timeindex_b, nsteps, 0)
         colb = colprime + startcol - 1
-        @inbounds result[row, col] += sqrt(2)*α*factor * b[row, colb]
+        idx_1 = max(timeindex_a,timeindex_b)
+        idx_2 = min(timeindex_a,timeindex_b)
+        idx_1 == idx_2 ? fac = sqrt(2) : fac = 1
+        index==idx2 ? waveguide_idx = (timeindex_a-1)*nsteps + timeindex_b : (timeindex_b-1)*nsteps + timeindex_a
+        @inbounds result[row, col] += sqrt(2)*alpha_fac * fac * b[row, offset_wgidx + waveguide_idx]
 
-    elseif twophoton_index(timeindex, nsteps, timeindex)+1 <= col-offset <= twophoton_index(timeindex, nsteps, nsteps)
-        colprime = col -offset - twophoton_index(timeindex, nsteps, 0)
-        colb = colprime + startcol - 1
+    elseif twophoton_index(timeindex_a, nsteps, timeindex_a)+1 <= col - offset <= twophoton_index(timeindex_a, nsteps, nsteps)
+        tprime = col - offset - twophoton_index(timeindex, nsteps, 0)
+        idx_1 = max(tprime,timeindex_b)
+        idx_2 = min(tprime,timeindex_b)
+        idx_1 == idx_2 ? fac = sqrt(2) : fac = 1
+        index==idx2 ? waveguide_idx = (tprime-1)*nsteps + timeindex_b : (timeindex_b-1)*nsteps + tprime
         
-        @inbounds result[row, col] += α*factor * b[row, colb]
-
+        @inbounds result[row, col] += alpha_fac * fac * b[row, offset_wgidx + waveguide_idx]
     elseif is_int
-        colb = r_idx + startcol - 1
-        @inbounds result[row, col] += α*factor * b[row, colb]
-    else
+        idx_1 = max(r_idx,timeindex_b)
+        idx_2 = min(r_idx,timeindex_b)
+        idx_1 == idx_2 ? fac = sqrt(2) : fac = 1
+        index==idx2 ? waveguide_idx = (r_idx-1)*nsteps + timeindex_b : (timeindex_b-1)*nsteps + r_idx
+                
+        @inbounds result[row, col] += alpha_fac * fac * b[row, offset_wgidx + waveguide_idx]
     end
     
 

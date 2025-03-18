@@ -1,34 +1,45 @@
 
 
-function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideOperator, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
-    T,
-    N1,
-    AR1<:CuArray,
-    N2,
-    AR2<:CuArray,
-}
+const CuReshapedArray{T,N} = Base.ReshapedArray{T,N,<:CuArray,<:Tuple}
+const CuReshapedOrCuArray{T,N} = Union{CuReshapedArray{T,N}, CuArray{T,N}}
+
+# Helper function to get the parent if x is a ReshapedArray, or x itself if it’s already a CuArray
+parent_of(x::Base.ReshapedArray) = x.parent
+parent_of(x::AbstractArray)      = x   # fallback for CuArray (or any other AbstractArray)
+
+
+function QuantumOpticsBase._tp_matmul_first!(
+    result :: CuReshapedOrCuArray{T,N1},
+    a      :: WaveguideOperator,
+    b      :: CuReshapedOrCuArray{T,N2},
+    α      :: Number,
+    β      :: Number
+) where {T,N1,N2}
     d_first = size(b, 1)
     d_rest = length(b)÷d_first
-    bp = b.parent
-    rp = result.parent
+    bp = parent_of(b)
+    rp = parent_of(result)
+
     br = reshape(bp, (d_first, d_rest))
     result_r = reshape(rp, (size(a, 1), d_rest))
     apply_first_op_gpu!(result_r,a,br,α,β)
     result
 end
 
+
+
 #Same as _tp_matmul_first! But indexed in another way.
-function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideOperator, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
-    T,
-    N1,
-    AR1<:CuArray,
-    N2,
-    AR2<:CuArray
-}
+function QuantumOpticsBase._tp_matmul_last!(
+    result :: CuReshapedOrCuArray{T,N1},
+    a      :: WaveguideOperator,
+    b      :: CuReshapedOrCuArray{T,N2},
+    α      :: Number,
+    β      :: Number
+) where {T,N1,N2}
     d_last = size(b, ndims(b))
     d_rest = length(b)÷d_last
-    bp = b.parent
-    rp = result.parent
+    bp = parent_of(b)
+    rp = parent_of(result)
     br = reshape(bp, (d_rest, d_last))
     result_r = reshape(rp, (d_rest, size(a, 1)))
     apply_last_op_gpu!(result_r,a,br,α,β)
@@ -387,12 +398,12 @@ function gpu_waveguide_twophoton_destroy_last!(result, b,α, β,N, M,nsteps,time
 
             if colprime < timeindex
                 # result[row,col] += α*factor * b[row, offset + twophoton_index(colprime, timeindex)]
-                result[row, col] += α*factor * b[row, offset + twophoton_index(colprime, nsteps, timeindex)]
+                @inbounds result[row, col] += α*factor * b[row, offset + twophoton_index(colprime, nsteps, timeindex)]
             elseif colprime > timeindex
-                result[row, col] += α*factor * b[row, offset + twophoton_index(timeindex, nsteps, colprime)]
+                @inbounds result[row, col] += α*factor * b[row, offset + twophoton_index(timeindex, nsteps, colprime)]
             else
                 # colprime == timeindex
-                result[row, col] += sqrt(2)*α*factor * b[row, offset + twophoton_index(timeindex, nsteps, timeindex)]
+                @inbounds result[row, col] += sqrt(2)*α*factor * b[row, offset + twophoton_index(timeindex, nsteps, timeindex)]
             end
         end
     end
@@ -417,9 +428,9 @@ function gpu_waveguide_twophoton_destroy_last!(result, b,α, β,N, M,nsteps,time
             order = (i == waveguide_idx)
             
             if order
-                result[row, col] += α*factor * b[row, offset_k + (colprime-1)*nsteps + timeindex]
+                @inbounds result[row, col] += α*factor * b[row, offset_k + (colprime-1)*nsteps + timeindex]
             else
-                result[row, col] += α*factor * b[row, offset_k + (timeindex-1)*nsteps + colprime]
+                @inbounds result[row, col] += α*factor * b[row, offset_k + (timeindex-1)*nsteps + colprime]
             end
         end
     
@@ -463,12 +474,12 @@ function gpu_waveguide_twophoton_destroy_first!(result, b,α, β,N, M,nsteps,tim
 
             if colprime < timeindex
                 # result[row,col] += α*factor * b[row, offset + twophoton_index(colprime, timeindex)]
-                result[row, col] += α*factor * b[offset + twophoton_index(colprime, nsteps, timeindex),col]
+                @inbounds result[row, col] += α*factor * b[offset + twophoton_index(colprime, nsteps, timeindex),col]
             elseif colprime > timeindex
-                result[row, col] += α*factor * b[offset + twophoton_index(timeindex, nsteps, colprime),col]
+                @inbounds result[row, col] += α*factor * b[offset + twophoton_index(timeindex, nsteps, colprime),col]
             else
                 # colprime == timeindex
-                result[row, col] += sqrt(2)*α*factor * b[offset + twophoton_index(timeindex, nsteps, timeindex),col]
+                @inbounds result[row, col] += sqrt(2)*α*factor * b[offset + twophoton_index(timeindex, nsteps, timeindex),col]
             end
         end
     end
@@ -493,9 +504,9 @@ function gpu_waveguide_twophoton_destroy_first!(result, b,α, β,N, M,nsteps,tim
             order = (i == waveguide_idx)
             
             if order
-                result[row, col] += α*factor * b[offset_k + (colprime-1)*nsteps + timeindex,col]
+                @inbounds result[row, col] += α*factor * b[offset_k + (colprime-1)*nsteps + timeindex,col]
             else
-                result[row, col] += α*factor * b[offset_k + (timeindex-1)*nsteps + colprime,col]
+                @inbounds result[row, col] += α*factor * b[offset_k + (timeindex-1)*nsteps + colprime,col]
             end
         end
     

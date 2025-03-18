@@ -16,7 +16,6 @@ function mul!(result::Ket{B,A},a::CavityWaveguideAbsorption,b::Ket{B,A},alpha::N
 
     if nd ==2 && i == 2
         for i in 2:size(b_data,1)
-            @cuprintln size(view(result_data,i,:,:))
             apply_first_op_gpu!(view(result_data,i,:,:),a.op,view(b_data,i-1,:,:),sqrt(i-1)*alpha*a.factor,beta)
         end
         #rmul!(view(result.data, 1 : dims_b[1] : 1 + (dims_b[2]-1)*dims_b[1]),beta)
@@ -25,7 +24,6 @@ function mul!(result::Ket{B,A},a::CavityWaveguideAbsorption,b::Ket{B,A},alpha::N
     end
     if nd ==2 && i == 1
         for i in 2:size(b_data,2)
-            #@cuprintln size(view(result_data,i,:,:))
             apply_first_op_gpu!(view(result_data,:,i,:),a.op,view(b_data,:,i-1,:),sqrt(i-1)*alpha*a.factor,beta)
         end
         #rmul!(view(result.data,1 : 1 : dims_b[1]),beta)

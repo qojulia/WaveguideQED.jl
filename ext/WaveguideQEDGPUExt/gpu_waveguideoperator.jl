@@ -1,4 +1,7 @@
 
+const CuReshapedArray{T,N} = Base.ReshapedArray{T,N,<:CuArray,<:Tuple}
+const CuReshapedOrCuArray{T,N} = Union{CuReshapedArray{T,N}, CuArray{T,N}}
+const CuReshapedOrCuArrayOrSparse{T,N} = Union{CuReshapedArray{T,N}, CuArray{T,N},CUDA.CUSPARSE.CuSparseMatrixCSC{T,N}}
 
 
 # Helper function to get the parent if x is a ReshapedArray, or x itself if it’s already a CuArray

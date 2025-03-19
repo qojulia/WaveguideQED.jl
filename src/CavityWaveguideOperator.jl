@@ -253,20 +253,15 @@ function QuantumOpticsBase.identityoperator(::Type{T}, b1::Basis, b2::Basis) whe
     identityoperator(b1)
 end
 
-const CuReshapedArray{T,N} = Base.ReshapedArray{T,N,<:CuArray,<:Tuple}
-const CuReshapedOrCuArray{T,N} = Union{CuReshapedArray{T,N}, CuArray{T,N}}
-const CuReshapedOrCuArrayOrSparse{T,N} = Union{CuReshapedArray{T,N}, CuArray{T,N},CUDA.CUSPARSE.CuSparseMatrixCSC{T,N}}
 
 _is_identity(a::Operator) = _is_identity(a.data,basis(a))
 _is_identity(a::AbstractArray,b::Basis) = isapprox(a,identityoperator(b).data)
-_is_identity(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_identity(map(ComplexF64,Array(a)),b)
 
 _is_destroy(a::Operator) = _is_destroy(a.data,basis(a))
 _is_destroy(a::AbstractArray,b::Basis) = isapprox(a,destroy(b).data)
-_is_destroy(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_destroy(map(ComplexF64,Array(a)),b)  
 _is_create(a::Operator) = _is_create(a.data,basis(a))
 _is_create(a::AbstractArray,b::Basis) = isapprox(a,create(b).data)
-_is_create(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_create(map(ComplexF64,Array(a)),b)
+
  
 
 
@@ -397,30 +392,6 @@ function is_create(data::AbstractArray,basis::CompositeBasis)
 end
 
 
-function is_destroy(data::CuArray,basis::CompositeBasis)
-    N = length(basis.shape)
-    ind = zeros(N)
-    for k = 1:N
-        ind .= 0
-        ind[k] = 1
-        if isequal(Array(data),tensor([ (i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
-            return k
-        end
-    end
-    return 0
-end
-function is_create(data::CuArray,basis::CompositeBasis)
-    N = length(basis.shape)
-    ind = zeros(N)
-    for k = 1:N
-        ind .= 0
-        ind[k] = 1
-        if isequal(Array(data),tensor([(i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
-            return k
-        end
-    end
-    return 0
-end
 
 function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
     if _is_identity(b)

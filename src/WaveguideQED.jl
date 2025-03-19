@@ -5,7 +5,6 @@ using Strided
 using UnsafeArrays
 using FFTW
 using Test
-using CUDA
 import LinearAlgebra: axpy!, dot, mul!, rmul!,I
 import QuantumOpticsBase: create, dagger, destroy, expect, identityoperator, tensor,set_time!
 
@@ -30,8 +29,5 @@ include("solver.jl")
 include("detection.jl")
 include("plotting.jl")
 include("InputOutput.jl")
-include("gpu_waveguideoperator.jl")
-include("gpu_cavitywaveguideoperator.jl")
-include("gpu_waveguideinteraction.jl")
 include("precompile.jl")
 end

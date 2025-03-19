@@ -1,4 +1,35 @@
 
+_is_identity(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_identity(map(ComplexF64,Array(a)),b)
+_is_destroy(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_destroy(map(ComplexF64,Array(a)),b)  
+_is_create(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_create(map(ComplexF64,Array(a)),b)
+
+
+
+
+function is_destroy(data::CuArray,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        ind .= 0
+        ind[k] = 1
+        if isequal(Array(data),tensor([ (i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+            return k
+        end
+    end
+    return 0
+end
+function is_create(data::CuArray,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        ind .= 0
+        ind[k] = 1
+        if isequal(Array(data),tensor([(i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
+            return k
+        end
+    end
+    return 0
+end
 
 function mul!(result::Ket{B,A},a::CavityWaveguideAbsorption,b::Ket{B,A},alpha::Number,beta::Number) where {B<:Basis,A<:CuArray}
     # == 0) Gather dimension info

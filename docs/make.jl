@@ -9,7 +9,7 @@ DocMeta.setdocmeta!(WaveguideQED, :DocTestSetup, :(using WaveguideQED); recursiv
 bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"))
 
 makedocs(
-bib,
+plugins = [bib],
 doctest = true,
 clean = true,
 sitename = "WaveguideQED.jl",
@@ -24,6 +24,7 @@ pages = [
 "beamsplitter.md",
 "input_output.md",
 "time_delay.md",
+"gpu_support.md",
 #"Examples" => ["Scattering on two level system" => "example_lodahl.md"],
 "API" => "API.md",
 "References and suggested readings" => "references.md",

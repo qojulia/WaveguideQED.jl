@@ -1,7 +1,5 @@
 
 
-const CuReshapedArray{T,N} = Base.ReshapedArray{T,N,<:CuArray,<:Tuple}
-const CuReshapedOrCuArray{T,N} = Union{CuReshapedArray{T,N}, CuArray{T,N}}
 
 # Helper function to get the parent if x is a ReshapedArray, or x itself if it’s already a CuArray
 parent_of(x::Base.ReshapedArray) = x.parent

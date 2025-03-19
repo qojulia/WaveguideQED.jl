@@ -1,5 +1,5 @@
 # GPU Support
-For particularly large system sizes there can be substantial computational gains by running the simulations on a Graphical Processing Unit (GPU). In WaveguideQED.jl, to run on a GPU, all operators and states (kets) should be "put" on the GPU, meaning they should be converted into CUDA arrays. The WaveguideOperators will then dispatch on custom written GPU kernels, which will significantly speed up the computational time for large systems. The GPU code is written using [https://github.com/JuliaGPU/CUDA.jl](CUDA.jl) and it should be installed before the following code will work, see [https://github.com/JuliaGPU/CUDA.jl](CUDA.jl) for details.  In the following, we provide an example of how to utilize a GPU.
+For particularly large system sizes there can be substantial computational gains by running the simulations on a Graphical Processing Unit (GPU). In WaveguideQED.jl, to run on a GPU, all operators and states (kets) should be "put" on the GPU, meaning they should be converted into CUDA arrays. The WaveguideOperators will then dispatch on custom written GPU kernels, which will significantly speed up the computational time for large systems. The GPU code is written using [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) and it should be installed before the following code will work, see [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) for details.  In the following, we provide an example of how to utilize a GPU.
 
 To convert operators and kets to GPU arrays we define the following convinience functions:
 ```julia
@@ -58,3 +58,4 @@ H_gpu =  sqrt(γ/dt)*(wda_gpu+ adw_gpu)
 ψ_out = waveguide_evolution(times,ψ_gpu,H_gpu)
 ```
 
+The above simulation takes around 30s using an Nvidia 3060Ti GPU compared to around 900s using a regular CPU. More gains could be expected with a more high-performance GPU and for larger systems. 

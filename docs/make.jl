@@ -9,7 +9,7 @@ DocMeta.setdocmeta!(WaveguideQED, :DocTestSetup, :(using WaveguideQED); recursiv
 bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"))
 
 makedocs(
-bib,
+plugins = [bib],
 doctest = true,
 clean = true,
 sitename = "WaveguideQED.jl",

@@ -1,4 +1,4 @@
-# [Beamsplitters](@id Beamsplitter)
+# [Beamsplitters](@id Beamsplitter_docs)
 
 Having introduced multiple waveguides in [`Multiple Waveguides`](@ref multiple), it is natural to implement the beamsplitter operation and consider some of the common measurements one would make on states having undergone a beamsplitter transformation.
 

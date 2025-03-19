@@ -24,6 +24,7 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
 include("view.jl")
 include("basis.jl")
 include("WaveguideOperator.jl")
+include("WaveguideDispersion.jl")
 include("CavityWaveguideOperator.jl")
 include("WaveguideInteraction.jl")
 include("solver.jl")

@@ -48,7 +48,7 @@ If we want to describe a simultaneous excitation in both waveguides (states like
 nothing #hide
 ``` 
 
-## Beamsplitter
+## Beamsplitter through interaction
 Let's now treat the same example as in [Interference on Beamsplitter](@ref BStutorial). We consider the two waveguides in an identic single-photon state and thus use the above defined `ψ_single_1_and_2`. The Hamiltonian governing a beamsplitter in the time-binned formalism has $V= \pi/4$:
 
 ```@example multiple

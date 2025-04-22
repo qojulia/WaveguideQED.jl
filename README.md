@@ -6,7 +6,7 @@
 A Julia package for simulating quantum states of photon wavepackets using a discrete-time formalism [Phys. Rev. A 101, 042322](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.042322). The package works as an extension to [QuantumOptics.jl](https://qojulia.org/) where bases and operators from WaveguideQED.jl can be used together with operators and bases from QuantumOpics.jl. 
 
 ### Citing
-If you find the package usefull in your research. Please consider citing: [https://arxiv.org/abs/2412.13332](https://arxiv.org/abs/2412.13332).
+If you find the package usefull in your research. Please consider citing: [https://quantum-journal.org/papers/q-2025-04-17-1710/](https://quantum-journal.org/papers/q-2025-04-17-1710/).
 
 
 ### Example of usage:

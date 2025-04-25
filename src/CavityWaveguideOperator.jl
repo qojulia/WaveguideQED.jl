@@ -211,7 +211,7 @@ function emission(b1::FockBasis,b2::WaveguideBasis{T,1}) where T
 end
 function emission(a::T,b::Operator) where T<: WaveguideOperatorT
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideEmission(btotal,btotal,a.factor,a.operators[1],[a.indices[1],a.indices[1]+1])
+    CavityWaveguideEmission(btotal,btotal,a.factor,a.operators[1],[a.indices[1],length(basis(a).shape)+1])
 end
 function emission(a::Operator,b::T) where T<: WaveguideOperatorT
     btotal = tensor(basis(a),basis(b))
@@ -310,6 +310,7 @@ function tensor(a::T,b::AbstractOperator) where {T<:CavityWaveguideEmission}
         LazyTensor(btotal,btotal,[a.loc[1]+1,a.loc[2]+1,length(btotal.shape)][sorted_idx],(a.op,get_cavity_operator(a),b)[sorted_idx])
     end
 end
+
 function tensor(a::T,b::Operator{BL,BR,F}) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
     if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
@@ -328,7 +329,7 @@ function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,
         LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
     elseif _is_destroy(a)
         emission(a,b)
-    elseif _is_destroy(b)
+    elseif _is_create(a)
         absorption(a,b)
     else
         LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
@@ -362,7 +363,13 @@ function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,
 end
 
 
+function is_destroy(data,basis)
+    false
+end
 
+function is_create(data,basis)
+    false
+end
 
 #Used to construct CavityWaveguideOperators from LazyTensors or CompositeBasis
 
@@ -401,6 +408,9 @@ function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
         emission(a,basis(b),k)
     elseif (k = is_create(b.data,basis(b))) > 0
         absorption(a,basis(b),k)
+    elseif !(typeof(basis(b)) <: QuantumOpticsBase.CompositeBasis)
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
     else
         error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
     end
@@ -413,6 +423,9 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
         emission(basis(a),b,k)
     elseif (k = is_create(a.data,basis(a))) > 0
         absorption(basis(a),b,k)
+    elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
     else
         error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
     end
@@ -426,6 +439,9 @@ function tensor(a::T,b::Operator)  where {T<:WaveguideOperator}
         emission(a,basis(b),k)
     elseif (k = is_create(b.data,basis(b))) > 0
         absorption(a,basis(b),k)
+    elseif !(typeof(basis(b)) <: QuantumOpticsBase.CompositeBasis)
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
     else
         error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
     end
@@ -438,6 +454,9 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
         emission(basis(a),b,k)
     elseif (k = is_create(a.data,basis(a))) > 0
         absorption(basis(a),b,k)
+    elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
+        btotal = basis(a) ⊗ basis(b)
+        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
     else
         error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
     end

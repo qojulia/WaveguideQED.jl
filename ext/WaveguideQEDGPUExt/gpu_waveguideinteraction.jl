@@ -1,266 +1,490 @@
-function mul!(result::Ket{B1,A}, a::WaveguideInteraction, b::Ket{B2,A}, alpha, beta) where {B1<:Basis,B2<:Basis,A<:CuArray}
-    b_data = Base.ReshapedArray(b.data, QuantumOpticsBase._comp_size(basis(b)), ())
-    result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
-
-    if a.loc == 1
-        return QuantumOpticsBase._tp_matmul_first!(result_data, a, b_data, alpha * a.factor, beta)
-    elseif a.loc == ndims(b_data)
-        return QuantumOpticsBase._tp_matmul_last!(result_data, a, b_data, alpha * a.factor, beta)
-    end
-    QuantumOpticsBase._tp_matmul_mid!(result_data, a, loc, b_data, alpha * a.factor, beta)
-      
-    result
+using WaveguideQED
+using CUDA
+using QuantumOpticsBase
+using QuantumOptics
+using Test
+using LinearAlgebra
+# Helper functions to convert to GPU
+function to_gpu(a::Operator)
+    data = cu(map(ComplexF32, a.data))
+    gpu_operator = Operator(a.basis_l, a.basis_r, data)
+    return gpu_operator
 end
 
-
-function QuantumOpticsBase._tp_matmul_mid!(result, a::WaveguideInteraction, loc::Integer, b, α::Number, β::Number)
-    sz_b_1 = 1
-    for i in 1:loc-1
-        sz_b_1 *= size(b,i)
-    end
-    sz_b_3 = 1
-    for i in loc+1:ndims(b)
-        sz_b_3 *= size(b,i)
-    end
-
-    # TODO: Perhaps we should avoid reshaping here... should be possible to infer
-    # contraction index tuple sizes
-    br = Base.ReshapedArray(b, (sz_b_1, size(b, loc), sz_b_3), ())
-    result_r = Base.ReshapedArray(result, (sz_b_1, size(a, 1), sz_b_3), ())
-
-    # Try to "minimize" the transpose for efficiency.
-    move_left = sz_b_1 < sz_b_3
-    perm = move_left ? (2,1,3) : (1,3,2)
-
-    br_p = QuantumOpticsBase._tp_matmul_get_tmp(eltype(br), ((size(br, i) for i in perm)...,), :_tp_matmul_mid_in, br)
-    @strided permutedims!(br_p, br, perm)
-    #permutedims!(br_p, br, perm)
-
-    result_r_p = QuantumOpticsBase._tp_matmul_get_tmp(eltype(result_r), ((size(result_r, i) for i in perm)...,), :_tp_matmul_mid_out, result_r)
-    @strided permutedims!(result_r_p, result_r, perm)
-    #β == 0.0 || permutedims!(result_r_p, result_r, perm)
-
-    if move_left
-        QuantumOpticsBase._tp_matmul_first!(result_r_p, a, br_p, α, β)
-    else
-        QuantumOpticsBase._tp_matmul_last!(result_r_p, a, br_p, α, β)
-    end
-
-    @strided permutedims!(result_r, result_r_p, perm)
-    #permutedims!(result_r, result_r_p, perm)
-
-    result
+function to_gpu(a::Ket)
+    data = cu(map(ComplexF32, a.data))
+    gpu_operator = Ket(a.basis, data)
+    return gpu_operator
 end
+# Setup bases
+bc = FockBasis(4)  # Small cavity basis for tests
+times = 0:0.1:5    # Smaller time range for tests
+bw = WaveguideBasis(1,2, times)  # Two waveguides
 
+# Create operators
+psi = fockstate(bc, 0) ⊗ onephoton(bw, 1, x->exp(-(x-2.5)^2))
+psi_gpu = to_gpu(psi)
+# Create waveguide operators
+w1c = create(bw, 1)
+w1d = destroy(bw, 1)
+w2c = create(bw, 2)
+w2d = destroy(bw, 2)
 
+# Create interaction operator (CPU)
+H = identityoperator(bc) ⊗ (w1c * w1d)
 
-function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideInteraction, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
-    T,
-    N1,
-    AR1<:CuArray,
-    N2,
-    AR2<:CuArray,
-}
-    d_first = size(b, 1)
-    d_rest = length(b)÷d_first
-    bp = b.parent
-    rp = result.parent
-    br = reshape(bp, (d_first, d_rest))
-    result_r = reshape(rp, (size(a, 1), d_rest))
-    apply_first_op_gpu!(result_r,a.op1,a.op2,br,α,β)
-    result
-end
+# Results (CPU)
+psi_result = copy(psi)
+QuantumOptics.mul!(psi_result, H, psi, 1.0, 0.0)
 
-#Same as _tp_matmul_first! But indexed in another way.
-function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideInteraction, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
-    T,
-    N1,
-    AR1<:CuArray,
-    N2,
-    AR2<:CuArray,
-}
-    d_last = size(b, ndims(b))
-    d_rest = length(b)÷d_last
-    bp = b.parent
-    rp = result.parent
-    br = reshape(bp, (d_rest, d_last))
-    result_r = reshape(rp, (d_rest, size(a, 1)))
-    apply_last_op_gpu!(result_r,a.op1,a.op2,br,α,β)
-    result
-end
+# Results (GPU)
+psi_gpu_result = to_gpu(copy(psi));
+QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
 
+# Compare
+@test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
 
-function apply_last_op_gpu!(
-    result,
-    a::WaveguideCreate{B1,B2,1,idx1},
-    bop::WaveguideDestroy{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
+# Test cross-waveguide interaction
+H_cross = identityoperator(bc) ⊗ ( w1c * w2d)
 
-    # Figure out shape:
-    N, M = size(result, 1), size(result, 2)
+# Results (CPU)
+psi_result = copy(psi)
+QuantumOptics.mul!(psi_result, H_cross, psi, 1.0, 0.0)
 
-    # read waveguide info
-    nsteps       = a.basis_l.nsteps
-    timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
-    timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
+# Results (GPU)
+psi_gpu_result = to_gpu(copy(psi))
+QuantumOptics.mul!(psi_gpu_result, H_cross, psi_gpu, 1.0, 0.0)
 
-    factor   = a.factor*bop.factor
-    
-    # Decide thread-block shape
-    blockx, blocky = 8, 32
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
+# Compare
+@test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
 
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_create_destroy_1photon_last!(
-        result, b, α, β,
-        N, M,
-        nsteps,
-        timeindex_a,
-        timeindex_b,
-        factor,
-        idx1, idx2
-    )
-    return result
-end
-
-
-function gpu_interaction_create_destroy_1photon_last!(
-    result, b, α, β,
-    N, M,            # matrix shape
-    nsteps,
-    timeindex_a,
-    timeindex_b,
-    factor,
-    idx1, idx2
-)
-    row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-
-    if row > N || col > M
-        return
+@testset "WaveguideQEDGPUExt - WaveguideInteraction" begin
+    # Helper functions to convert to GPU
+    function to_gpu(a::Operator)
+        data = cu(map(ComplexF32, a.data))
+        gpu_operator = Operator(a.basis_l, a.basis_r, data)
+        return gpu_operator
     end
 
-    # (A) multiply result by β
-    if !isone(β)
-        @inbounds result[row, col] *= β
+    function to_gpu(a::Ket)
+        data = cu(map(ComplexF32, a.data))
+        gpu_operator = Ket(a.basis, data)
+        return gpu_operator
     end
 
-    # (B) do the "create x destroy" increment only for col == 1
-    if col == 1 + (idx1-1)*nsteps + timeindex_a
-        @inbounds result[row, col] += α * factor * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
-    end
-end
-
-
-#STILL IN PROGRESS
-
-function apply_last_op_gpu!(
-    result,
-    a::WaveguideCreate{B1,B2,2,idx1},
-    bop::WaveguideDestroy{B1,B2,2,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-
-    # Figure out shape:
-    N, M = size(result, 1), size(result, 2)
-
-    # read waveguide info
-    nsteps       = a.basis_l.nsteps
-    timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
-    timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
-
-    factor   = a.factor*bop.factor
-    
-    # Decide thread-block shape
-    blockx, blocky = 8, 32
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_create_destroy_2photon_last!(
-        result, b, α, β,
-        N, M,
-        nsteps,
-        timeindex_a,
-        timeindex_b,
-        factor,
-        idx1, idx2
-    )
-    return result
-end
-
-function gpu_interaction_create_destroy_2photon_last!(
-    result, b, α, β,
-    N, M,
-    nsteps,
-    timeindex_a,
-    timeindex_b,
-    factor,
-    idx1, idx2
-)
-    row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-
-    if row > N || col > M
-        return
-    end
-
-    # (A) multiply by β
-    if !isone(β)
-        @inbounds result[row, col] *= β
-    end
-
-    offset   = Nw*nsteps + 1 + (idx1-1)*(nsteps*(nsteps+1)>>>1)    
-    is_int,r_idx = reverse_idx(col-offset,nsteps,timeindex_a)
-
-    offset_b   = Nw*nsteps + 1 + (idx2-1)*(nsteps*(nsteps+1)>>>1)    
-    
-    i,j = min(idx1,idx2),max(idx1,idx2)
-    index = (i-1)*Nw + j - (i*(i+1))÷2
-    
-    offset_wgidx   = Nw*nsteps + 1 + (Nw-1)*(nsteps*(nsteps+1)>>>1) + (index-1)*nsteps^2   
-    
-    # (B) single-photon part: if col == 1
-    
-
-    alpha_fac = α * factor
-
-    if col == 1 + (idx1-1)*nsteps + timeindex_a
-        @inbounds result[row, col] += alpha_fac * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
-    
-    elseif col-offset == twophoton_index(timeindex_a, nsteps, timeindex_a)
-        colprime = col - offset - twophoton_index(timeindex_b, nsteps, 0)
-        colb = colprime + startcol - 1
-        idx_1 = max(timeindex_a,timeindex_b)
-        idx_2 = min(timeindex_a,timeindex_b)
-        idx_1 == idx_2 ? fac = sqrt(2) : fac = 1
-        index==idx2 ? waveguide_idx = (timeindex_a-1)*nsteps + timeindex_b : (timeindex_b-1)*nsteps + timeindex_a
-        @inbounds result[row, col] += sqrt(2)*alpha_fac * fac * b[row, offset_wgidx + waveguide_idx]
-
-    elseif twophoton_index(timeindex_a, nsteps, timeindex_a)+1 <= col - offset <= twophoton_index(timeindex_a, nsteps, nsteps)
-        tprime = col - offset - twophoton_index(timeindex, nsteps, 0)
-        idx_1 = max(tprime,timeindex_b)
-        idx_2 = min(tprime,timeindex_b)
-        idx_1 == idx_2 ? fac = sqrt(2) : fac = 1
-        index==idx2 ? waveguide_idx = (tprime-1)*nsteps + timeindex_b : (timeindex_b-1)*nsteps + tprime
+    @testset "One-photon operators" begin
+        # Setup bases
+        bc = FockBasis(4)  # Small cavity basis for tests
+        times = 0:0.1:5    # Smaller time range for tests
+        bw = WaveguideBasis(1,2, times)  # Two waveguides
         
-        @inbounds result[row, col] += alpha_fac * fac * b[row, offset_wgidx + waveguide_idx]
-    elseif is_int
-        idx_1 = max(r_idx,timeindex_b)
-        idx_2 = min(r_idx,timeindex_b)
-        idx_1 == idx_2 ? fac = sqrt(2) : fac = 1
-        index==idx2 ? waveguide_idx = (r_idx-1)*nsteps + timeindex_b : (timeindex_b-1)*nsteps + r_idx
-                
-        @inbounds result[row, col] += alpha_fac * fac * b[row, offset_wgidx + waveguide_idx]
+        # Create operators
+        psi = fockstate(bc, 0) ⊗ onephoton(bw, 1, x->exp(-(x-2.5)^2))
+        psi.data .= 1
+        psi_gpu = to_gpu(psi)
+        
+        # Test different combinations
+        @testset "Create-Destroy" begin
+            # Create waveguide operators
+            w1c = create(bw, 1)
+            w1d = destroy(bw, 1)
+            w2c = create(bw, 2)
+            w2d = destroy(bw, 2)
+            
+            # Create interaction operator (CPU)
+            H = identityoperator(bc) ⊗ ( w1c * w1d)
+            # Results (CPU)
+            psi_result = copy(psi)
+            QuantumOptics.mul!(psi_result, H, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+            
+            # Test cross-waveguide interaction
+            H_cross = identityoperator(bc) ⊗ ( w1c * w2d)
+            
+            # Results (CPU)
+            psi_result = copy(psi)
+            QuantumOptics.mul!(psi_result, H_cross, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+        end
+        
+        @testset "Destroy-Destroy" begin
+            # Create waveguide operators
+            w1d = destroy(bw, 1)
+            w2d = destroy(bw, 2)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1d * w1d)
+            
+            # Results (CPU)
+            psi_result = copy(psi)
+            QuantumOptics.mul!(psi_result, H, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1d * w2d)
+            
+            # Results (CPU)
+            psi_result = copy(psi)
+            QuantumOptics.mul!(psi_result, H_cross, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+        end
+        
+        @testset "Create-Create" begin
+            # Create waveguide operators
+            w1c = create(bw, 1)
+            w2c = create(bw, 2)
+            
+            # Create state with vacuum component
+            psi_vac = (fockstate(bc, 0) ⊗ zerophoton(bw))
+            psi_vac_gpu = to_gpu(psi_vac)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1c * w1c)
+            
+            # Results (CPU)
+            psi_result = copy(psi_vac)
+            QuantumOptics.mul!(psi_result, H, psi_vac, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_vac))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_vac_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1c * w2c)
+            
+            # Results (CPU)
+            psi_result = copy(psi_vac)
+            QuantumOptics.mul!(psi_result, H_cross, psi_vac, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_vac))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_vac_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+        end
+        
+        @testset "Destroy-Create" begin
+            # Create waveguide operators
+            w1c = create(bw, 1)
+            w1d = destroy(bw, 1)
+            w2c = create(bw, 2)
+            w2d = destroy(bw, 2)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1d * w1c)
+            
+            # Results (CPU)
+            psi_result = copy(psi)
+            QuantumOptics.mul!(psi_result, H, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1d * w2c)
+            
+            # Results (CPU)
+            psi_result = copy(psi)
+            QuantumOptics.mul!(psi_result, H_cross, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
+        end
     end
     
+    @testset "Two-photon operators" begin
+        # Setup bases
+        bc = FockBasis(3)  # Small cavity basis
+        times = 0:0.1:4    # Smaller time range
+        bw = WaveguideBasis(2, 2, times)  # Two waveguides, two photons
+        
+        # Create test states
+        psi_vac = fockstate(bc, 0) ⊗ zerophoton(bw)
+        psi_vac_gpu = to_gpu(psi_vac)
+        
+        psi_one = fockstate(bc, 0) ⊗ twophoton(bw, 1, (x,y)->exp(-(x-2)^2-(y-3)^2))
+        psi_one = fockstate(bc, 0) ⊗ twophoton(bw, 1, (x,y)->exp(-(x-2)^2-(y-3)^2))
+        
+        #psi_one.data .= 1
+        psi_one_gpu = to_gpu(psi_one)
+        
+        function gaussian_twophoton(t1, t2)
+            return exp(-(t1-1.5)^2) * exp(-(t2-2.5)^2)
+        end
+        
+        psi_two = fockstate(bc, 0) ⊗ twophoton(bw, 1, gaussian_twophoton)
+        psi_two.data .= 1
+        psi_two_gpu = to_gpu(psi_two)
+        
+        @testset "Create-Destroy" begin
+            # Create waveguide operators
+            w1c = create(bw, 1)  # 2-photon operators
+            w1d = destroy(bw, 1)
+            w2c = create(bw, 2)
+            w2d = destroy(bw, 2)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1c * w1d)
+            
+            # Results (CPU)
+            psi_result = copy(psi_two)
+            QuantumOptics.mul!(psi_result, H, psi_two, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_two))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_two_gpu, 1.0, 0.0)
+            
+            println(findall(x->x!=0,abs.(Array(psi_gpu_result.data))))
+            println(findall(x->x!=0,abs.(psi_result.data)))
 
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1c * w2d)
+            
+            # Results (CPU)
+            psi_result = copy(psi_two)
+            QuantumOptics.mul!(psi_result, H_cross, psi_two, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_two))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_two_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+        end
+        
+        @testset "Destroy-Destroy" begin
+            # Create waveguide operators
+            w1d = destroy(bw, 1)
+            w2d = destroy(bw, 2)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1d * w1d)
+            
+            # Results (CPU)
+            psi_result = copy(psi_two)
+            QuantumOptics.mul!(psi_result, H, psi_two, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_two))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_two_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1d * w2d)
+            
+            # Results (CPU)
+            psi_result = copy(psi_two)
+            QuantumOptics.mul!(psi_result, H_cross, psi_two, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_two))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_two_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+        end
+        
+        @testset "Create-Create" begin
+            # Create waveguide operators
+            w1c = create(bw, 1)
+            w2c = create(bw, 2)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1c * w1c)
+            
+            # Results (CPU)
+            psi_result = copy(psi_vac)
+            QuantumOptics.mul!(psi_result, H, psi_vac, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_vac))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_vac_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1c * w2c)
+            
+            # Results (CPU)
+            psi_result = copy(psi_vac)
+            QuantumOptics.mul!(psi_result, H_cross, psi_vac, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_vac))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_vac_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+        end
+        
+        @testset "Destroy-Create" begin
+            # Create waveguide operators
+            w1c = create(bw, 1)
+            w1d = destroy(bw, 1)
+            w2c = create(bw, 2)
+            w2d = destroy(bw, 2)
+            
+            # Create interaction operator
+            H = identityoperator(bc) ⊗ ( w1d * w1c)
+            
+            # Results (CPU)
+            psi_result = copy(psi_one)
+            QuantumOptics.mul!(psi_result, H, psi_one, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_one))
+            QuantumOptics.mul!(psi_gpu_result, H, psi_one_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+            
+            # Cross waveguide
+            H_cross = identityoperator(bc) ⊗ ( w1d * w2c)
+            
+            # Results (CPU)
+            psi_result = copy(psi_one)
+            QuantumOptics.mul!(psi_result, H_cross, psi_one, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi_one))
+            QuantumOptics.mul!(psi_gpu_result, H_cross, psi_one_gpu, 1.0, 0.0)
+            
+            # Compare
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+        end
+    end
 
-    return
+    @testset "Complex operators and LazyTensor combinations" begin
+        # Setup bases
+        bc = FockBasis(3)
+        times = 0:0.1:3
+        bw = WaveguideBasis(2, times)
+        
+        # Create operators
+        a = destroy(bc)
+        ad = create(bc)
+        a_gpu = to_gpu(dense(a))
+        ad_gpu = to_gpu(dense(ad))
+        
+        w1c = create(bw, 1)
+        w1d = destroy(bw, 1)
+        
+        # Create test states
+        psi = fockstate(bc, 1) ⊗ onephoton(bw, 1, x->exp(-(x-1.5)^2))
+        psi_gpu = to_gpu(psi)
+        
+        # Test LazyTensor with interaction
+        H_cpu = identityoperator(bc) ⊗ (w1c * w1d)
+        
+        # Results (CPU)
+        psi_result = copy(psi)
+        QuantumOptics.mul!(psi_result, H_cpu, psi, 1.0, 0.0)
+        
+        # Results (GPU) 
+        psi_gpu_result = to_gpu(copy(psi))
+        H_gpu = identityoperator(bc) ⊗ (w1c * w1d)
+        QuantumOptics.mul!(psi_gpu_result, H_gpu, psi_gpu, 1.0, 0.0)
+        
+        # Compare
+        @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+        
+        # Test sum of interactions
+        H_sum_cpu = identityoperator(bc) ⊗ ((w1c * w1d) + 0.5 * (w1d * w1c))
+        
+        # Results (CPU)
+        psi_result = copy(psi)
+        QuantumOptics.mul!(psi_result, H_sum_cpu, psi, 1.0, 0.0)
+        
+        # Results (GPU)
+        psi_gpu_result = to_gpu(copy(psi))
+        QuantumOptics.mul!(psi_gpu_result, H_sum_cpu, psi_gpu, 1.0, 0.0)
+        
+        # Compare
+        @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+    end
+    
+    @testset "Performance metrics" begin
+        # Only run timing tests if not in CI environment
+        if !haskey(ENV, "CI")
+            # Setup larger bases for meaningful performance comparison
+            bc = FockBasis(8)
+            times = 0:0.05:10
+            bw = WaveguideBasis(2, times)
+            
+            # Create operators
+            w1c = create(bw, 1)
+            w1d = destroy(bw, 1)
+            H = identityoperator(bc) ⊗ ( w1c * w1d)
+            
+            # Create test state
+            psi = fockstate(bc, 1) ⊗ onephoton(bw, 1, x->exp(-(x-5)^2))
+            psi.data .= 1
+            psi_gpu = to_gpu(psi)
+            
+            # Results (CPU)
+            psi_result = copy(psi)
+            t_cpu = @elapsed QuantumOptics.mul!(psi_result, H, psi, 1.0, 0.0)
+            
+            # Results (GPU)
+            psi_gpu_result = to_gpu(copy(psi))
+            # Warmup
+            QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
+            CUDA.synchronize()
+            
+            t_gpu = @elapsed begin
+                QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
+                CUDA.synchronize()
+            end
+            
+            println("CPU time: $t_cpu seconds")
+            println("GPU time: $t_gpu seconds")
+            println("Speedup: $(t_cpu/t_gpu)x")
+            
+            # We don't assert on speedup as it depends on hardware
+            # but we verify correctness
+            @test isapprox(Array(psi_gpu_result.data), psi_result.data; rtol=1e-5, atol=1e-5)
+        end
+    end
 end
-
-

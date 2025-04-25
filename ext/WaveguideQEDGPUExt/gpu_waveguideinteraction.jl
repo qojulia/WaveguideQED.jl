@@ -1,13 +1,13 @@
-function mul!(result::Ket{B1,A}, a::WaveguideInteraction{B1,B2}, b::Ket{B2,A}, alpha, beta) where {B1<:Basis,B2<:Basis,A<:CuArray}
-    @views b_data = reshape(b.data, QuantumOpticsBase._comp_size(basis(b)))
-    @views result_data = reshape(result.data, QuantumOpticsBase._comp_size(basis(result)))
+function mul!(result::Ket{B1,A}, a::WaveguideInteraction, b::Ket{B2,A}, alpha, beta) where {B1<:Basis,B2<:Basis,A<:CuArray}
+    b_data = Base.ReshapedArray(b.data, QuantumOpticsBase._comp_size(basis(b)), ())
+    result_data = Base.ReshapedArray(result.data, QuantumOpticsBase._comp_size(basis(result)), ())
 
     if a.loc == 1
         return QuantumOpticsBase._tp_matmul_first!(result_data, a, b_data, alpha * a.factor, beta)
     elseif a.loc == ndims(b_data)
         return QuantumOpticsBase._tp_matmul_last!(result_data, a, b_data, alpha * a.factor, beta)
     end
-    QuantumOpticsBase._tp_matmul_mid!(result_data, a, a.loc, b_data, alpha * a.factor, beta)
+    QuantumOpticsBase._tp_matmul_mid!(result_data, a, loc, b_data, alpha * a.factor, beta)
       
     result
 end
@@ -54,75 +54,42 @@ end
 
 
 
-function QuantumOpticsBase.:_tp_matmul_first!(
-    result :: CuReshapedOrCuArray{T,N1},
-    a      :: WaveguideInteraction,
-    b      :: CuReshapedOrCuArray{T,N2},
-    α      :: Number,
-    β      :: Number
-) where {T,N1,N2}
+function QuantumOpticsBase.:_tp_matmul_first!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideInteraction, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
+    T,
+    N1,
+    AR1<:CuArray,
+    N2,
+    AR2<:CuArray,
+}
     d_first = size(b, 1)
     d_rest = length(b)÷d_first
-    bp = parent_of(b)
-    rp = parent_of(result)
+    bp = b.parent
+    rp = result.parent
     br = reshape(bp, (d_first, d_rest))
-    result_r = reshape(rp, (size(a.op1, 1), d_rest))
+    result_r = reshape(rp, (size(a, 1), d_rest))
     apply_first_op_gpu!(result_r,a.op1,a.op2,br,α,β)
     result
 end
 
 #Same as _tp_matmul_first! But indexed in another way.
-function QuantumOpticsBase.:_tp_matmul_last!(
-    result :: CuReshapedOrCuArray{T,N1},
-    a      :: WaveguideInteraction,
-    b      :: CuReshapedOrCuArray{T,N2},
-    α      :: Number,
-    β      :: Number
-) where {T,N1,N2}
+function QuantumOpticsBase.:_tp_matmul_last!(result::Base.ReshapedArray{T,N1,AR1,<:Tuple}, a::WaveguideInteraction, b::Base.ReshapedArray{T,N2,AR2,<:Tuple}, α::Number, β::Number) where {
+    T,
+    N1,
+    AR1<:CuArray,
+    N2,
+    AR2<:CuArray,
+}
     d_last = size(b, ndims(b))
     d_rest = length(b)÷d_last
-    bp = parent_of(b)
-    rp = parent_of(result)
+    bp = b.parent
+    rp = result.parent
     br = reshape(bp, (d_rest, d_last))
-    result_r = reshape(rp, (d_rest, size(a.op1, 1)))
+    result_r = reshape(rp, (d_rest, size(a, 1)))
     apply_last_op_gpu!(result_r,a.op1,a.op2,br,α,β)
     result
 end
 
-# Helper functions for GPU implementation
-@inline function twophoton_index_gpu(i, nsteps, j)
-    return (i-1)*nsteps + j - ((i-1)*i)÷2
-end
 
-@inline function reverse_idx_gpu(C::Int, nsteps::Int, timeindex::Int)
-    out = nsteps+1/2-sqrt(4*nsteps^2 - 8*C-4*nsteps + 8*timeindex + 1)
-    is_int = isinteger(out)
-    return is_int, is_int ? Int(out) : out
-end
-
-@inline function reverse_idx_waveguide_gpu(C::Int, nsteps::Int, timeindex::Int)
-    out = (C-timeindex)/nsteps+1
-    is_int = isinteger(out) && (timeindex <= C <= (nsteps-1)*nsteps + timeindex)
-    return is_int, is_int ? Int(out) : out
-end
-
-# Helper kernel for operations that only scale by β
-function gpu_interaction_scale_only!(result, β, N, M)
-    row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-
-    if row > N || col > M
-        return
-    end
-
-    if !isone(β)
-        @inbounds result[row, col] *= β
-    end
-    return
-end
-
-# One-photon operations
-# Create-Destroy implementations (1-photon)
 function apply_last_op_gpu!(
     result,
     a::WaveguideCreate{B1,B2,1,idx1},
@@ -159,41 +126,6 @@ function apply_last_op_gpu!(
     return result
 end
 
-function apply_first_op_gpu!(
-    result,
-    a::WaveguideCreate{B1,B2,1,idx1},
-    bop::WaveguideDestroy{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-
-    # Figure out shape:
-    N, M = size(result, 1), size(result, 2)
-
-    # read waveguide info
-    nsteps       = a.basis_l.nsteps
-    timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
-    timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
-
-    factor   = a.factor*bop.factor
-    
-    # Decide thread-block shape
-    blockx, blocky = 32, 8
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_create_destroy_1photon_first!(
-        result, b, α, β,
-        N, M,
-        nsteps,
-        timeindex_a,
-        timeindex_b,
-        factor,
-        idx1, idx2
-    )
-    return result
-end
 
 function gpu_interaction_create_destroy_1photon_last!(
     result, b, α, β,
@@ -220,248 +152,11 @@ function gpu_interaction_create_destroy_1photon_last!(
     if col == 1 + (idx1-1)*nsteps + timeindex_a
         @inbounds result[row, col] += α * factor * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
     end
-    return
 end
 
-function gpu_interaction_create_destroy_1photon_first!(
-    result, b, α, β,
-    N, M,            # matrix shape
-    nsteps,
-    timeindex_a,
-    timeindex_b,
-    factor,
-    idx1, idx2
-)
-    row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
 
-    if row > N || col > M
-        return
-    end
+#STILL IN PROGRESS
 
-    # (A) multiply result by β
-    if !isone(β)
-        @inbounds result[row, col] *= β
-    end
-
-    # (B) do the "create x destroy" increment only for appropriate row
-    if row == 1 + (idx1-1)*nsteps + timeindex_a
-        @inbounds result[row, col] += α * factor * b[1 + (idx2-1)*nsteps + timeindex_b, col]
-    end
-    return
-end
-
-# Destroy-Destroy implementations (1-photon)
-function apply_last_op_gpu!(
-    result,
-    a::WaveguideDestroy{B1,B2,1,idx1},
-    bop::WaveguideDestroy{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # For destroy-destroy (1-photon), we just scale by β as in CPU implementation
-    N, M = size(result, 1), size(result, 2)
-    blockx, blocky = 8, 32
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_scale_only!(
-        result, β, N, M
-    )
-    return result
-end
-
-function apply_first_op_gpu!(
-    result,
-    a::WaveguideDestroy{B1,B2,1,idx1},
-    bop::WaveguideDestroy{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # For destroy-destroy (1-photon), we just scale by β as in CPU implementation
-    N, M = size(result, 1), size(result, 2)
-    blockx, blocky = 32, 8
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_scale_only!(
-        result, β, N, M
-    )
-    return result
-end
-
-# Create-Create implementations (1-photon)
-function apply_last_op_gpu!(
-    result,
-    a::WaveguideCreate{B1,B2,1,idx1},
-    bop::WaveguideCreate{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # For create-create (1-photon), we just scale by β as in CPU implementation
-    N, M = size(result, 1), size(result, 2)
-    blockx, blocky = 8, 32
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_scale_only!(
-        result, β, N, M
-    )
-    return result
-end
-
-function apply_first_op_gpu!(
-    result,
-    a::WaveguideCreate{B1,B2,1,idx1},
-    bop::WaveguideCreate{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # For create-create (1-photon), we just scale by β as in CPU implementation
-    N, M = size(result, 1), size(result, 2)
-    blockx, blocky = 32, 8
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_scale_only!(
-        result, β, N, M
-    )
-    return result
-end
-
-# Destroy-Create implementations (1-photon)
-function apply_last_op_gpu!(
-    result,
-    a::WaveguideDestroy{B1,B2,1,idx1},
-    bop::WaveguideCreate{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # Figure out shape:
-    N, M = size(result, 1), size(result, 2)
-
-    # read waveguide info
-    nsteps       = a.basis_l.nsteps
-    timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
-    timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
-
-    factor   = a.factor*bop.factor
-    
-    # Decide thread-block shape
-    blockx, blocky = 8, 32
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_destroy_create_1photon_last!(
-        result, b, α, β,
-        N, M,
-        nsteps,
-        timeindex_a,
-        timeindex_b,
-        factor,
-        idx1, idx2
-    )
-    return result
-end
-
-function apply_first_op_gpu!(
-    result,
-    a::WaveguideDestroy{B1,B2,1,idx1},
-    bop::WaveguideCreate{B1,B2,1,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # Figure out shape:
-    N, M = size(result, 1), size(result, 2)
-
-    # read waveguide info
-    nsteps       = a.basis_l.nsteps
-    timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
-    timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
-
-    factor   = a.factor*bop.factor
-    
-    # Decide thread-block shape
-    blockx, blocky = 32, 8
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
-
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_destroy_create_1photon_first!(
-        result, b, α, β,
-        N, M,
-        nsteps,
-        timeindex_a,
-        timeindex_b,
-        factor,
-        idx1, idx2
-    )
-    return result
-end
-
-function gpu_interaction_destroy_create_1photon_last!(
-    result, b, α, β,
-    N, M,            # matrix shape
-    nsteps,
-    timeindex_a,
-    timeindex_b,
-    factor,
-    idx1, idx2
-)
-    row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-
-    if row > N || col > M
-        return
-    end
-
-    # (A) multiply result by β
-    if !isone(β)
-        @inbounds result[row, col] *= β
-    end
-
-    # Only add contribution if same waveguide and same time bin
-    if idx1 == idx2 && timeindex_a == timeindex_b && col == 1
-        @inbounds result[row, col] += α * factor * b[row, 1]
-    end
-    return
-end
-
-function gpu_interaction_destroy_create_1photon_first!(
-    result, b, α, β,
-    N, M,            # matrix shape
-    nsteps,
-    timeindex_a,
-    timeindex_b,
-    factor,
-    idx1, idx2
-)
-    row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-
-    if row > N || col > M
-        return
-    end
-
-    # (A) multiply result by β
-    if !isone(β)
-        @inbounds result[row, col] *= β
-    end
-
-    # Only add contribution if same waveguide and same time bin
-    if idx1 == idx2 && timeindex_a == timeindex_b && row == 1
-        @inbounds result[row, col] += α * factor * b[1, col]
-    end
-    return
-end
-
-# Two-photon operations
-# Create-Destroy implementations (2-photon)
 function apply_last_op_gpu!(
     result,
     a::WaveguideCreate{B1,B2,2,idx1},
@@ -478,7 +173,6 @@ function apply_last_op_gpu!(
     nsteps       = a.basis_l.nsteps
     timeindex_a  = (a.timeindex + a.delay -1) % nsteps + 1
     timeindex_b  = (bop.timeindex + bop.delay -1) % nsteps + 1
-    Nw           = get_number_of_waveguides(a.basis_l)
 
     factor   = a.factor*bop.factor
     
@@ -494,8 +188,7 @@ function apply_last_op_gpu!(
         timeindex_a,
         timeindex_b,
         factor,
-        idx1, idx2,
-        Nw
+        idx1, idx2
     )
     return result
 end
@@ -507,8 +200,7 @@ function gpu_interaction_create_destroy_2photon_last!(
     timeindex_a,
     timeindex_b,
     factor,
-    idx1, idx2,
-    Nw
+    idx1, idx2
 )
     row = (blockIdx().x - 1) * blockDim().x + threadIdx().x
     col = (blockIdx().y - 1) * blockDim().y + threadIdx().y
@@ -522,58 +214,141 @@ function gpu_interaction_create_destroy_2photon_last!(
         @inbounds result[row, col] *= β
     end
 
-    # Single photon part
+    # Direct implementation of the CPU's waveguide_interaction_mul! for WaveguideCreate+WaveguideDestroy
+    
+    # 1. Single-photon component (direct correlation between a photon in create and destroy)
+    # This corresponds to: result[1+(idx1-1)*nsteps+timeindex_a] += alpha*factor*b[1+(idx2-1)*nsteps+timeindex_b]
     if col == 1 + (idx1-1)*nsteps + timeindex_a
         @inbounds result[row, col] += α * factor * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
     end
-
-    # Two-photon same waveguide part
-    if idx1 == idx2
-        offset = Nw*nsteps + 1 + (idx1-1)*(nsteps*(nsteps+1)>>>1)
+    
+    # 2. Two-photon operations
+    
+    # First case: Create from TwoPhotonTimestepView in B to TwoWaveguideTimestepView in Result
+    # This corresponds to:
+    # twophotonview_b = TwoPhotonTimestepView(b,timeindex_b,nsteps,Nw*nsteps+1+(idx2-1)*(nsteps*(nsteps+1))÷2)
+    # i,j = min(idx1,idx2),max(idx1,idx2)
+    # index = (i-1)*Nw + j - (i*(i+1))÷2
+    # twophotonview_r = TwoWaveguideTimestepView(result,timeindex_a,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx1)
+    
+    twophoton_b_offset = Nw*nsteps + 1 + (idx2-1)*(nsteps*(nsteps+1))÷2
+    i, j = min(idx1, idx2), max(idx1, idx2)
+    index = (i-1)*Nw + j - (i*(i+1))÷2
+    mixed_r_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index-1)*nsteps^2
+    
+    # If we're in the mixed waveguide section of the output
+    if col >= mixed_r_offset && col < mixed_r_offset + nsteps*nsteps
+        # This is roughly equivalent to the TwoWaveguideTimestepView in the CPU implementation
+        col_offset = col - mixed_r_offset
+        t1 = (col_offset ÷ nsteps) + 1
+        t2 = (col_offset % nsteps) + 1
         
-        # Handle photons in same waveguide
-        twophoton_view_idx = twophoton_index_gpu(timeindex_a, nsteps, timeindex_b)
-        if col >= offset && col < offset + (nsteps*(nsteps+1))÷2
-            col_offset = col - offset
+        # We're in the right time slot for timeindex_a 
+        # and mapping from a two-photon state in a single waveguide
+        if (idx1 == i && t1 == timeindex_a) || (idx1 != i && t2 == timeindex_a)
+            # Figure out which time corresponds to the other photon
+            other_time = (idx1 == i) ? t2 : t1
             
-            # Adding support for same time bin (requires sqrt(2) factor)
-            if timeindex_a == timeindex_b && col_offset == twophoton_index_gpu(timeindex_a, nsteps, timeindex_a)
-                # This is the special case for same time bin
-                @inbounds result[row, col] += sqrt(2) * α * factor * b[row, 1]
-            else
-                # Check if this index corresponds to one of our time bins
-                is_valid = false
-                
-                # Two cases: our time bin is first or second in the pair
-                if col_offset == twophoton_index_gpu(timeindex_a, nsteps, timeindex_b)
-                    is_valid = true
-                elseif col_offset == twophoton_index_gpu(timeindex_b, nsteps, timeindex_a)
-                    is_valid = true
-                end
-                
-                if is_valid
-                    @inbounds result[row, col] += α * factor * b[row, 1]
-                end
-            end
+            # Get the index in the source vector
+            twophoton_idx = twophoton_b_offset + twophoton_index_gpu(min(other_time, timeindex_b), nsteps, max(other_time, timeindex_b))
+            
+            @inbounds result[row, col] += α * factor * b[row, twophoton_idx]
         end
-    else
-        # Different waveguides
-        i, j = min(idx1, idx2), max(idx1, idx2)
-        index = (i-1)*Nw + j - (i*(i+1))÷2
-        offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index-1)*nsteps^2
+    end
+    
+    # Second case: Create from TwoWaveguideTimestepView in B to TwoPhotonTimestepView in Result
+    # This corresponds to:
+    # twophotonview_b = TwoWaveguideTimestepView(b,timeindex_b,nsteps,1+Nw*nsteps+Nw*(nsteps*(nsteps+1))÷2+(index-1)*nsteps^2,i==idx2)
+    # twophotonview_r = TwoPhotonTimestepView(result,timeindex_a,nsteps,1+Nw*nsteps+(idx1-1)*(nsteps*(nsteps+1))÷2)
+    
+    mixed_b_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index-1)*nsteps^2
+    twophoton_r_offset = 1 + Nw*nsteps + (idx1-1)*(nsteps*(nsteps+1))÷2
+    
+    # If we're in the two-photon section of the output for waveguide idx1
+    if col >= twophoton_r_offset && col < twophoton_r_offset + (nsteps*(nsteps+1))÷2
+        # This is roughly equivalent to the TwoPhotonTimestepView in the CPU implementation
+        col_offset = col - twophoton_r_offset
         
-        if idx1 == i  # First waveguide (row major ordering in array)
-            target_idx = offset + (timeindex_a-1)*nsteps + timeindex_b
-            if col == 1 + (idx1-1)*nsteps + timeindex_a
-                @inbounds result[row, col] += α * factor * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
+        # We need to determine the two times this represents
+        is_int, t1 = reverse_idx_gpu(col_offset, nsteps, 0)
+        
+        if is_int
+            # It's a valid time pair
+            t2 = col_offset - twophoton_index_gpu(Int(t1), nsteps, 0) + Int(t1)
+            
+            # Mapping from a mixed waveguide state (photons in two different waveguides)
+            mixed_idx = 0
+            if idx2 == i # idx2 is the first waveguide in ordering
+                mixed_idx = mixed_b_offset + (t1-1)*nsteps + t2
+            else # idx2 is the second waveguide in ordering
+                mixed_idx = mixed_b_offset + (t2-1)*nsteps + t1
             end
-        else  # Second waveguide (column major ordering in array)
-            target_idx = offset + (timeindex_b-1)*nsteps + timeindex_a
-            if col == 1 + (idx1-1)*nsteps + timeindex_a
-                @inbounds result[row, col] += α * factor * b[row, 1 + (idx2-1)*nsteps + timeindex_b]
+            
+            # Assuming t1 is associated with timeindex_a (which might not be correct)
+            if t1 == timeindex_a || t2 == timeindex_a
+                @inbounds result[row, col] += α * factor * b[row, mixed_idx]
             end
         end
     end
+    
+    # Third case: Handle the loop for other waveguides
+    # This corresponds to:
+    # @simd for k in filter(x -> x != idx1 && x != idx2, 1:Nw)
+    #   m,l = min(k,idx1),max(k,idx1)
+    #   ... Rest of the loop handling other waveguide interactions
+    
+    # This is hard to vectorize efficiently in a GPU kernel, but we can approximate
+    # by checking if the current column corresponds to any valid mixed waveguide state
+    for k in 1:Nw
+        if k == idx1 || k == idx2
+            continue
+        end
+        
+        # Calculate index for (k, idx1) pair
+        m, l = min(k, idx1), max(k, idx1)
+        index_r = (m-1)*Nw + l - (m*(m+1))÷2
+        r_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index_r-1)*nsteps^2
+        
+        # Calculate index for (k, idx2) pair
+        i, j = min(k, idx2), max(k, idx2)
+        index_b = (i-1)*Nw + j - (i*(i+1))÷2
+        b_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index_b-1)*nsteps^2
+        
+        # If we're in a mixed waveguide section for (k, idx1)
+        if col >= r_offset && col < r_offset + nsteps*nsteps
+            col_offset = col - r_offset
+            t1 = (col_offset ÷ nsteps) + 1
+            t2 = (col_offset % nsteps) + 1
+            
+            # We're in the right time slot for timeindex_a
+            if (m == idx1 && t1 == timeindex_a) || (m != idx1 && t2 == timeindex_a)
+                # Figure out which time corresponds to the other photon
+                other_time = (m == idx1) ? t2 : t1
+                
+                # Get the source index in the b vector for the other waveguide pair
+                b_time1 = 0
+                b_time2 = 0
+                
+                if i == k # k is the first waveguide in the (k, idx2) ordering
+                    b_time1 = other_time
+                    b_time2 = timeindex_b
+                else # k is the second waveguide in the (k, idx2) ordering
+                    b_time1 = timeindex_b
+                    b_time2 = other_time
+                end
+                
+                mixed_b_idx = b_offset + (b_time1-1)*nsteps + b_time2
+                
+                @inbounds result[row, col] += α * factor * b[row, mixed_b_idx]
+            end
+        end
+    end
+    
+    # Special case for vacuum state when operating on same waveguide/time
+    if idx1 == idx2 && timeindex_a == timeindex_b && col == 1
+        @inbounds result[row, col] += α * factor * b[row, 1]
+    end
+    
     return
 end
 
@@ -597,23 +372,7 @@ function apply_first_op_gpu!(
 
     factor   = a.factor*bop.factor
     
-    # Decide thread-block shape
-    blockx, blocky = 32, 8
-    gridx = cld(N, blockx)
-    gridy = cld(M, blocky)
 
-    @cuda threads=(blockx, blocky) blocks=(gridx, gridy) gpu_interaction_create_destroy_2photon_first!(
-        result, b, α, β,
-        N, M,
-        nsteps,
-        timeindex_a,
-        timeindex_b,
-        factor,
-        idx1, idx2,
-        Nw
-    )
-    return result
-end
 
 function gpu_interaction_create_destroy_2photon_first!(
     result, b, α, β,
@@ -637,73 +396,127 @@ function gpu_interaction_create_destroy_2photon_first!(
         @inbounds result[row, col] *= β
     end
 
-    # Single photon part
+    # Direct implementation of the CPU's waveguide_interaction_mul! for WaveguideCreate+WaveguideDestroy
+    # But transposed for first-mode operations
+    
+    # 1. Single-photon component (direct correlation between a photon in create and destroy)
     if row == 1 + (idx1-1)*nsteps + timeindex_a
         @inbounds result[row, col] += α * factor * b[1 + (idx2-1)*nsteps + timeindex_b, col]
     end
-
-    # Two-photon same waveguide part
-    if idx1 == idx2
-        offset = Nw*nsteps + 1 + (idx1-1)*(nsteps*(nsteps+1)>>>1)
+    
+    # 2. Two-photon operations 
+    
+    # First case: Create from TwoPhotonTimestepView in B to TwoWaveguideTimestepView in Result
+    twophoton_b_offset = Nw*nsteps + 1 + (idx2-1)*(nsteps*(nsteps+1))÷2
+    i, j = min(idx1, idx2), max(idx1, idx2)
+    index = (i-1)*Nw + j - (i*(i+1))÷2
+    mixed_r_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index-1)*nsteps^2
+    
+    # If we're in the mixed waveguide section of the output (transposed)
+    if row >= mixed_r_offset && row < mixed_r_offset + nsteps*nsteps
+        # This is roughly equivalent to the TwoWaveguideTimestepView in the CPU implementation
+        row_offset = row - mixed_r_offset
+        t1 = (row_offset ÷ nsteps) + 1
+        t2 = (row_offset % nsteps) + 1
         
-        # Handle photons in same waveguide
-        twophoton_view_idx = twophoton_index_gpu(timeindex_a, nsteps, timeindex_b)
-        if row >= offset && row < offset + (nsteps*(nsteps+1))÷2
-            row_offset = row - offset
+        # We're in the right time slot for timeindex_a
+        # and mapping from a two-photon state in a single waveguide
+        if (idx1 == i && t1 == timeindex_a) || (idx1 != i && t2 == timeindex_a)
+            # Figure out which time corresponds to the other photon
+            other_time = (idx1 == i) ? t2 : t1
             
-            # Adding support for same time bin (requires sqrt(2) factor)
-            if timeindex_a == timeindex_b && row_offset == twophoton_index_gpu(timeindex_a, nsteps, timeindex_a)
-                # This is the special case for same time bin
-                @inbounds result[row, col] += sqrt(2) * α * factor * b[1, col]
-            else
-                # Check if this index corresponds to one of our time bins
-                is_valid = false
-                
-                # Two cases: our time bin is first or second in the pair
-                if row_offset == twophoton_index_gpu(timeindex_a, nsteps, timeindex_b)
-                    is_valid = true
-                elseif row_offset == twophoton_index_gpu(timeindex_b, nsteps, timeindex_a)
-                    is_valid = true
-                end
-                
-                if is_valid
-                    @inbounds result[row, col] += α * factor * b[1, col]
-                end
-            end
+            # Get the index in the source vector
+            twophoton_idx = twophoton_b_offset + twophoton_index_gpu(min(other_time, timeindex_b), nsteps, max(other_time, timeindex_b))
+            
+            @inbounds result[row, col] += α * factor * b[twophoton_idx, col]
         end
+    end
+    
+    # Second case: Create from TwoWaveguideTimestepView in B to TwoPhotonTimestepView in Result
+    mixed_b_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index-1)*nsteps^2
+    twophoton_r_offset = 1 + Nw*nsteps + (idx1-1)*(nsteps*(nsteps+1))÷2
+    
+    # If we're in the two-photon section of the output for waveguide idx1
+    if row >= twophoton_r_offset && row < twophoton_r_offset + (nsteps*(nsteps+1))÷2
+        # This is roughly equivalent to the TwoPhotonTimestepView in the CPU implementation
+        row_offset = row - twophoton_r_offset
         
-    else
-        # Different waveguides
-        i, j = min(idx1, idx2), max(idx1, idx2)
-        index = (i-1)*Nw + j - (i*(i+1))÷2
-        offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index-1)*nsteps^2
+        # We need to determine the two times this represents
+        is_int, t1 = reverse_idx_gpu(row_offset, nsteps, 0)
         
-        if idx1 == i  # First waveguide (row major ordering in array)
-            target_idx = offset + (timeindex_a-1)*nsteps + timeindex_b
-            if row == 1 + (idx1-1)*nsteps + timeindex_a
-                @inbounds result[row, col] += α * factor * b[1 + (idx2-1)*nsteps + timeindex_b, col]
+        if is_int
+            # It's a valid time pair
+            t2 = row_offset - twophoton_index_gpu(Int(t1), nsteps, 0) + Int(t1)
+            
+            # Mapping from a mixed waveguide state (photons in two different waveguides)
+            mixed_idx = 0
+            if idx2 == i # idx2 is the first waveguide in ordering
+                mixed_idx = mixed_b_offset + (t1-1)*nsteps + t2
+            else # idx2 is the second waveguide in ordering
+                mixed_idx = mixed_b_offset + (t2-1)*nsteps + t1
             end
-        else  # Second waveguide (column major ordering in array)
-            target_idx = offset + (timeindex_b-1)*nsteps + timeindex_a
-            if row == 1 + (idx1-1)*nsteps + timeindex_a
-                @inbounds result[row, col] += α * factor * b[1 + (idx2-1)*nsteps + timeindex_b, col]
+            
+            # Assuming t1 is associated with timeindex_a (which might not be correct)
+            if t1 == timeindex_a || t2 == timeindex_a
+                @inbounds result[row, col] += α * factor * b[mixed_idx, col]
             end
         end
     end
+    
+    # Third case: Handle the loop for other waveguides
+    for k in 1:Nw
+        if k == idx1 || k == idx2
+            continue
+        end
+        
+        # Calculate index for (k, idx1) pair
+        m, l = min(k, idx1), max(k, idx1)
+        index_r = (m-1)*Nw + l - (m*(m+1))÷2
+        r_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index_r-1)*nsteps^2
+        
+        # Calculate index for (k, idx2) pair
+        i, j = min(k, idx2), max(k, idx2)
+        index_b = (i-1)*Nw + j - (i*(i+1))÷2
+        b_offset = 1 + Nw*nsteps + Nw*(nsteps*(nsteps+1))÷2 + (index_b-1)*nsteps^2
+        
+        # If we're in a mixed waveguide section for (k, idx1)
+        if row >= r_offset && row < r_offset + nsteps*nsteps
+            row_offset = row - r_offset
+            t1 = (row_offset ÷ nsteps) + 1
+            t2 = (row_offset % nsteps) + 1
+            
+            # We're in the right time slot for timeindex_a
+            if (m == idx1 && t1 == timeindex_a) || (m != idx1 && t2 == timeindex_a)
+                # Figure out which time corresponds to the other photon
+                other_time = (m == idx1) ? t2 : t1
+                
+                # Get the source index in the b vector for the other waveguide pair
+                b_time1 = 0
+                b_time2 = 0
+                
+                if i == k # k is the first waveguide in the (k, idx2) ordering
+                    b_time1 = other_time
+                    b_time2 = timeindex_b
+                else # k is the second waveguide in the (k, idx2) ordering
+                    b_time1 = timeindex_b
+                    b_time2 = other_time
+                end
+                
+                mixed_b_idx = b_offset + (b_time1-1)*nsteps + b_time2
+                
+                @inbounds result[row, col] += α * factor * b[mixed_b_idx, col]
+            end
+        end
+    end
+    
+    # Special case for vacuum state when operating on same waveguide/time
+    if idx1 == idx2 && timeindex_a == timeindex_b && row == 1
+        @inbounds result[row, col] += α * factor * b[1, col]
+    end
+    
     return
 end
 
-# 2-photon implementations for Destroy-Destroy
-function apply_last_op_gpu!(
-    result,
-    a::WaveguideDestroy{B1,B2,2,idx1},
-    bop::WaveguideDestroy{B1,B2,2,idx2},
-    b,
-    α,
-    β
-) where {B1,B2,idx1,idx2}
-    # Figure out shape:
-    N, M = size(result, 1), size(result, 2)
 
     # read waveguide info
     nsteps       = a.basis_l.nsteps
@@ -1067,40 +880,35 @@ function gpu_interaction_destroy_create_2photon_last!(
         @inbounds result[row, col] *= β
     end
 
-    # Only contribute to vacuum state at matching time bins
+    # Handle same waveguide and same time bin case 
     if idx1 == idx2 && timeindex_a == timeindex_b
+        # Vacuum state contribution
         if col == 1
             @inbounds result[row, col] += α * factor * b[row, 1]
+        end
+        
+        # Add contributions to all waveguide states
+        # This is the critical part that was missing
+        
+        # Check if we're in a waveguide state column (all columns after the first)
+        for j in 1:Nw
+            waveguide_offset = 1 + (j-1)*nsteps
             
-            # Add for all waveguides (same as CPU implementation)
-            if idx1 == idx2
-                # For each waveguide, handle its contribution
-                for j in 1:Nw
-                    waveguide_offset = 1 + (j-1)*nsteps
-                    
-                    if j == idx1
-                        # Same waveguide needs factor of 2 at exactly the time bin
-                        if timeindex_a > 1 && timeindex_a < nsteps
-                            # Contribute to all time bins except matching time bin
-                            for t in 1:timeindex_a-1
-                                @inbounds result[row, waveguide_offset+t-1] += b[row, waveguide_offset+t-1]
-                            end
-                            for t in timeindex_a+1:nsteps
-                                @inbounds result[row, waveguide_offset+t-1] += b[row, waveguide_offset+t-1]
-                            end
-                            @inbounds result[row, waveguide_offset+timeindex_a-1] += 2 * b[row, waveguide_offset+timeindex_a-1]
-                        end
-                    else
-                        # Other waveguides just get all time bins
-                        for t in 1:nsteps
-                            @inbounds result[row, waveguide_offset+t-1] += b[row, waveguide_offset+t-1]
-                        end
-                    end
+            # Only operate on columns that are waveguide columns
+            if waveguide_offset <= col <= waveguide_offset+nsteps-1
+                t_idx = col - waveguide_offset + 1
+                
+                if j == idx1 && t_idx == timeindex_a
+                    # Same waveguide at matching time bin, apply factor of 2
+                    @inbounds result[row, col] += α * factor * 2 * b[row, col]
+                else
+                    # Other time bins or waveguides just get the normal contribution
+                    @inbounds result[row, col] += α * factor * b[row, col]
                 end
             end
         end
     else
-        # Different time bins
+        # Different waveguides or time bins
         if col == 1 + (idx2-1)*nsteps + timeindex_b
             @inbounds result[row, col] += α * factor * b[row, 1 + (idx1-1)*nsteps + timeindex_a]
         end
@@ -1147,34 +955,35 @@ function gpu_interaction_destroy_create_2photon_first!(
         @inbounds result[row, col] *= β
     end
 
+    # Handle same waveguide and same time bin case
     if idx1 == idx2 && timeindex_a == timeindex_b
+        # Vacuum state contribution
         if row == 1
             @inbounds result[row, col] += α * factor * b[1, col]
+        end
+        
+        # Add contributions to all waveguide states (transposed from last version)
+        # This is the critical part that was missing
+        
+        # Check if we're in a waveguide state row (all rows after the first)
+        for j in 1:Nw
+            waveguide_offset = 1 + (j-1)*nsteps
             
-            # For each waveguide, handle its contribution (transposed from last version)
-            if idx1 == idx2
-                for j in 1:Nw
-                    waveguide_offset = 1 + (j-1)*nsteps
-                    
-                    if j == idx1
-                        if timeindex_a > 1 && timeindex_a < nsteps
-                            for t in 1:timeindex_a-1
-                                @inbounds result[waveguide_offset+t-1, col] += b[waveguide_offset+t-1, col]
-                            end
-                            for t in timeindex_a+1:nsteps
-                                @inbounds result[waveguide_offset+t-1, col] += b[waveguide_offset+t-1, col]
-                            end
-                            @inbounds result[waveguide_offset+timeindex_a-1, col] += 2 * b[waveguide_offset+timeindex_a-1, col]
-                        end
-                    else
-                        for t in 1:nsteps
-                            @inbounds result[waveguide_offset+t-1, col] += b[waveguide_offset+t-1, col]
-                        end
-                    end
+            # Only operate on rows that are waveguide rows
+            if waveguide_offset <= row <= waveguide_offset+nsteps-1
+                t_idx = row - waveguide_offset + 1
+                
+                if j == idx1 && t_idx == timeindex_a
+                    # Same waveguide at matching time bin, apply factor of 2
+                    @inbounds result[row, col] += α * factor * 2 * b[row, col]
+                else
+                    # Other time bins or waveguides just get the normal contribution
+                    @inbounds result[row, col] += α * factor * b[row, col]
                 end
             end
         end
     else
+        # Different waveguides or time bins
         if row == 1 + (idx2-1)*nsteps + timeindex_b
             @inbounds result[row, col] += α * factor * b[1 + (idx1-1)*nsteps + timeindex_a, col]
         end

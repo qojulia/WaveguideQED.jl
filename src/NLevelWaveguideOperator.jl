@@ -15,8 +15,8 @@ mutable struct NLevelWaveguideOperator{B1,B2} <: AbstractOperator{B1,B2}
     n_to::Int
     n_from::Int
     indexing::WaveguideIndexing
-    function NLevelWaveguideOperator(basis_l::B1,basis_r::B2,factor::ComplexF64,op::AbstractOperator,loc,n_to,n_from) where{B1,B2}
-        new{B1,B2}(basis_l,basis_r,factor,op,loc,n_to,n_from,WaveguideIndexing(basis_l,loc))
+    function NLevelWaveguideOperator(basis_l::B1,basis_r::B2,factor,op::AbstractOperator,loc,n_to,n_from) where{B1,B2}
+        new{B1,B2}(basis_l,basis_r,complex(factor),op,loc,n_to,n_from,WaveguideIndexing(basis_l,loc))
     end
 end
 
@@ -163,7 +163,7 @@ function tensor(a::Operator{BL,BR,F},b::T) where {BL<:NLevelBasis,BR<:NLevelBasi
             truth_value, prefactor = _is_transition(a,i,j)
             if truth_value
                 btotal = basis(a) ⊗ basis(b)
-                return NLevelWaveguideOperator(btotal,btotal,b.factor*prefactor,b.operators[1],[b.indices[1],1],i,j) 
+                return NLevelWaveguideOperator(btotal,btotal,b.factor*prefactor,b.operators[1],[b.indices[1]+1,1],i,j) 
             end
         end
     end
@@ -229,14 +229,15 @@ function mul!(result::Ket{B1,A1}, a::NLevelWaveguideOperator, b::Ket{B2,A2}, alp
         loop_transition_third_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1,a.n_to,a.n_from)     
         a.indexing.idx_vec1[j] = dims[j]
         for k in 1:dims[j]
-            if i !=a.n_to || k!=a.n_from 
-                loop_rmul_axis!(result.data,a,b.data,alpha,beta1,a.indexing,k)
+            if k !=a.n_to
+                a.indexing.idx_vec1[j] = k
+                loop_rmul_axis!(result.data,a,b.data,alpha,beta1,a.indexing,1)
             end
         end
     else
         iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_transition_third_axis!,a.n_to,a.n_from)
         for k in 1:dims[j]
-            if i !=a.n_to || k!=a.n_from 
+            if k !=a.n_to
                 a.indexing.idx_vec1[j] = k
                 iterate_over_iter!(result.data,a,b.data,alpha,beta1,a.indexing,1,loop_rmul_axis!)
             end
@@ -254,6 +255,8 @@ function loop_transition_ax!(result,a,b,alpha,beta,indexing::WaveguideIndexing,k
     waveguide_mul!(view(result,li1:indexing.strides[a.loc[1]]:li1+(indexing.end_idx-1)*indexing.strides[a.loc[1]]),a.op,view(b,li2:indexing.strides[a.loc[1]]:li2+(indexing.end_idx-1)*indexing.strides[a.loc[1]]),a.factor*alpha,beta)
 end
 function loop_transition_third_axis!(result,a,b,alpha,beta,indexing::WaveguideIndexing,idx,k,l)
+    println("loop_transition_third_axis!")
+    println(indexing.iter[idx])
     for j in 1:indexing.iter[idx]
         @inbounds indexing.idx_vec1[indexing.range_idx[idx]] = j
         @inbounds indexing.idx_vec2[indexing.range_idx[idx]] = j

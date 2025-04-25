@@ -144,47 +144,45 @@ end
 
 Create [`CavityWaveguideAbsorption`](@ref) that applies `create(b::FockBasis)` on `FockBasis` and destroy(b::WaveguideBasis{T}) on [`WaveguideBasis{T}`](@ref).  
 """
-function absorption(b1::WaveguideBasis{T,Nw},b2::FockBasis,idx) where {T,Nw}
+function absorption(b1::WaveguideBasis{T,Nw},b2::FockBasis,idx;factor=1.0) where {T,Nw}
     btotal = tensor(b1,b2)
-    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b1,idx),[1,2])
+    return CavityWaveguideAbsorption(btotal,btotal,complex(factor),destroy(b1,idx),[1,2])
 end
-function absorption(b1::FockBasis,b2::WaveguideBasis{T,Nw},idx) where {T,Nw}
+function absorption(b1::FockBasis,b2::WaveguideBasis{T,Nw},idx;factor=1.0) where {T,Nw}
     btotal = tensor(b1,b2)
-    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b2,idx),[2,1])
+    return CavityWaveguideAbsorption(btotal,btotal,complex(factor),destroy(b2,idx),[2,1])
 end
-function absorption(b1::WaveguideBasis{T},b2::FockBasis) where T
+function absorption(b1::WaveguideBasis{T},b2::FockBasis;factor=1.0) where T
     btotal = tensor(b1,b2)
-    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b1),[1,2])
+    return CavityWaveguideAbsorption(btotal,btotal,complex(factor),destroy(b1),[1,2])
 end
-function absorption(b1::FockBasis,b2::WaveguideBasis{T}) where T
+function absorption(b1::FockBasis,b2::WaveguideBasis{T};factor=1.0) where T
     btotal = tensor(b1,b2)
-    return CavityWaveguideAbsorption(btotal,btotal,complex(1.0),destroy(b2),[2,1])
+    return CavityWaveguideAbsorption(btotal,btotal,complex(factor),destroy(b2),[2,1])
 end
-function absorption(a::T,b::Operator) where T<: WaveguideOperatorT
+function absorption(a::T,b::Operator;factor=1.0) where T<: WaveguideOperatorT
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideAbsorption(btotal,btotal,a.factor,a.operators[1],[a.indices[1],a.indices[1]+1])
+    CavityWaveguideAbsorption(btotal,btotal,complex(factor)*a.factor,a.operators[1],[a.indices[1],a.indices[1]+1])
 end
-function absorption(a::Operator,b::T) where T<: WaveguideOperatorT
+function absorption(a::Operator,b::T;factor=1.0) where T<: WaveguideOperatorT
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideAbsorption(btotal,btotal,b.factor,b.operators[1],[b.indices[1]+1,1])
+    CavityWaveguideAbsorption(btotal,btotal,complex(factor)*b.factor,b.operators[1],[b.indices[1]+1,1])
 end
-function absorption(a::T,b::Operator) where T<: WaveguideOperator
-    @assert _is_create(b)
+function absorption(a::T,b::Operator;factor=1.0) where T<: WaveguideOperator
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideAbsorption(btotal,btotal,complex(1.0),a,[1,2])
+    CavityWaveguideAbsorption(btotal,btotal,complex(factor),a,[1,2])
 end
-function absorption(a::Operator,b::T) where T<: WaveguideOperator
-    @assert _is_create(a)
+function absorption(a::Operator,b::T;factor=1.0) where T<: WaveguideOperator
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideAbsorption(btotal,btotal,complex(1.0),b,[2,1])
+    CavityWaveguideAbsorption(btotal,btotal,complex(factor),b,[2,1])
 end
-function absorption(a::CompositeBasis,b::T,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+function absorption(a::CompositeBasis,b::T,i::Int;factor=1.0) where T<: Union{WaveguideOperator,WaveguideOperatorT}
     btotal = tensor(a,basis(b))
-    CavityWaveguideAbsorption(btotal,btotal,complex(1.0),get_waveguide_operators(b)[1],[get_waveguide_location(basis(b))+length(a.shape),i])
+    CavityWaveguideAbsorption(btotal,btotal,complex(factor),get_waveguide_operators(b)[1],[get_waveguide_location(basis(b))+length(a.shape),i])
 end
-function absorption(a::T,b::CompositeBasis,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+function absorption(a::T,b::CompositeBasis,i::Int;factor=1.0) where T<: Union{WaveguideOperator,WaveguideOperatorT}
     btotal = tensor(basis(a),b)
-    CavityWaveguideAbsorption(btotal,btotal,complex(1.0),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
+    CavityWaveguideAbsorption(btotal,btotal,complex(factor),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
 end
 
 """
@@ -193,47 +191,45 @@ end
 
 Create [`CavityWaveguideEmission`](@ref) that applies `destroy(b::FockBasis)` on `FockBasis` and create(b::WaveguideBasis{T}) on [`WaveguideBasis{T}`](@ref).  
 """
-function emission(b1::WaveguideBasis{T,Nw},b2::FockBasis,idx) where {T,Nw}
+function emission(b1::WaveguideBasis{T,Nw},b2::FockBasis,idx;factor=1.0) where {T,Nw}
     btotal = tensor(b1,b2)
-    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b1,idx),[1,2])
+    return CavityWaveguideEmission(btotal,btotal,complex(factor),create(b1,idx),[1,2])
 end
-function emission(b1::FockBasis,b2::WaveguideBasis{T,Nw},idx) where {T,Nw}
+function emission(b1::FockBasis,b2::WaveguideBasis{T,Nw},idx;factor=1.0) where {T,Nw}
     btotal = tensor(b1,b2)
-    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b2,idx),[2,1])
+    return CavityWaveguideEmission(btotal,btotal,complex(factor),create(b2,idx),[2,1])
 end
-function emission(b1::WaveguideBasis{T,1},b2::FockBasis) where T
+function emission(b1::WaveguideBasis{T,1},b2::FockBasis;factor=1.0) where T
     btotal = tensor(b1,b2)
-    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b1),[1,2])
+    return CavityWaveguideEmission(btotal,btotal,complex(factor),create(b1),[1,2])
 end
-function emission(b1::FockBasis,b2::WaveguideBasis{T,1}) where T
+function emission(b1::FockBasis,b2::WaveguideBasis{T,1};factor=1.0) where T
     btotal = tensor(b1,b2)
-    return CavityWaveguideEmission(btotal,btotal,complex(1.0),create(b2),[2,1])
+    return CavityWaveguideEmission(btotal,btotal,complex(factor),create(b2),[2,1])
 end
-function emission(a::T,b::Operator) where T<: WaveguideOperatorT
+function emission(a::T,b::Operator;factor=1.0) where T<: WaveguideOperatorT
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideEmission(btotal,btotal,a.factor,a.operators[1],[a.indices[1],length(basis(a).shape)+1])
+    CavityWaveguideEmission(btotal,btotal,complex(factor)*a.factor,a.operators[1],[a.indices[1],length(basis(a).shape)+1])
 end
-function emission(a::Operator,b::T) where T<: WaveguideOperatorT
+function emission(a::Operator,b::T;factor=1.0) where T<: WaveguideOperatorT
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideEmission(btotal,btotal,b.factor,b.operators[1],[b.indices[1]+1,1])
+    CavityWaveguideEmission(btotal,btotal,complex(factor)*b.factor,b.operators[1],[b.indices[1]+1,1])
 end
-function emission(a::T,b::Operator) where T<: WaveguideOperator
-    @assert _is_destroy(b)
+function emission(a::T,b::Operator;factor=1.0) where T<: WaveguideOperator
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideEmission(btotal,btotal,complex(1.0),a,[1,2])
+    CavityWaveguideEmission(btotal,btotal,complex(factor),a,[1,2])
 end
-function emission(a::Operator,b::T) where T<: WaveguideOperator
-    @assert _is_destroy(a)
+function emission(a::Operator,b::T;factor=1.0) where T<: WaveguideOperator
     btotal = tensor(basis(a),basis(b))
-    CavityWaveguideEmission(btotal,btotal,complex(1.0),b,[2,1])
+    CavityWaveguideEmission(btotal,btotal,complex(factor),b,[2,1])
 end
-function emission(a::CompositeBasis,b::T,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+function emission(a::CompositeBasis,b::T,i::Int;factor=1.0) where T<: Union{WaveguideOperator,WaveguideOperatorT}
     btotal = tensor(a,basis(b))
-    CavityWaveguideEmission(btotal,btotal,complex(1.0),get_waveguide_operators(b)[1],[get_waveguide_location(basis(b))+length(a.shape),i])
+    CavityWaveguideEmission(btotal,btotal,complex(factor),get_waveguide_operators(b)[1],[get_waveguide_location(basis(b))+length(a.shape),i])
 end
-function emission(a::T,b::CompositeBasis,i::Int) where T<: Union{WaveguideOperator,WaveguideOperatorT}
+function emission(a::T,b::CompositeBasis,i::Int;factor=1.0) where T<: Union{WaveguideOperator,WaveguideOperatorT}
     btotal = tensor(basis(a),b)
-    CavityWaveguideEmission(btotal,btotal,complex(1.0),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
+    CavityWaveguideEmission(btotal,btotal,complex(factor),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
 end
 
 
@@ -258,9 +254,56 @@ _is_identity(a::Operator) = _is_identity(a.data,basis(a))
 _is_identity(a::AbstractArray,b::Basis) = isapprox(a,identityoperator(b).data)
 
 _is_destroy(a::Operator) = _is_destroy(a.data,basis(a))
-_is_destroy(a::AbstractArray,b::Basis) = isapprox(a,destroy(b).data)
 _is_create(a::Operator) = _is_create(a.data,basis(a))
-_is_create(a::AbstractArray,b::Basis) = isapprox(a,create(b).data)
+function _is_destroy(a::AbstractArray,b::Basis) 
+    # Get the destroy operator
+    destroy_op = destroy(b).data
+    
+    # Find non-zero elements in both operators
+    non_zero_a = findall(!iszero, a)
+    non_zero_destroy = findall(!iszero, destroy_op)
+    
+    # If the non-zero patterns don't match, it's not a destroy operator
+    if non_zero_a != non_zero_destroy
+        return false, 1.0
+    end
+    
+    # If there are no non-zero elements, both are zero operators
+    if isempty(non_zero_a)
+        return true, 1.0
+    end
+    
+    # Get the scaling factor from the first non-zero element
+    scale_factor = a[first(non_zero_a)] / destroy_op[first(non_zero_a)]
+    
+    # Check if all non-zero elements are scaled by the same factor
+    return all(idx -> isapprox(a[idx], destroy_op[idx] * scale_factor), non_zero_a), scale_factor
+end
+
+function _is_create(a::AbstractArray,b::Basis) 
+    # Get the create operator
+    create_op = create(b).data
+    
+    # Find non-zero elements in both operators
+    non_zero_a = findall(!iszero, a)
+    non_zero_create = findall(!iszero, create_op)
+    
+    # If the non-zero patterns don't match, it's not a create operator
+    if non_zero_a != non_zero_create
+        return false, 1.0
+    end
+    
+    # If there are no non-zero elements, both are zero operators
+    if isempty(non_zero_a)
+        return true, 1.0
+    end
+    
+    # Get the scaling factor from the first non-zero element
+    scale_factor = a[first(non_zero_a)] / create_op[first(non_zero_a)]
+    
+    # Check if all non-zero elements are scaled by the same factor
+    return all(idx -> isapprox(a[idx], create_op[idx] * scale_factor), non_zero_a), scale_factor
+end
 
  
 
@@ -314,51 +357,71 @@ end
 function tensor(a::T,b::Operator{BL,BR,F}) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
     if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
-    elseif _is_destroy(b)
-        emission(a,b)
-    elseif _is_create(b)
-        absorption(a,b)
+        return LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
+    end
+    truth_value, prefactor = _is_destroy(b.data,basis(b))
+    if truth_value
+        emission(a,b;factor=prefactor)
     else
-        a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+        truth_value, prefactor = _is_create(b.data,basis(b))
+        if truth_value
+            absorption(a,b;factor=prefactor)
+        else
+            a ⊗ LazyTensor(b.basis_l,b.basis_r,[1],(b,),1)
+        end
     end
 end
 function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperatorT}
     if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
-    elseif _is_destroy(a)
-        emission(a,b)
-    elseif _is_create(a)
-        absorption(a,b)
+        return LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
+    end
+    truth_value, prefactor = _is_destroy(a.data,basis(a))
+    if truth_value
+        emission(a,b;factor=prefactor)
     else
-        LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
+        truth_value, prefactor = _is_create(a.data,basis(a))
+        if truth_value
+            absorption(a,b;factor=prefactor)
+        else
+            LazyTensor(a.basis_l,a.basis_r,[1],(a,),1) ⊗ b
+        end
     end
 end
 function tensor(a::T,b::Operator{BL,BR,F})  where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperator}
     if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,),(a,))
-    elseif _is_destroy(b)
-        emission(a,b)
-    elseif _is_create(b)
-        absorption(a,b)
+        return LazyTensor(btotal,btotal,(1,),(a,))
+    end
+    truth_value, prefactor = _is_destroy(b.data,basis(b))
+    if truth_value
+        emission(a,b;factor=prefactor)
     else
-        btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        truth_value, prefactor = _is_create(b.data,basis(b))
+        if truth_value
+            absorption(a,b;factor=prefactor)
+        else
+            btotal = basis(a) ⊗ basis(b)
+            LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        end
     end
 end
 function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,T<:WaveguideOperator}
     if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
-    elseif _is_destroy(a)
-        emission(a,b)
-    elseif _is_create(a)
-        absorption(a,b)
+        return LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
+    end
+    truth_value, prefactor = _is_destroy(a.data,basis(a))
+    if truth_value
+        emission(a,b;factor=prefactor)
     else
-        btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        truth_value, prefactor = _is_create(a.data,basis(a))
+        if truth_value
+            absorption(a,b;factor=prefactor)
+        else
+            btotal = basis(a) ⊗ basis(b)
+            LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        end
     end
 end
 
@@ -379,11 +442,25 @@ function is_destroy(data::AbstractArray,basis::CompositeBasis)
     for k = 1:N
         ind .= 0
         ind[k] = 1
-        if isequal(data,tensor([ (i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
-            return k
+        destroy_op = tensor([ (i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : destroy(basis.bases[j]) for (j,i) in enumerate(ind)]...).data
+        
+        # Check if this is the same destroy operator
+        if isequal(data, destroy_op)
+            return k, 1.0
+        end
+        
+        # Check if it's a scaled destroy operator
+        non_zero_data = findall(!iszero, data)
+        non_zero_destroy = findall(!iszero, destroy_op)
+        
+        if non_zero_data == non_zero_destroy && !isempty(non_zero_data)
+            scale_factor = data[first(non_zero_data)] / destroy_op[first(non_zero_data)]
+            if all(idx -> isapprox(data[idx], destroy_op[idx] * scale_factor), non_zero_data)
+                return k, scale_factor
+            end
         end
     end
-    return 0
+    return 0, 1.0
 end
 function is_create(data::AbstractArray,basis::CompositeBasis)
     N = length(basis.shape)
@@ -391,74 +468,189 @@ function is_create(data::AbstractArray,basis::CompositeBasis)
     for k = 1:N
         ind .= 0
         ind[k] = 1
-        if isequal(data,tensor([(i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data)
-            return k
+        create_op = tensor([(i==0 || !isa(basis.bases[j],FockBasis)) ? identityoperator(basis.bases[j]) : create(basis.bases[j]) for (j,i) in enumerate(ind)]...).data
+        
+        # Check if this is the same create operator
+        if isequal(data, create_op)
+            return k, 1.0
+        end
+        
+        # Check if it's a scaled create operator
+        non_zero_data = findall(!iszero, data)
+        non_zero_create = findall(!iszero, create_op)
+        
+        if non_zero_data == non_zero_create && !isempty(non_zero_data)
+            scale_factor = data[first(non_zero_data)] / create_op[first(non_zero_data)]
+            if all(idx -> isapprox(data[idx], create_op[idx] * scale_factor), non_zero_data)
+                return k, scale_factor
+            end
         end
     end
-    return 0
+    return 0, 1.0
 end
+
+# Add this function before the tensor implementations
+
+function is_transition(data::AbstractArray,basis::CompositeBasis)
+    N = length(basis.shape)
+    ind = zeros(N)
+    for k = 1:N
+        if isa(basis.bases[k], NLevelBasis)
+            nlevel_basis = basis.bases[k]
+            # Check all possible transitions in the NLevelBasis
+            for i in 1:nlevel_basis.N
+                for j in 1:nlevel_basis.N
+                    if i != j
+                        ind .= 0
+                        ind[k] = 1
+                        transition_op = tensor([ (idx==0 || idx!=k) ? identityoperator(basis.bases[m]) : transition(basis.bases[m],i,j) for (m,idx) in enumerate(ind)]...).data
+                        
+                        # Check if this is the same transition operator
+                        if isequal(data, transition_op)
+                            return k, i, j,1.0
+                        end
+                        
+                        # Check if it's a scaled transition operator
+                        non_zero_data = findall(!iszero, data)
+                        non_zero_trans = findall(!iszero, transition_op)
+                        
+                        if non_zero_data == non_zero_trans && !isempty(non_zero_data)
+                            scale_factor = data[first(non_zero_data)] / transition_op[first(non_zero_data)]
+                            if all(idx -> isapprox(data[idx], transition_op[idx] * scale_factor), non_zero_data)
+                                return k, i, j, scale_factor
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return 0, 0, 0,1.0
+end
+
+# Then modify each tensor function to include NLevelBasis checks
 
 
 
 function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
     if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
-    elseif (k = is_destroy(b.data,basis(b))) > 0
-        emission(a,basis(b),k)
-    elseif (k = is_create(b.data,basis(b))) > 0
-        absorption(a,basis(b),k)
-    elseif !(typeof(basis(b)) <: QuantumOpticsBase.CompositeBasis)
-        btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        return LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
     else
-        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+        # Check if b is a destroy operator
+        k, scale_factor = is_destroy(b.data,basis(b))
+        if k > 0
+            emission(a,basis(b),k;factor=scale_factor)
+        else
+            # Check if b is a create operator
+            k, scale_factor = is_create(b.data,basis(b))
+            if k > 0
+                absorption(a,basis(b),k;factor=scale_factor)
+            else
+                # Check for transition operators
+                k, i, j, scale_factor = is_transition(b.data,basis(b))
+                if k > 0
+                    btotal = basis(a) ⊗ basis(b)
+                    return NLevelWaveguideOperator(btotal,btotal,a.factor*scale_factor,a.operators[1],[a.indices[1],k+length(basis(a).shape)],i,j)
+                elseif !(typeof(basis(b)) <: QuantumOpticsBase.CompositeBasis)
+                    btotal = basis(a) ⊗ basis(b)
+                    LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+                else
+                    error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+                end
+            end
+        end
     end
 end
 function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
     if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
-    elseif (k = is_destroy(a.data,basis(a))) > 0
-        emission(basis(a),b,k)
-    elseif (k = is_create(a.data,basis(a))) > 0
-        absorption(basis(a),b,k)
-    elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
-        btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        return LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
     else
-        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+        # Check if a is a destroy operator
+        k, scale_factor = is_destroy(a.data,basis(a))
+        if k > 0
+            emission(basis(a),b,k;factor=scale_factor)
+        else
+            # Check if a is a create operator
+            k, scale_factor = is_create(a.data,basis(a))
+            if k > 0
+                absorption(basis(a),b,k;factor=scale_factor)
+            else
+                # Check for transition operators
+                k, i, j, scale_factor = is_transition(a.data,basis(a))
+                if k > 0
+                    btotal = basis(a) ⊗ basis(b)
+                    return NLevelWaveguideOperator(btotal,btotal,b.factor*scale_factor,b.operators[1],[b.indices[1]+1,k+length(basis(b).shape)],i,j)
+                elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
+                    btotal = basis(a) ⊗ basis(b)
+                    LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+                else
+                    error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+                end
+            end
+        end
     end
 end
 
 function tensor(a::T,b::Operator)  where {T<:WaveguideOperator}
     if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,),(a,))
-    elseif (k = is_destroy(b.data,basis(b))) > 0
-        emission(a,basis(b),k)
-    elseif (k = is_create(b.data,basis(b))) > 0
-        absorption(a,basis(b),k)
-    elseif !(typeof(basis(b)) <: QuantumOpticsBase.CompositeBasis)
-        btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        return LazyTensor(btotal,btotal,(1,),(a,))
     else
-        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+        # Check if b is a destroy operator
+        k, scale_factor = is_destroy(b.data,basis(b))
+        if k > 0
+            emission(a,basis(b),k;factor=scale_factor)
+        else
+            # Check if b is a create operator
+            k, scale_factor = is_create(b.data,basis(b))
+            if k > 0
+                absorption(a,basis(b),k;factor=scale_factor)
+            else
+                # Check for transition operators
+                k, i, j, scale_factor = is_transition(b.data,basis(b))
+                if k > 0
+                    btotal = basis(a) ⊗ basis(b)
+                    return NLevelWaveguideOperator(btotal,btotal,complex(scale_factor),a,[1,k+1],i,j)
+                elseif !(typeof(basis(b)) <: QuantumOpticsBase.CompositeBasis)
+                    btotal = basis(a) ⊗ basis(b)
+                    LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+                else
+                    error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+                end
+            end
+        end
     end
 end
 function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
     if _is_identity(a)
         btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
-    elseif (k = is_destroy(a.data,basis(a))) > 0
-        emission(basis(a),b,k)
-    elseif (k = is_create(a.data,basis(a))) > 0
-        absorption(basis(a),b,k)
-    elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
-        btotal = basis(a) ⊗ basis(b)
-        LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+        return LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
     else
-        error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+        # Check if a is a destroy operator
+        k, scale_factor = is_destroy(a.data,basis(a))
+        if k > 0
+            emission(basis(a),b,k;factor=scale_factor)
+        else
+            # Check if a is a create operator
+            k, scale_factor = is_create(a.data,basis(a))
+            if k > 0
+                absorption(basis(a),b,k;factor=scale_factor)
+            else
+                # Check for transition operators
+                k, i, j, scale_factor = is_transition(a.data,basis(a))
+                if k > 0
+                    btotal = basis(a) ⊗ basis(b)
+                    return NLevelWaveguideOperator(btotal,btotal,complex(scale_factor),b,[k+length(basis(a).shape),k],i,j)
+                elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
+                    btotal = basis(a) ⊗ basis(b)
+                    LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
+                else
+                    error("I was trying to do LazyTensor(b.basis_l,b.basis_r,[1],(b,),1) the operator b in tensor(a::WaveguideOperator,b) seems to already be a tensor product (b.basis_l is a composite basis). Try reconstructing your tensor product so that WaveguideOperator is multiplied with other operators as the first step. Alternatively create the operator with LazyTensor(btotal,btotal,(1,2,3,...),(a,b,c,d...)) where btotal = b1 ⊗ b2 ⊗ b3 ⊗ ...")
+                end
+            end
+        end
     end
 end
 

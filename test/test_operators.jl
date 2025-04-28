@@ -356,3 +356,196 @@ end
     end
     
 end
+
+
+@testset "NLevelWaveguideOperator with multiple bases" begin
+    # Common parameters
+    times = 0:0.1:10
+    dt = times[2] - times[1]
+    γL, γR = 1.0, 1.0
+    
+    @testset "TwoBases (NLevel + Waveguide)" begin
+        # Set up bases
+        bw = WaveguideBasis(2, 2, times)
+        be = NLevelBasis(3)
+        
+        # Set up operators
+        wh, wdh = destroy(bw, 1), create(bw, 1)
+        wv, wdv = destroy(bw, 2), create(bw, 2)
+        sh, sdh = transition(be, 1, 3), transition(be, 3, 1)
+        sv, sdv = transition(be, 2, 3), transition(be, 3, 2)
+        
+        # Create identities for easier tensor products
+        id_e = identityoperator(be)
+        id_w = identityoperator(bw)
+        
+        # Test operators in different arrangements
+        combined_basis = be ⊗ bw
+        
+        # Case 1: NLevel ⊗ Waveguide
+        H1 = sdh ⊗ wv
+        original_op1 = LazyTensor(combined_basis, combined_basis, (1, 2), (sdh, wv))
+        
+        # Create test states
+        psi_in = Ket(be) ⊗ Ket(bw)
+        
+        # Initialize with random data for better testing
+        psi_in.data .= rand(ComplexF64, length(psi_in.data))
+        
+        # Test Case 1
+        psi_out1 = copy(psi_in)
+        psi_ref1 = copy(psi_in)
+        QuantumOptics.mul!(psi_out1, H1, psi_in)
+        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        @test isapprox(psi_out1.data, psi_ref1.data)
+
+
+
+        # Test operators in different arrangements
+        combined_basis = bw ⊗ be
+        
+        # Case 1: NLevel ⊗ Waveguide
+        H1 =  wv ⊗ sdh
+        original_op1 = LazyTensor(combined_basis, combined_basis, (1, 2), (wv, sdh))
+        
+        # Create test states
+        psi_in = Ket(bw) ⊗ Ket(be)
+        
+        # Initialize with random data for better testing
+        psi_in.data .= rand(ComplexF64, length(psi_in.data))
+        
+        # Test Case 1
+        psi_out1 = copy(psi_in)
+        psi_ref1 = copy(psi_in)
+        QuantumOptics.mul!(psi_out1, H1, psi_in)
+        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        @test isapprox(psi_out1.data, psi_ref1.data)
+    end
+
+    # Test 1: Three bases - NLevel, Waveguide, and Fock basis as filler
+    @testset "Three bases (NLevel + Waveguide + Fock)" begin
+        # Set up bases
+        bw = WaveguideBasis(2, 2, times)
+        be = NLevelBasis(3)
+        bf = FockBasis(4)  # Filler basis
+        
+        # Set up operators
+        wh, wdh = destroy(bw, 1), create(bw, 1)
+        wv, wdv = destroy(bw, 2), create(bw, 2)
+        sh, sdh = transition(be, 1, 3), transition(be, 3, 1)
+        sv, sdv = transition(be, 2, 3), transition(be, 3, 2)
+        a, ad = destroy(bf), create(bf)
+        
+        # Create identities for easier tensor products
+        id_e = identityoperator(be)
+        id_w = identityoperator(bw)
+        id_f = identityoperator(bf)
+        
+        # Test operators in different arrangements
+        # Case 1: (NLevel ⊗ Fock) ⊗ Waveguide
+        combined_basis = be ⊗ bf ⊗ bw
+        H1 = (im*sqrt(γL)*sdh ⊗ id_f) ⊗ wv
+        original_op1 = im*sqrt(γL)*LazyTensor(combined_basis, combined_basis, (1, 3), (sdh, wv))
+        
+        # Case 2: NLevel ⊗ (Fock ⊗ Waveguide)
+        H2 = sdh ⊗ (id_f ⊗ wv)
+        original_op2 = LazyTensor(combined_basis, combined_basis, (1, 3), (sdh, wv))
+        
+        # Case 3: Fock ⊗ (NLevel ⊗ Waveguide)
+        combined_basis = bf  ⊗ be  ⊗ bw
+        H3 = id_f ⊗ (sdh ⊗ wv)
+        original_op3 = LazyTensor(combined_basis, combined_basis, (2, 3), (sdh, wv))
+        
+        # Create test states
+        psi_in = Ket(be) ⊗ Ket(bf) ⊗ Ket(bw)
+        psi_in.data .= 1.0
+        
+        # Test Case 1
+        psi_out1 = copy(psi_in)
+        psi_ref1 = copy(psi_in)
+        QuantumOptics.mul!(psi_out1, H1, psi_in)
+        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        @test isapprox(psi_out1.data, psi_ref1.data)
+        
+        # Test Case 2
+        psi_out2 = copy(psi_in)
+        psi_ref2 = copy(psi_in)
+        QuantumOptics.mul!(psi_out2, H2, psi_in)
+        QuantumOptics.mul!(psi_ref2, original_op2, psi_in)
+        @test isapprox(psi_out2.data, psi_ref2.data)
+        
+        # Test Case 3
+        psi_in = Ket(bf) ⊗ Ket(be) ⊗ Ket(bw)
+        psi_in.data .= 1.0
+        psi_out3 = copy(psi_in)
+        psi_ref3 = copy(psi_in)
+        QuantumOptics.mul!(psi_out3, H3, psi_in)
+        QuantumOptics.mul!(psi_ref3, original_op3, psi_in)
+        @test isapprox(psi_out3.data, psi_ref3.data)
+    end
+    
+    # Test 2: Four bases - NLevel, Waveguide, and two filler bases
+    @testset "Four bases (NLevel + Waveguide + 2 fillers)" begin
+        # Set up bases
+        bw = WaveguideBasis(2, 2, times)
+        be = NLevelBasis(3)
+        bf1 = FockBasis(2)  # First filler basis
+        bf2 = NLevelBasis(2)  # Second filler basis
+        
+        # Set up operators
+        wh, wdh = destroy(bw, 1), create(bw, 1)
+        wv, wdv = destroy(bw, 2), create(bw, 2)
+        sh, sdh = transition(be, 1, 3), transition(be, 3, 1)
+        sv, sdv = transition(be, 2, 3), transition(be, 3, 2)
+        a, ad = destroy(bf1), create(bf1)
+        s12, s21 = transition(bf2, 1, 2), transition(bf2, 2, 1)
+        
+        # Create identities for easier tensor products
+        id_e = identityoperator(be)
+        id_w = identityoperator(bw)
+        id_f1 = identityoperator(bf1)
+        id_f2 = identityoperator(bf2)
+        
+        # Test several complex arrangements
+        combined_basis = be ⊗ bf1 ⊗ bf2 ⊗ bw
+        
+        # Case 1: (NLevel ⊗ Fock ⊗ NLevel) ⊗ Waveguide
+        H1 = (sdh ⊗ id_f1 ⊗ id_f2) ⊗ wv
+        original_op1 = LazyTensor(combined_basis, combined_basis, (1, 4), (sdh, wv))
+        
+        # Create test states
+        psi_in = Ket(be) ⊗ Ket(bf1) ⊗ Ket(bf2) ⊗ Ket(bw)
+        psi_in.data .= 1.0
+        
+        # Test Case 1
+        psi_out1 = copy(psi_in)
+        psi_ref1 = copy(psi_in)
+        QuantumOptics.mul!(psi_out1, H1, psi_in)
+        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        @test isapprox(psi_out1.data, psi_ref1.data)
+        
+
+
+        # Test several complex arrangements
+        combined_basis = bf1 ⊗ be ⊗ bf2 ⊗ bw
+        
+        # Case 1: (NLevel ⊗ Fock ⊗ NLevel) ⊗ Waveguide
+        H1 = (id_f1 ⊗ sdh ⊗ id_f2) ⊗ wv
+        original_op1 = LazyTensor(combined_basis, combined_basis, (2, 4), (sdh, wv))
+        
+        # Create test states
+        psi_in = Ket(bf1) ⊗ Ket(be) ⊗ Ket(bf2) ⊗ Ket(bw)
+        psi_in.data .= 1.0
+        
+        # Test Case 1
+        psi_out1 = copy(psi_in)
+        psi_ref1 = copy(psi_in)
+        QuantumOptics.mul!(psi_out1, H1, psi_in)
+        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        @test isapprox(psi_out1.data, psi_ref1.data)
+
+    end
+    
+end
+
+

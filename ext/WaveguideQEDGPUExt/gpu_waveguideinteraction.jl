@@ -262,5 +262,3 @@ function gpu_interaction_create_destroy_2photon_last!(
 
     return
 end
-
-

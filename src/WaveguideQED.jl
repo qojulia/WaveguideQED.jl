@@ -15,6 +15,7 @@ export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonVie
     WaveguideInteraction,
     waveguide_evolution,waveguide_montecarlo,fast_unitary,
     CavityWaveguideOperator,
+    NLevelWaveguideOperator,
     detect_single_click,detect_single_click!,LazyTensorKet,LazyTensorBra,LazySumKet,get_all_projectors,detect_double_click,detect_double_click!,Detector,
     plot_twophoton!,
     WaveguideTransform,WaveguideTransformEvolution,effective_hamiltonian,fftket,

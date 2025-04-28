@@ -229,7 +229,7 @@ function emission(a::CompositeBasis,b::T,i::Int;factor=1.0) where T<: Union{Wave
 end
 function emission(a::T,b::CompositeBasis,i::Int;factor=1.0) where T<: Union{WaveguideOperator,WaveguideOperatorT}
     btotal = tensor(basis(a),b)
-    CavityWaveguideEmission(btotal,btotal,complex(factor),get_waveguide_operators(a)[1],[1,length(basis(a).shape)+i])
+    CavityWaveguideEmission(btotal,btotal,complex(factor),get_waveguide_operators(a)[1],[get_waveguide_location(basis(a)),length(basis(a).shape)+i])
 end
 
 
@@ -491,7 +491,7 @@ end
 
 # Add this function before the tensor implementations
 
-function is_transition(data::AbstractArray,basis::CompositeBasis)
+function is_transition(data,basis::CompositeBasis)
     N = length(basis.shape)
     ind = zeros(N)
     for k = 1:N
@@ -503,7 +503,7 @@ function is_transition(data::AbstractArray,basis::CompositeBasis)
                     if i != j
                         ind .= 0
                         ind[k] = 1
-                        transition_op = tensor([ (idx==0 || idx!=k) ? identityoperator(basis.bases[m]) : transition(basis.bases[m],i,j) for (m,idx) in enumerate(ind)]...).data
+                        transition_op = tensor([ (m!=k) ? identityoperator(basis.bases[m]) : transition(basis.bases[m],i,j) for (m,idx) in enumerate(ind)]...).data
                         
                         # Check if this is the same transition operator
                         if isequal(data, transition_op)
@@ -642,7 +642,7 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
                 k, i, j, scale_factor = is_transition(a.data,basis(a))
                 if k > 0
                     btotal = basis(a) ⊗ basis(b)
-                    return NLevelWaveguideOperator(btotal,btotal,complex(scale_factor),b,[k+length(basis(a).shape),k],i,j)
+                    return NLevelWaveguideOperator(btotal,btotal,complex(scale_factor),b,[get_waveguide_location(basis(b))+length(basis(a).shape),k],i,j)
                 elseif !(typeof(basis(a)) <: QuantumOpticsBase.CompositeBasis)
                     btotal = basis(a) ⊗ basis(b)
                     LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
@@ -981,3 +981,33 @@ function waveguide_mul_first!(result, a::CavityWaveguideEmission, b, alpha::Numb
     rmul!(view(result,map[1,1]:map[1,2]-map[1,1]:map[1,end]),beta)
 end
 """
+
+# Modify the existing tensor method for WaveguideOperator with Operator
+function tensor(a::WaveguideOperator, b::Operator)
+    if _is_identity(b)
+        btotal = basis(a) ⊗ basis(b)
+        return LazyTensor(btotal, btotal, (1,), (a,))
+    else
+        # Check if b is a destroy operator
+        k, scale_factor = is_destroy(b.data, basis(b))
+        if k > 0
+            emission(a, basis(b), k; factor=scale_factor)
+        else
+            # Check if b is a create operator
+            k, scale_factor = is_create(b.data, basis(b))
+            if k > 0
+                absorption(a, basis(b), k; factor=scale_factor)
+            else
+                # Check for transition operators
+                k, i, j, scale_factor = is_transition(b.data, basis(b))
+                if k > 0
+                    btotal = basis(a) ⊗ basis(b)
+                    return NLevelWaveguideOperator(btotal, btotal, complex(scale_factor), a, [1, k+1], i, j)
+                else
+                    btotal = basis(a) ⊗ basis(b)
+                    LazyTensor(btotal, btotal, (1, length(basis(a).shape) + 1), (a, b))
+                end
+            end
+        end
+    end
+end

@@ -343,6 +343,10 @@ function QuantumOpticsBase._tp_sum_get_tmp(op::WaveguideOperator, loc::Integer, 
     QuantumOpticsBase._tp_matmul_get_tmp(S, shp, sym,arr)
 end
 
+function QuantumOpticsBase._tp_sum_get_tmp(op::WaveguideOperator, loc::Integer, arr::AbstractArray{S,N}, arr_typeref::AbstractArray, sym) where {S,N}
+    shp = ntuple(i -> i == loc ? size(op,1) : size(arr,i), N)
+    QuantumOpticsBase._tp_matmul_get_tmp(S, shp, sym,arr_typeref)
+end
 
 function mul!(result::Ket{B},a::WaveguideOperator{B,B},input::Ket{B},alpha,beta) where {B}
     waveguide_mul!(result.data,a,input.data,alpha,beta)

@@ -177,7 +177,7 @@ function tensor(a::T,b::Operator{BL,BR,F})  where {BL<:NLevelBasis,BR<:NLevelBas
     N_basis = basis(b)
     for i in 1:N_basis.N
         for j in 1:N_basis.N
-            truth_value, prefactor = _is_transition(a,i,j)
+            truth_value, prefactor = _is_transition(b,i,j)
             if truth_value
                 btotal = basis(a) ⊗ basis(b)
                 return NLevelWaveguideOperator(btotal,btotal,prefactor,a,[1,2],i,j) 
@@ -255,8 +255,6 @@ function loop_transition_ax!(result,a,b,alpha,beta,indexing::WaveguideIndexing,k
     waveguide_mul!(view(result,li1:indexing.strides[a.loc[1]]:li1+(indexing.end_idx-1)*indexing.strides[a.loc[1]]),a.op,view(b,li2:indexing.strides[a.loc[1]]:li2+(indexing.end_idx-1)*indexing.strides[a.loc[1]]),a.factor*alpha,beta)
 end
 function loop_transition_third_axis!(result,a,b,alpha,beta,indexing::WaveguideIndexing,idx,k,l)
-    println("loop_transition_third_axis!")
-    println(indexing.iter[idx])
     for j in 1:indexing.iter[idx]
         @inbounds indexing.idx_vec1[indexing.range_idx[idx]] = j
         @inbounds indexing.idx_vec2[indexing.range_idx[idx]] = j

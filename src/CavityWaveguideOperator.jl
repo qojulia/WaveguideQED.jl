@@ -981,33 +981,3 @@ function waveguide_mul_first!(result, a::CavityWaveguideEmission, b, alpha::Numb
     rmul!(view(result,map[1,1]:map[1,2]-map[1,1]:map[1,end]),beta)
 end
 """
-
-# Modify the existing tensor method for WaveguideOperator with Operator
-function tensor(a::WaveguideOperator, b::Operator)
-    if _is_identity(b)
-        btotal = basis(a) ⊗ basis(b)
-        return LazyTensor(btotal, btotal, (1,), (a,))
-    else
-        # Check if b is a destroy operator
-        k, scale_factor = is_destroy(b.data, basis(b))
-        if k > 0
-            emission(a, basis(b), k; factor=scale_factor)
-        else
-            # Check if b is a create operator
-            k, scale_factor = is_create(b.data, basis(b))
-            if k > 0
-                absorption(a, basis(b), k; factor=scale_factor)
-            else
-                # Check for transition operators
-                k, i, j, scale_factor = is_transition(b.data, basis(b))
-                if k > 0
-                    btotal = basis(a) ⊗ basis(b)
-                    return NLevelWaveguideOperator(btotal, btotal, complex(scale_factor), a, [1, k+1], i, j)
-                else
-                    btotal = basis(a) ⊗ basis(b)
-                    LazyTensor(btotal, btotal, (1, length(basis(a).shape) + 1), (a, b))
-                end
-            end
-        end
-    end
-end

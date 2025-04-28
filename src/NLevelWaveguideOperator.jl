@@ -4,7 +4,23 @@
 """
     NLevelWaveguideOperator{B1,B2} <: NWaveguideOperator{BL,BR}
 
-Structure for fast simultaneous NLevelTransition and Waveguide operator
+Structure for fast simultaneous N-level transition and waveguide operator. This operator combines a transition operator between levels in an N-level system with a waveguide operator.
+
+# Fields
+- `basis_l::B1`: Left basis
+- `basis_r::B2`: Right basis
+- `factor::ComplexF64`: Complex prefactor
+- `op::AbstractOperator`: The waveguide operator
+- `loc`: Location indices for the operator
+- `n_to::Int`: Target level for the transition
+- `n_from::Int`: Source level for the transition
+- `indexing::WaveguideIndexing`: Indexing structure for efficient state vector multiplication
+
+# Examples
+```julia
+# Create a transition between levels 2 and 1 in an N-level system combined with a waveguide operator
+op = NLevelWaveguideOperator(basis_l, basis_r, 1.0, waveguide_op, [1,2], 2, 1)
+```
 """
 mutable struct NLevelWaveguideOperator{B1,B2} <: AbstractOperator{B1,B2}
     basis_l::B1
@@ -20,15 +36,40 @@ mutable struct NLevelWaveguideOperator{B1,B2} <: AbstractOperator{B1,B2}
     end
 end
 
+"""
+    set_time!(o::NLevelWaveguideOperator, t::Number)
+
+Set the time parameter of the waveguide operator.
+"""
 @inline function set_time!(o::NLevelWaveguideOperator, t::Number)
     set_time!(o.op,t)
 end
 
+"""
+    eltype(x::NLevelWaveguideOperator)
+
+Return the element type of the operator's factor.
+"""
 function Base.:eltype(x::NLevelWaveguideOperator) typeof(x.factor) end
+
+"""
+    copy(x::NLevelWaveguideOperator)
+
+Create a copy of the NLevelWaveguideOperator.
+"""
 function Base.:copy(x::NLevelWaveguideOperator)
     NLevelWaveguideOperator(x.basis_l,x.basis_r,x.factor,x.op,x.loc,x.n_to,x.n_from)
 end
 
+"""
+    *(x::NLevelWaveguideOperator, y::NLevelWaveguideOperator)
+    *(x::NLevelWaveguideOperator, y::WaveguideOperator)
+    *(x::WaveguideOperator, y::NLevelWaveguideOperator)
+    *(x::Operator, y::NLevelWaveguideOperator)
+    *(x::NLevelWaveguideOperator, y::Operator)
+
+Multiplication methods for NLevelWaveguideOperator with other operators. Returns a LazyProduct.
+"""
 Base.:*(x::NLevelWaveguideOperator{BL,BR},y::NLevelWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 Base.:*(x::NLevelWaveguideOperator{BL,BR},y::WaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
 Base.:*(x::WaveguideOperator{BL,BR},y::NLevelWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor*y.factor)
@@ -36,6 +77,12 @@ Base.:*(x::WaveguideOperator{BL,BR},y::NLevelWaveguideOperator{BL,BR}) where {BL
 Base.:*(x::Operator{BL,BR},y::NLevelWaveguideOperator{BL,BR}) where {BL,BR} = LazyProduct((x,y),y.factor)
 Base.:*(x::NLevelWaveguideOperator{BL,BR},y::Operator{BL,BR}) where {BL,BR} = LazyProduct((x,y),x.factor)
 
+"""
+    *(a::Number, b::NLevelWaveguideOperator)
+    *(b::NLevelWaveguideOperator, a::Number)
+
+Multiply the operator by a scalar number, updating its factor.
+"""
 #Method for multiplying, which updates factor in the operator.
 function Base.:*(a::Number,b::NLevelWaveguideOperator)
     out = copy(b)
@@ -45,12 +92,24 @@ end
 Base.:*(b::NLevelWaveguideOperator,a::Number)=*(a,b)
 
 
+"""
+    get_nlevel_operator(a::NLevelWaveguideOperator)
+
+Return the transition operator for the N-level system part of the operator.
+"""
 function get_nlevel_operator(a::NLevelWaveguideOperator)
     transition(a.basis_l.bases[a.loc[2]],a.n_to,a.n_from)
 end
 
 
+"""
+    _is_transition(a::Operator, i, j)
+    _is_transition(a::AbstractArray, b::Basis, i, j)
 
+Check if an operator or array represents a transition between levels i and j in basis b.
+Returns a tuple (is_transition, scale_factor) where is_transition is a boolean indicating if it's a transition operator,
+and scale_factor is the scaling factor if it is a transition operator.
+"""
 _is_transition(a::Operator,i,j) = _is_transition(a.data,basis(a),i,j)
 function _is_transition(a::AbstractArray,b::Basis,i,j) 
     # Get the transition operator
@@ -77,6 +136,13 @@ function _is_transition(a::AbstractArray,b::Basis,i,j)
     return all(idx -> isapprox(a[idx], trans_op[idx] * scale_factor), non_zero_a),scale_factor
 end
 
+"""
+    +(a::NLevelWaveguideOperator, b::NLevelWaveguideOperator)
+    -(a::NLevelWaveguideOperator, b::NLevelWaveguideOperator)
+    -(a::NLevelWaveguideOperator)
+
+Addition and subtraction methods for NLevelWaveguideOperator. Returns a LazySum.
+"""
 function QuantumOpticsBase.:+(a::NLevelWaveguideOperator,b::NLevelWaveguideOperator)
     @assert a.basis_l == b.basis_l
     @assert a.basis_r == b.basis_r
@@ -110,12 +176,10 @@ end
 
 
 """
-    tensor(a::AbstractOperator,b::CavityWaveguideAbsorption)
-    tensor(a::CavityWaveguideAbsorption,b::AbstractOperator)
-    tensor(a::AbstractOperator,b::CavityWaveguideEmission)
-    tensor(a::CavityWaveguideEmission,b::AbstractOperator)
+    tensor(a::AbstractOperator, b::NLevelWaveguideOperator)
+    tensor(a::NLevelWaveguideOperator, b::AbstractOperator)
 
-Methods for tensorproducts between QuantumOptics.jl operators and [`NLevelWaveguideOperator`](@ref).
+Methods for tensor products between QuantumOptics.jl operators and [`NLevelWaveguideOperator`](@ref).
 """
 function tensor(a::AbstractOperator,b::NLevelWaveguideOperator)
     btotal = tensor(a.basis_l,b.basis_r)
@@ -135,6 +199,15 @@ function tensor(a::NLevelWaveguideOperator,b::AbstractOperator)
         LazyTensor(btotal,btotal,[a.loc[1]+1,a.loc[2]+1,length(btotal.shape)][sorted_idx],(a.op,get_nlevel_operator(a),b)[sorted_idx])
     end
 end
+
+"""
+    tensor(a::WaveguideOperatorT, b::Operator{BL,BR,F}) where {BL<:NLevelBasis,BR<:NLevelBasis,F}
+    tensor(a::Operator{BL,BR,F}, b::WaveguideOperatorT) where {BL<:NLevelBasis,BR<:NLevelBasis,F}
+    tensor(a::WaveguideOperator, b::Operator{BL,BR,F}) where {BL<:NLevelBasis,BR<:NLevelBasis,F}
+    tensor(a::Operator{BL,BR,F}, b::WaveguideOperator) where {BL<:NLevelBasis,BR<:NLevelBasis,F}
+
+Specialized tensor product methods for N-level basis operators.
+"""
 function tensor(a::T,b::Operator{BL,BR,F}) where {BL<:NLevelBasis,BR<:NLevelBasis,F,T<:WaveguideOperatorT}
     if _is_identity(b)
         btotal = basis(a) ⊗ basis(b)
@@ -206,13 +279,11 @@ function tensor(a::Operator{BL,BR,F},b::T) where {BL<:NLevelBasis,BR<:NLevelBasi
     LazyTensor(btotal,btotal,(1,length(basis(a).shape)+1),(a,b))
 end
 
-
 #TO DO: CLEAN UP
 #Currently indexing is very complicated using the CavityIndexing structure and could possible be done smoother and faster.
 """
-    mul!(result::Ket{B1}, a::CavityWaveguideEmission, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
-    mul!(result::Ket{B1}, a::CavityWaveguideAbsorption, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
-    
+    mul!(result::Ket{B1}, a::NLevelWaveguideOperator, b::Ket{B2}, alpha, beta) where {B1<:Basis,B2<:Basis}
+
 Fast in-place multiplication of operators/state vectors. Updates `result` as `result = alpha*a*b + beta*result`. `a` is a [`NLevelWaveguideOperator`](@ref).
 """
 function mul!(result::Ket{B1,A1}, a::NLevelWaveguideOperator, b::Ket{B2,A2}, alpha, beta) where {B1<:Basis,B2<:Basis, A1<:AbstractArray, A2<:AbstractArray}

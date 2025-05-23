@@ -71,31 +71,6 @@ function get_nlevel_operator(a::NLevelWaveguideOperator)
     transition(a.basis_l.bases[a.loc[2]],a.n_to,a.n_from)
 end
 
-_is_transition(a::Operator,i,j) = _is_transition(a.data,basis(a),i,j)
-function _is_transition(a::AbstractArray,b::Basis,i,j) 
-    # Get the transition operator
-    trans_op = QuantumOptics.transition(b,i,j).data
-    
-    # Find non-zero elements in both operators
-    non_zero_a = findall(!iszero, a)
-    non_zero_trans = findall(!iszero, trans_op)
-    
-    # If the non-zero patterns don't match, it's not a transition operator
-    if non_zero_a != non_zero_trans
-        return false,1.0
-    end
-    
-    # If there are no non-zero elements, both are zero operators
-    if isempty(non_zero_a)
-        return true,1.0
-    end
-    
-    # Get the scaling factor from the first non-zero element
-    scale_factor = a[first(non_zero_a)] / trans_op[first(non_zero_a)]
-    
-    # Check if all non-zero elements are scaled by the same factor
-    return all(idx -> isapprox(a[idx], trans_op[idx] * scale_factor), non_zero_a),scale_factor
-end
 
 function QuantumOpticsBase.:+(a::NLevelWaveguideOperator,b::NLevelWaveguideOperator)
     @assert a.basis_l == b.basis_l

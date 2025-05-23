@@ -255,7 +255,7 @@ _is_identity(a::AbstractArray,b::Basis) = isapprox(a,identityoperator(b).data)
 
 _is_destroy(a::Operator) = _is_destroy(a.data,basis(a))
 _is_create(a::Operator) = _is_create(a.data,basis(a))
-function _is_destroy(a::AbstractArray,b::Basis) 
+function _is_destroy(a::AbstractArray,b::FockBasis) 
     # Get the destroy operator
     destroy_op = destroy(b).data
     
@@ -280,7 +280,7 @@ function _is_destroy(a::AbstractArray,b::Basis)
     return all(idx -> isapprox(a[idx], destroy_op[idx] * scale_factor), non_zero_a), scale_factor
 end
 
-function _is_create(a::AbstractArray,b::Basis) 
+function _is_create(a::AbstractArray,b::FockBasis) 
     # Get the create operator
     create_op = create(b).data
     
@@ -305,7 +305,6 @@ function _is_create(a::AbstractArray,b::Basis)
     return all(idx -> isapprox(a[idx], create_op[idx] * scale_factor), non_zero_a), scale_factor
 end
 
- 
 
 
 
@@ -426,17 +425,17 @@ function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,
 end
 
 
-function is_destroy(data,basis)
-    false
+function _is_destroy(data,basis)
+    0, 1.0
 end
 
-function is_create(data,basis)
-    false
+function _is_create(data,basis)
+    0, 1.0
 end
 
 #Used to construct CavityWaveguideOperators from LazyTensors or CompositeBasis
 
-function is_destroy(data::AbstractArray,basis::CompositeBasis)
+function _is_destroy(data::AbstractArray,basis::CompositeBasis)
     N = length(basis.shape)
     ind = zeros(N)
     for k = 1:N
@@ -462,7 +461,7 @@ function is_destroy(data::AbstractArray,basis::CompositeBasis)
     end
     return 0, 1.0
 end
-function is_create(data::AbstractArray,basis::CompositeBasis)
+function _is_create(data::AbstractArray,basis::CompositeBasis)
     N = length(basis.shape)
     ind = zeros(N)
     for k = 1:N
@@ -491,7 +490,35 @@ end
 
 # Add this function before the tensor implementations
 
-function is_transition(data,basis::CompositeBasis)
+_is_transition(a,b) = 0, 0, 0,1.0
+
+_is_transition(a::Operator,i,j) = _is_transition(a.data,basis(a),i,j)
+function _is_transition(a::AbstractArray,b::NLevelBasis,i,j) 
+    # Get the transition operator
+    trans_op = QuantumOptics.transition(b,i,j).data
+    
+    # Find non-zero elements in both operators
+    non_zero_a = findall(!iszero, a)
+    non_zero_trans = findall(!iszero, trans_op)
+    
+    # If the non-zero patterns don't match, it's not a transition operator
+    if non_zero_a != non_zero_trans
+        return false,1.0
+    end
+    
+    # If there are no non-zero elements, both are zero operators
+    if isempty(non_zero_a)
+        return true,1.0
+    end
+    
+    # Get the scaling factor from the first non-zero element
+    scale_factor = a[first(non_zero_a)] / trans_op[first(non_zero_a)]
+    
+    # Check if all non-zero elements are scaled by the same factor
+    return all(idx -> isapprox(a[idx], trans_op[idx] * scale_factor), non_zero_a),scale_factor
+end
+
+function _is_transition(data,basis::CompositeBasis)
     N = length(basis.shape)
     ind = zeros(N)
     for k = 1:N
@@ -538,17 +565,17 @@ function tensor(a::T,b::Operator) where {T<:WaveguideOperatorT}
         return LazyTensor(btotal,btotal,[a.indices...],(a.operators...,),a.factor)
     else
         # Check if b is a destroy operator
-        k, scale_factor = is_destroy(b.data,basis(b))
+        k, scale_factor = _is_destroy(b.data,basis(b))
         if k > 0
             emission(a,basis(b),k;factor=scale_factor)
         else
             # Check if b is a create operator
-            k, scale_factor = is_create(b.data,basis(b))
+            k, scale_factor = _is_create(b.data,basis(b))
             if k > 0
                 absorption(a,basis(b),k;factor=scale_factor)
             else
                 # Check for transition operators
-                k, i, j, scale_factor = is_transition(b.data,basis(b))
+                k, i, j, scale_factor = _is_transition(b.data,basis(b))
                 if k > 0
                     btotal = basis(a) ⊗ basis(b)
                     return NLevelWaveguideOperator(btotal,btotal,a.factor*scale_factor,a.operators[1],[a.indices[1],k+length(basis(a).shape)],i,j)
@@ -568,17 +595,17 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperatorT}
         return LazyTensor(btotal,btotal,[b.indices...].+1 ,(b.operators...,),b.factor)
     else
         # Check if a is a destroy operator
-        k, scale_factor = is_destroy(a.data,basis(a))
+        k, scale_factor = _is_destroy(a.data,basis(a))
         if k > 0
             emission(basis(a),b,k;factor=scale_factor)
         else
             # Check if a is a create operator
-            k, scale_factor = is_create(a.data,basis(a))
+            k, scale_factor = _is_create(a.data,basis(a))
             if k > 0
                 absorption(basis(a),b,k;factor=scale_factor)
             else
                 # Check for transition operators
-                k, i, j, scale_factor = is_transition(a.data,basis(a))
+                k, i, j, scale_factor = _is_transition(a.data,basis(a))
                 if k > 0
                     btotal = basis(a) ⊗ basis(b)
                     return NLevelWaveguideOperator(btotal,btotal,b.factor*scale_factor,b.operators[1],[b.indices[1]+1,k+length(basis(b).shape)],i,j)
@@ -599,17 +626,17 @@ function tensor(a::T,b::Operator)  where {T<:WaveguideOperator}
         return LazyTensor(btotal,btotal,(1,),(a,))
     else
         # Check if b is a destroy operator
-        k, scale_factor = is_destroy(b.data,basis(b))
+        k, scale_factor = _is_destroy(b.data,basis(b))
         if k > 0
             emission(a,basis(b),k;factor=scale_factor)
         else
             # Check if b is a create operator
-            k, scale_factor = is_create(b.data,basis(b))
+            k, scale_factor = _is_create(b.data,basis(b))
             if k > 0
                 absorption(a,basis(b),k;factor=scale_factor)
             else
                 # Check for transition operators
-                k, i, j, scale_factor = is_transition(b.data,basis(b))
+                k, i, j, scale_factor = _is_transition(b.data,basis(b))
                 if k > 0
                     btotal = basis(a) ⊗ basis(b)
                     return NLevelWaveguideOperator(btotal,btotal,complex(scale_factor),a,[1,k+1],i,j)
@@ -629,17 +656,17 @@ function tensor(a::Operator,b::T) where {T<:WaveguideOperator}
         return LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
     else
         # Check if a is a destroy operator
-        k, scale_factor = is_destroy(a.data,basis(a))
+        k, scale_factor = _is_destroy(a.data,basis(a))
         if k > 0
             emission(basis(a),b,k;factor=scale_factor)
         else
             # Check if a is a create operator
-            k, scale_factor = is_create(a.data,basis(a))
+            k, scale_factor = _is_create(a.data,basis(a))
             if k > 0
                 absorption(basis(a),b,k;factor=scale_factor)
             else
                 # Check for transition operators
-                k, i, j, scale_factor = is_transition(a.data,basis(a))
+                k, i, j, scale_factor = _is_transition(a.data,basis(a))
                 if k > 0
                     btotal = basis(a) ⊗ basis(b)
                     return NLevelWaveguideOperator(btotal,btotal,complex(scale_factor),b,[get_waveguide_location(basis(b))+length(basis(a).shape),k],i,j)

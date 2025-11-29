@@ -108,10 +108,6 @@ end
 See documentation for [`waveguide_evolution`](@ref) on how to define `fout`. J should be a list of collapse operators following documentation of [`timeevolution.mcwf_dynamic`](https://docs.qojulia.org/api/#QuantumOptics.timeevolution.mcwf_dynamic). 
 """
 function fast_unitary(times_eval,psi,H;order=2,fout=nothing)
-    if fout !== nothing
-        fout_type = QuantumOptics.pure_inference(fout)
-        output_container = Array{fout_type}(undef,length(times_eval))
-    end
     isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
     dt = get_dt(H.basis_l)
     U = generate_unitary(H,dt,order)

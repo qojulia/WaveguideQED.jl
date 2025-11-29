@@ -805,6 +805,7 @@ function get_nsteps(basis::CompositeBasis)
             return get_nsteps(b)
         end
     end
+    return 0
 end
 
 """
@@ -818,14 +819,15 @@ function get_dt(basis::WaveguideBasis)
     basis.dt
 end
 function get_dt(basis::Basis)
-    0
+    0.0
 end
 function get_dt(basis::CompositeBasis)
     for b in basis.bases
-        if get_dt(b) != 0
+        if get_dt(b) != 0.0
             return get_dt(b)
         end
     end
+    return 0.0
 end
 
 """

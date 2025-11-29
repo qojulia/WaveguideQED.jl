@@ -36,6 +36,6 @@ doset("aqua") && begin
     Aqua.test_all(WaveguideQED,
         ambiguities=false, # TODO needs fixes
         undefined_exports=false, # TODO needs fixes
-        piracy=false, # TODO needs fixes
+        piracies =false, # TODO needs fixes
     )
 end

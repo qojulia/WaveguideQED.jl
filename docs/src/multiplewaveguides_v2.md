@@ -173,3 +173,127 @@ If we consider the single photon state, we can also visualize the temporal evolu
 
 
 [^1]: [DynamicalPhotonLodahl2022](@cite)
+
+
+## [Different lengths](@id differentlengths)
+
+It is also possible to consider waveguides of **different effective lengths**. This can be useful when modeling systems with feedback loops or delays, where photons travel different distances before interacting again with the system.
+
+The waveguide length can be specified through the optional keyword argument `lengths` when constructing the [`WaveguideBasis`](@ref). Each entry corresponds to the number of time bins stored for that waveguide mode.
+
+As an example, consider a system consisting of two cavities connected through a circular waveguide loop. Photons emitted from one emitter propagate through the waveguide and return after a delay determined by the waveguide length. A sketch of the system is shown below:
+
+![`alt text`](./illustrations/circularwaveguide.svg)
+
+We begin by defining the waveguide basis with two waveguides of different lengths. Here the first waveguide contains the full number of time bins, while the second waveguide contains only half as many:
+
+```@example differentlengths
+using QuantumOptics
+using WaveguideQED
+
+N_ROUND_TRIPS = 5
+FULL_WAVEGUIDE = 200
+
+dt = 0.05
+times = range(0, step=dt, length=FULL_WAVEGUIDE)
+times_sim = range(0, step=dt, length=FULL_WAVEGUIDE*N_ROUND_TRIPS)
+
+bw = WaveguideBasis(2,2,times,lengths=[FULL_WAVEGUIDE, FULL_WAVEGUIDE/2])
+nothing #hide
+```
+
+Here the argument `lengths=[FULL_WAVEGUIDE, FULL_WAVEGUIDE/2]` specifies that the first waveguide contains `FULL_WAVEGUIDE` time bins while the second contains only half as many. Physically this corresponds to photons in the second waveguide returning to the system after a shorter delay.
+
+We can now construct the creation and annihilation operators for the two waveguides.
+
+```@example differentlengths
+wd1 = create(bw,1)
+w1 = destroy(bw,1)
+
+wd2 = create(bw,2)
+w2 = destroy(bw,2)
+nothing #hide
+```
+
+Next we define two emitter subspaces which couple to the two waveguides. The emitter operators are defined using a tensor product basis.
+
+```@example differentlengths
+bc = FockBasis(1)
+
+c1  = destroy(bc) ⊗ identityoperator(bc)
+c1d = create(bc)  ⊗ identityoperator(bc)
+
+c2  = identityoperator(bc) ⊗ destroy(bc)
+c2d = identityoperator(bc) ⊗ create(bc)
+
+I_c = identityoperator(bc)
+nothing #hide
+```
+
+The interaction Hamiltonian describing the coupling between the cavities and their respective waveguides is
+
+$$\begin{equation*}
+H = i \sqrt{\frac{\gamma}{\Delta t}}
+\left( \sigma _1 ^ \dagger w_1 - \sigma _1 w_1^\dagger\right)
++
+i \sqrt{\frac{\gamma}{\Delta t}}
+\left(\sigma _2^\dagger w_2 - \sigma _2 w_2^\dagger\right)
+\end{equation*}$$
+
+which can be implemented as:
+
+
+```@example differentlengths
+γ = 5
+
+H = im*sqrt(γ/dt)*((c1d ⊗ w1) - (c1 ⊗ wd1)) +
+    im*sqrt(γ/dt)*((c2d ⊗ w2) - (c2 ⊗ wd2))
+nothing #hide
+```
+
+To monitor the emitter populations during the evolution we define the number operators.
+
+```@example differentlengths
+n_c1 = (c1d*c1) ⊗ identityoperator(bw)
+n_c2 = (c2d*c2) ⊗ identityoperator(bw)
+
+function f_out(times, ψ)
+    return [expect(n_c1, ψ), expect(n_c2, ψ)]
+end
+nothing #hide
+```
+
+We initialize the system with one excitation in each emitter and no photons in the waveguide.
+
+```@example differentlengths
+Ψ_in = fockstate(bc,1) ⊗ fockstate(bc,1) ⊗ zerophoton(bw)
+nothing #hide
+```
+Finally, we evolve the state using [`waveguide_evolution`](@ref).
+
+```@example differentlengths
+Ψ_out, exp_c1, exp_c2 = waveguide_evolution(times_sim, Ψ_in, H, fout=f_out)
+nothing #hide
+```
+
+We can visualize the cavity populations during the evolution.
+
+
+```@example differentlengths
+using PyPlot; #hide
+rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams") #hide
+rcParams["font.size"] = 20 #hide
+rcParams["font.family"] = "serif" #hide
+rcParams["mathtext.fontset"] ="cm" #hide
+fig,ax = subplots(1,1,figsize=(6,4))
+ax.plot(times_sim, real.(exp_c1), label="emitter 1")
+ax.plot(times_sim, real.(exp_c2), label="emitter 2")
+ax.set_xlabel(L"time [$1/\gamma$]")
+ax.set_ylabel("⟨n⟩")
+legend()
+plt.tight_layout()
+plt.savefig("different_lengths.svg") #hide
+nothing #hide
+```
+
+![different_lengths](different_lengths.svg)

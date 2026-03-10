@@ -11,11 +11,16 @@ mutable struct WaveguideBasis{Np,Nw} <: QuantumOpticsBase.Basis
     offset::Int
     nsteps::Int
     dt::Float64
-    function WaveguideBasis(Np::Int,Nw::Int,times)
+    lengths::Vector{Int}
+    function WaveguideBasis(Np::Int,Nw::Int,times;lengths=fill(length(times),Nw))
         dim = 0
         N = length(times)
+        @assert length(lengths) == Nw "Length of the lengths vector should be equal to the number of waveguides"
+        for i in lengths
+            @assert i <= N "Length of the Waveguidebins should be smaller than the number of time steps in the provided times vector"
+        end
         if Np == 1
-            dim = N*Nw 
+            dim = N*Nw
         elseif Np == 2
             #Number of combinations of waveguides ([1,2],[1,3],[2,3] and so on)
             combinations = Nw*(Nw-1)/2
@@ -23,14 +28,16 @@ mutable struct WaveguideBasis{Np,Nw} <: QuantumOpticsBase.Basis
         else
             error("Currently no more than two simultanoues photons are allowed")
         end
-        new{Np,Nw}([dim+1], dim, 0,N,times[2]-times[1])
+        new{Np,Nw}([dim+1], dim, 0,N,times[2]-times[1], lengths)
     end
 end
-function WaveguideBasis(Np::Int,times)
-    WaveguideBasis(Np,1,times)
+function WaveguideBasis(Np::Int,times;lengths=fill(length(times),1))
+    @warn  "Note that for only one waveguide the lengths keyword is not needed since the length of the waveguidebins will be set to the length of the times vector."
+    WaveguideBasis(Np,1,times;lengths=lengths)
 end
 
-Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps)
+
+Base.:(==)(b1::WaveguideBasis,b2::WaveguideBasis) = (b1.N==b2.N && b1.offset==b2.offset && b1.nsteps==b2.nsteps && b1.lengths==b2.lengths)
 
 #Type unions to dispatch on.
 const SingleWaveguideBasis{Np} = Union{CompositeBasis{Vector{Int64}, T},WaveguideBasis{Np,1}} where {T<:Tuple{Vararg{Union{SpinBasis,NLevelBasis,FockBasis,WaveguideBasis{Np,1}}}},Np}

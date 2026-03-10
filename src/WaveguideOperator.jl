@@ -16,6 +16,7 @@ mutable struct WaveguideDestroy{B1,B2,Np,idx} <: WaveguideOperator{B1,B2}
     factor::ComplexF64
     timeindex::Int
     delay::Int
+    length::Int
 end
 
 """
@@ -30,6 +31,7 @@ mutable struct WaveguideCreate{B1,B2,N,idx} <:WaveguideOperator{B1,B2}
     factor::ComplexF64
     timeindex::Int
     delay::Int
+    length::Int
 end
 
 
@@ -44,10 +46,10 @@ end
 
 #Methods for copying waveguide operators
 function Base.:copy(x::WaveguideDestroy{B,B,Np,idx}) where {B,Np,idx}
-    WaveguideDestroy{B,B,Np,idx}(x.basis_l,x.basis_r,x.factor,x.timeindex,x.delay)
+    WaveguideDestroy{B,B,Np,idx}(x.basis_l,x.basis_r,x.factor,x.timeindex,x.delay,x.length)
 end
 function Base.:copy(x::WaveguideCreate{B,B,Np,idx}) where {B,Np,idx}
-    WaveguideCreate{B,B,Np,idx}(x.basis_l,x.basis_r,x.factor,x.timeindex,x.delay)
+    WaveguideCreate{B,B,Np,idx}(x.basis_l,x.basis_r,x.factor,x.timeindex,x.delay,x.length)
 end
 
 #Arithmetic operations for multiplying, which updates factor in the operator.
@@ -89,12 +91,12 @@ Annihilation operator ``w`` for [`WaveguideBasis`](@ref) ``w_i(t_k) | 1_j \\empt
 """
 function destroy(basis::WaveguideBasis{Np,1};delay=0) where {Np}
     B = typeof(basis)
-    return WaveguideDestroy{B,B,Np,1}(basis,basis,1,1,delay)
+    return WaveguideDestroy{B,B,Np,1}(basis,basis,1,1,delay,basis.lengths[1])
 end
 function destroy(basis::WaveguideBasis{Np,Nw},i::Int;delay=0) where {Np,Nw}
     @assert i <= Nw
     B = typeof(basis)
-    return WaveguideDestroy{B,B,Np,i}(basis,basis,1,1,delay)
+    return WaveguideDestroy{B,B,Np,i}(basis,basis,1,1,delay,basis.lengths[i])
 end
 
 """
@@ -114,12 +116,12 @@ Creation operator ``w^\\dagger`` for [`WaveguideBasis`](@ref) ``w_i(t_k)^\\dagge
 """
 function create(basis::WaveguideBasis{Np,1};delay=0) where {Np}
     B = typeof(basis)
-    return WaveguideCreate{B,B,Np,1}(basis,basis,1,1,delay)
+    return WaveguideCreate{B,B,Np,1}(basis,basis,1,1,delay,basis.lengths[1])
 end
 function create(basis::WaveguideBasis{Np,Nw},i::Int;delay=0) where {Np,Nw}
     @assert i <= Nw
     B = typeof(basis)
-    return WaveguideCreate{B,B,Np,i}(basis,basis,1,1,delay)
+    return WaveguideCreate{B,B,Np,i}(basis,basis,1,1,delay,basis.lengths[i])
 end
 
 
@@ -131,11 +133,11 @@ Dagger opration on Waveguide operator.
 """
 function dagger(op::WaveguideCreate{B,B,Np,idx}) where {B,Np,idx}
     @assert op.basis_l == op.basis_r
-    WaveguideDestroy{B,B,Np,idx}(op.basis_l,op.basis_r,op.factor,op.timeindex,op.delay)
+    WaveguideDestroy{B,B,Np,idx}(op.basis_l,op.basis_r,op.factor,op.timeindex,op.delay,op.length)
 end
 function dagger(op::WaveguideDestroy{B,B,Np,idx}) where {B,Np,idx}
     @assert op.basis_l == op.basis_r
-    WaveguideCreate{B,B,Np,idx}(op.basis_l,op.basis_r,op.factor,op.timeindex,op.delay)
+    WaveguideCreate{B,B,Np,idx}(op.basis_l,op.basis_r,op.factor,op.timeindex,op.delay,op.length)
 end
 
 
@@ -360,7 +362,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,1,idx},b,alpha,beta) wher
         rmul!(result, beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
+    timeindex = (a.timeindex + a.delay -1) % (a.length) +1
     
     @inbounds result[1] += alpha*a.factor*b[timeindex+(idx-1)*nsteps+1]
     return
@@ -373,7 +375,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,1},b,alpha,beta) where 
         rmul!(result, beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
+    timeindex = (a.timeindex + a.delay -1) % (a.length) +1
     
     @inbounds result[1] += alpha*a.factor*b[timeindex+1]
     #twophotonview = TwoPhotonTimestepView(b,timeindex,nsteps,nsteps+1)
@@ -389,7 +391,7 @@ function waveguide_mul!(result,a::WaveguideDestroy{B,B,2,idx},b,alpha,beta) wher
         rmul!(result, beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
+    timeindex = (a.timeindex + a.delay -1) % (a.length) +1
     
     Nw  = get_number_of_waveguides(a.basis_l)
     @inbounds result[1] += alpha*a.factor*b[timeindex+(idx-1)*a.basis_l.nsteps+1]
@@ -415,7 +417,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,1,idx},b,alpha,beta) where
         rmul!(result, beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
+    timeindex = (a.timeindex + a.delay -1) % (a.length) +1
     
     @inbounds result[timeindex+(idx-1)*nsteps+1] += alpha*a.factor*b[1]
     return
@@ -428,7 +430,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,2,1},b,alpha,beta) where {
         rmul!(result, beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
+    timeindex = (a.timeindex + a.delay -1) % (a.length) +1
     
     @inbounds result[timeindex+1] += alpha*a.factor*b[1]
     #twophotonview = TwoPhotonTimestepView(result,timeindex,nsteps,nsteps+1)
@@ -444,7 +446,7 @@ function waveguide_mul!(result,a::WaveguideCreate{B,B,2,idx},b,alpha,beta) where
         rmul!(result, beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex = (a.timeindex + a.delay -1) % (nsteps) +1
+    timeindex = (a.timeindex + a.delay -1) % (a.length) +1
     
     Nw  = get_number_of_waveguides(a.basis_l)
     @inbounds result[timeindex+(idx-1)*a.basis_l.nsteps+1] += alpha*a.factor*b[1]

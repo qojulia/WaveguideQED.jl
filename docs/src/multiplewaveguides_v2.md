@@ -232,14 +232,13 @@ nothing #hide
 
 The interaction Hamiltonian describing the coupling between the cavities and their respective waveguides is
 
-$$
-H =
-i \sqrt{\frac{\gamma}{\Delta t}}
-\left(\sigma_1^\dagger w_1 - \sigma_1 w_1^\dagger\right)
+$$\begin{equation*}
+H = i \sqrt{\frac{\gamma}{\Delta t}}
+\left( \sigma _1 ^ \dagger w_1 - \sigma _1 w_1^\dagger\right)
 +
 i \sqrt{\frac{\gamma}{\Delta t}}
-\left(\sigma_2^\dagger w_2 - \sigma_2 w_2^\dagger\right)
-$$
+\left(\sigma _2^\dagger w_2 - \sigma _2 w_2^\dagger\right)
+\end{equation*}$$
 
 which can be implemented as:
 

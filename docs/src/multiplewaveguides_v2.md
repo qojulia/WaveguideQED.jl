@@ -296,9 +296,10 @@ plt.savefig("different_lengths.svg") #hide
 nothing #hide
 ```
 
+![different_lengths](different_lengths.svg)
+
+
 Because the two waveguides have different lengths, photons emitted from the cavities return to the system after different delay times. This produces oscillatory dynamics as photons repeatedly circulate through the waveguide loop and re-enter the cavities.
 
 !!! info "Waveguides with different delays"
     Without specifying `lengths`, all waveguides would contain the same number of time bins and therefore the same propagation delay. The `lengths` keyword makes it possible to model systems such as feedback loops, interferometers, cavity–mirror setups, and circular waveguide geometries with different propagation times while still using the same efficient waveguide representation.
-
-![different_lengths](different_lengths.svg)

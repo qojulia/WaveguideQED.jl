@@ -210,8 +210,8 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,1,idx1},bop:
     end
     
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
     
     nsteps = a.basis_l.nsteps
     @inbounds result[1+(idx1-1)*nsteps+timeindex_a] += alpha*a.factor*bop.factor*b[1+(idx2-1)*nsteps+timeindex_b] 
@@ -238,8 +238,8 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx1},bop:
     end
     nsteps = a.basis_l.nsteps
     
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
     
     Nw = get_number_of_waveguides(a.basis_l)    
 
@@ -275,8 +275,8 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx},bop::
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
     
     
     Nw = get_number_of_waveguides(a.basis_l)
@@ -302,8 +302,8 @@ function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,2,idx},bop:
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
 
     t2 = timeindex_a >= timeindex_b ? timeindex_a : timeindex_b
     t1 = timeindex_a >= timeindex_b ? timeindex_b : timeindex_a
@@ -321,9 +321,9 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx},bop::
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
-    
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
+
     t2 = timeindex_a >= timeindex_b ? timeindex_a : timeindex_b
     t1 = timeindex_a >= timeindex_b ? timeindex_b : timeindex_a
 
@@ -339,9 +339,9 @@ function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,2,idx1},bop
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
-    
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
+
     t1 = idx1 >= idx2 ? timeindex_a : timeindex_b
     t2 = idx1 >= idx2 ? timeindex_b : timeindex_a
 
@@ -357,8 +357,8 @@ function waveguide_interaction_mul!(result,a::WaveguideCreate{B1,B2,2,idx1},bop:
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
     t1 = idx1 >= idx2 ? timeindex_a : timeindex_b
     t2 = idx1 >= idx2 ? timeindex_b : timeindex_a
     #a >= timeindex_b ? timeindex_a : timeindex_b
@@ -380,8 +380,8 @@ function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,1,idx1},bop
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
     
     if timeindex_a == timeindex_b && idx1 == idx2
         @inbounds result[1] += alpha*a.factor*bop.factor*b[1]
@@ -398,8 +398,8 @@ function waveguide_interaction_mul!(result,a::WaveguideDestroy{B1,B2,2,idx1},bop
         rmul!(result,beta)
     end
     nsteps = a.basis_l.nsteps
-    timeindex_a = (a.timeindex + a.delay -1) % (nsteps) +1
-    timeindex_b = (bop.timeindex + bop.delay -1) % (nsteps) +1
+    timeindex_a = (a.timeindex + a.delay -1) % (a.length) +1
+    timeindex_b = (bop.timeindex + bop.delay -1) % (bop.length) +1
     
     Nw = get_number_of_waveguides(a.basis_l)
 

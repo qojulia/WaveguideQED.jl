@@ -1,5 +1,5 @@
 using Parameters
-using DifferentialEquations
+using OrdinaryDiffEq
 
 @with_kw mutable struct parameters
     γ::Float64 = 1.0

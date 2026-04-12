@@ -518,15 +518,30 @@ end
 
 
 @inline function reverse_idx(C::Int,nsteps::Int,timeindex::Int)
-    out = nsteps+1/2-sqrt(4*nsteps^2 - 8*C-4*nsteps + 8*timeindex + 1)
-    is_int = isinteger(out)
-    is_int,is_int ? Int(out) : out
+    discriminant = (2 * nsteps - 1)^2 - 8 * (C - timeindex)
+    if discriminant < 0
+        return false, 0
+    end
+
+    root = isqrt(discriminant)
+    if root * root != discriminant
+        return false, 0
+    end
+
+    numerator = 2 * nsteps + 1 - root
+    if numerator % 2 != 0
+        return false, 0
+    end
+
+    idx = numerator ÷ 2
+    is_match = 1 <= idx < timeindex && twophoton_index(idx, nsteps, timeindex) == C
+    return is_match, is_match ? idx : 0
 end
 
 @inline function reverse_idx_waveguide(C::Int,nsteps::Int,timeindex::Int)
-    out = (C-timeindex)/nsteps+1
-    is_int = isinteger(out) && (timeindex <= C <= (nsteps-1)*nsteps + timeindex)
-    is_int,is_int ? Int(out) : out
+    is_match = timeindex <= C <= (nsteps - 1) * nsteps + timeindex && (C - timeindex) % nsteps == 0
+    idx = is_match ? ((C - timeindex) ÷ nsteps + 1) : 0
+    return is_match, idx
 end
 
 

@@ -18,8 +18,8 @@ function to_gpu(a::Ket)
 end
 # Setup bases
 bc = FockBasis(4)  # Small cavity basis for tests
-times = 0:0.1:5    # Smaller time range for tests
-bw = WaveguideBasis(1,2, times)  # Two waveguides
+times = 0:0.01:10    # Smaller time range for tests
+bw = WaveguideBasis(2,2, times)  # Two waveguides
 
 # Create operators
 psi = fockstate(bc, 0) ⊗ onephoton(bw, 1, x->exp(-(x-2.5)^2))
@@ -30,16 +30,19 @@ w1d = destroy(bw, 1)
 w2c = create(bw, 2)
 w2d = destroy(bw, 2)
 
+a = destroy(bc)
+
 # Create interaction operator (CPU)
-H = identityoperator(bc) ⊗ (w1c * w1d)
+H = a ⊗ ( w1d)
 
 # Results (CPU)
 psi_result = copy(psi)
+using BenchmarkTools
 QuantumOptics.mul!(psi_result, H, psi, 1.0, 0.0)
 
 # Results (GPU)
-psi_gpu_result = to_gpu(copy(psi));
-QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, 0.0)
+psi_gpu_result = to_gpu(psi);
+QuantumOptics.mul!(psi_gpu_result, H, psi_gpu, 1.0, Float32(0.0))
 
 # Compare
 @test Array(psi_gpu_result.data) ≈ psi_result.data rtol=1e-5
@@ -450,7 +453,7 @@ QuantumOptics.mul!(psi_gpu_result, H_cross, psi_gpu, 1.0, 0.0)
         if !haskey(ENV, "CI")
             # Setup larger bases for meaningful performance comparison
             bc = FockBasis(8)
-            times = 0:0.05:10
+            times = 0:0.01:10
             bw = WaveguideBasis(2, times)
             
             # Create operators

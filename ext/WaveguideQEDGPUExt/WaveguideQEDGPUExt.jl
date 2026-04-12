@@ -6,7 +6,7 @@ using CUDA
 using QuantumOpticsBase
 using Strided
 import QuantumOpticsBase: _tp_matmul_first!,_tp_matmul_last!
-import LinearAlgebra: mul!
+import LinearAlgebra: mul!, rmul!
 
 
 include("gpu_waveguideoperator.jl")

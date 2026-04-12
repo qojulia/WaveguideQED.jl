@@ -1,7 +1,41 @@
 
-_is_identity(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_identity(map(ComplexF64,Array(a)),b)
-_is_destroy(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_destroy(map(ComplexF64,Array(a)),b)  
-_is_create(a::T,b::Basis) where T<:CuReshapedOrCuArrayOrSparse = _is_create(map(ComplexF64,Array(a)),b)
+_to_cpu_array(a::CuReshapedOrCuArrayOrSparse) = map(ComplexF64, Array(a))
+
+_is_identity(a::T, b::Basis) where {T<:CuReshapedOrCuArrayOrSparse} = _is_identity(_to_cpu_array(a), b)
+
+_gpu_real_eltype(::Type{T}) where {T} = typeof(real(zero(T)))
+_gpu_match_rtol(::Type{T}) where {T} = eps(float(_gpu_real_eltype(T)))
+
+function _is_scaled_fock_operator(a::AbstractArray, reference_op; rtol)
+    non_zero_a = findall(!iszero, a)
+    non_zero_reference = findall(!iszero, reference_op)
+
+    if non_zero_a != non_zero_reference
+        return false, one(eltype(a))
+    end
+
+    if isempty(non_zero_a)
+        return true, one(eltype(a))
+    end
+
+    scale_factor = a[first(non_zero_a)] / reference_op[first(non_zero_a)]
+    matches = all(idx -> isapprox(a[idx], reference_op[idx] * scale_factor; rtol=rtol), non_zero_a)
+    return matches, scale_factor
+end
+
+function _is_destroy(a::T, b::FockBasis) where {T<:CuReshapedOrCuArrayOrSparse}
+    cpu_a = _to_cpu_array(a)
+    _is_scaled_fock_operator(cpu_a, destroy(b).data; rtol=_gpu_match_rtol(eltype(a)))
+end
+_is_destroy(a::T, b::CompositeBasis) where {T<:CuReshapedOrCuArrayOrSparse} = _is_destroy(_to_cpu_array(a), b)
+_is_destroy(a::T, b::Basis) where {T<:CuReshapedOrCuArrayOrSparse} = _is_destroy(_to_cpu_array(a), b)
+
+function _is_create(a::T, b::FockBasis) where {T<:CuReshapedOrCuArrayOrSparse}
+    cpu_a = _to_cpu_array(a)
+    _is_scaled_fock_operator(cpu_a, create(b).data; rtol=_gpu_match_rtol(eltype(a)))
+end
+_is_create(a::T, b::CompositeBasis) where {T<:CuReshapedOrCuArrayOrSparse} = _is_create(_to_cpu_array(a), b)
+_is_create(a::T, b::Basis) where {T<:CuReshapedOrCuArrayOrSparse} = _is_create(_to_cpu_array(a), b)
 
 
 
@@ -50,7 +84,7 @@ function mul!(result::Ket{B,A},a::CavityWaveguideAbsorption,b::Ket{B,A},alpha::N
             apply_first_op_gpu!(view(result_data,i,:,:),a.op,view(b_data,i-1,:,:),sqrt(i-1)*alpha*a.factor,beta)
         end
         #rmul!(view(result.data, 1 : dims_b[1] : 1 + (dims_b[2]-1)*dims_b[1]),beta)
-        rmul!(view(result_data, 1,:,:),beta)
+        view(result_data, 1,:,:) .*= beta
         return result
     end
     if nd ==2 && i == 1
@@ -58,7 +92,7 @@ function mul!(result::Ket{B,A},a::CavityWaveguideAbsorption,b::Ket{B,A},alpha::N
             apply_first_op_gpu!(view(result_data,:,i,:),a.op,view(b_data,:,i-1,:),sqrt(i-1)*alpha*a.factor,beta)
         end
         #rmul!(view(result.data,1 : 1 : dims_b[1]),beta)
-        rmul!(view(result_data, :,1,:),beta)
+        view(result_data, :,1,:) .*= beta
         return result
     end
 
@@ -129,14 +163,14 @@ function mul!(result::Ket{B,A},a::CavityWaveguideEmission,b::Ket{B,A},alpha::Num
             apply_first_op_gpu!(view(result_data,i,:,:),a.op,view(b_data,i+1,:,:),sqrt(i)*alpha*a.factor,beta)
         end
         #rmul!(view(result.data,dims_b[1] : dims_b[1] : dims_b[1] + (dims_b[2]-1)*dims_b[1]),beta)
-        rmul!(view(result_data,size(b_data,1),:,:),beta)
+        view(result_data,size(b_data,1),:,:) .*= beta
         return result
     end
     if nd ==2 && i == 1
         for i in 1:size(b_data,2)-1
             apply_first_op_gpu!(view(result_data,:,i,:),a.op,view(b_data,:,i+1,:),sqrt(i)*alpha*a.factor,beta)
         end
-        rmul!(view(result_data,:,size(b_data,2),:),beta)
+        view(result_data,:,size(b_data,2),:) .*= beta
         #rmul!(view(result.data,(dims_b[2]-1)*dims_b[1] +1 : 1 :(dims_b[2]-1)*dims_b[1]+ dims_b[1]),beta)
         return result
     end

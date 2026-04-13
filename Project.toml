@@ -20,7 +20,7 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 WaveguideQEDGPUExt = "CUDA"
 
 [compat]
-CUDA = "5"
+CUDA = "5, 6.0"
 FFTW = "1"
 PrecompileTools = "1"
 QuantumOptics = "1"

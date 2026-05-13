@@ -32,7 +32,7 @@ function waveguide_evolution(times,psi,H;fout=nothing,kwargs...)
     isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
 
     function get_hamiltonian(time,psi) 
-        tidx = round(Int,time/dt,RoundDown) + 1
+        tidx = _waveguide_timeindex(time, dt, RoundDown)
         set_waveguidetimeindex!(ops,tidx)
         return H
     end
@@ -76,7 +76,7 @@ function waveguide_montecarlo(times,psi,H,J;fout=nothing,kwargs...)
     isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
 
     function get_hamiltonian(time,psi)
-        set_waveguidetimeindex!(ops,round(Int,time/dt,RoundUp)+1)
+        set_waveguidetimeindex!(ops,_waveguide_timeindex(time, dt, RoundUp))
         return (H,J,Jdagger)
     end
     function eval_last_element(time,psi)

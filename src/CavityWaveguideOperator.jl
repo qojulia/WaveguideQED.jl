@@ -410,7 +410,7 @@ function tensor(a::Operator{BL,BR,F},b::T) where {BL<:FockBasis,BR<:FockBasis,F,
         btotal = basis(a) ⊗ basis(b)
         return LazyTensor(btotal,btotal,(length(basis(a).shape)+1,),(b,))
     end
-    truth_value, prefactor = _is_destroy(a.data,basis(a))
+    truth_value, prefactor = _is_destroy(a)
     if truth_value
         emission(a,b;factor=prefactor)
     else

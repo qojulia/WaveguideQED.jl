@@ -39,8 +39,12 @@ function Base.:eltype(x::WaveguideOperator) typeof(x.factor) end
 
 #Base.:*(x::WaveguideOperator{B1,B2},y::WaveguideOperator{B1,B2}) where {B1,B2} = LazyProduct((x,y),x.factor*y.factor)
 
+@inline _primal_number(x::Number) = hasproperty(x, :value) ? _primal_number(getproperty(x, :value)) : x
+@inline _waveguide_timeindex(t::Number, dt::Number, rounding::RoundingMode=RoundDown) =
+    round(Int, _primal_number(t) / _primal_number(dt), rounding) + 1
+
 @inline function set_time!(o::WaveguideOperator, t::Number)
-    o.timeindex = round(Int,t/o.basis_l.dt,RoundDown) + 1
+    o.timeindex = _waveguide_timeindex(t, o.basis_l.dt, RoundDown)
     return o
 end
 
@@ -231,7 +235,7 @@ function mul!(result::Ket{B1}, a::LazyTensor{B1,B2,F,I,T}, b::Ket{B2}, alpha, be
     tp_ops = QuantumOpticsBase._tpops_tuple(a)
     iso_ops = QuantumOpticsBase._explicit_isometries(eltype(a), a.indices, a.basis_l, a.basis_r)
 
-    QuantumOpticsBase._tp_sum_matmul!(result_data, tp_ops, iso_ops, b_data, alpha * a.factor, beta)
+    QuantumOpticsBase._tp_sum_matmul!(result_data,tp_ops, iso_ops, b_data, alpha * a.factor, beta)
     result
 end
 
@@ -260,6 +264,9 @@ function QuantumOpticsBase.:_tp_matmul!(result, a::WaveguideOperator, loc::Integ
     end
     QuantumOpticsBase._tp_matmul_mid!(result, a, loc, b, α, β)
 end
+
+
+
 
 function QuantumOpticsBase._tp_matmul_mid!(result, a::WaveguideOperator, loc::Integer, b, α::Number, β::Number)
     sz_b_1 = 1

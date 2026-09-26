@@ -30,9 +30,8 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 #VERSION == v"1.8" && @doset "doctests"
 get(ENV,"QUANTUMOPTICS_JET_TEST","")=="true" && @doset "jet"
 
-using Aqua
-
-doset("aqua") && begin
+if get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") != "true" && doset("aqua")
+    using Aqua
     Aqua.test_all(WaveguideQED,
         ambiguities=false, # TODO needs fixes
         undefined_exports=false, # TODO needs fixes

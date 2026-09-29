@@ -245,45 +245,13 @@ Requires [`QuantumOptics.jl`](https://qojulia.org/), which provides the solver: 
 function waveguide_montecarlo end
 
 """
-    fast_unitary(times_eval,psi,H;order=2,fout=nothing)
+    fast_unitary(times,psi,H;order=2,fout=nothing)
 
-See documentation for [`waveguide_evolution`](@ref) on how to define `fout`. J should be a list of collapse operators following documentation of [`timeevolution.mcwf_dynamic`](https://docs.qojulia.org/api/#QuantumOptics.timeevolution.mcwf_dynamic). 
+Deprecated, use [`waveguide_evolution`](@ref). `fast_unitary` propagated each time bin with the Taylor series
+of ``\\exp(-iH\\Delta t)`` truncated at `order`, whereas [`waveguide_evolution`](@ref) applies the exponential
+itself (up to the tolerance `tol`).
 """
-function fast_unitary(times_eval,psi,H;order=2,fout=nothing)
-    isapprox(norm(psi),1,rtol=10^(-6)) || @warn "Initial waveguidestate is not normalized. Consider passing norm=true to the state generation function."
-    dt = get_dt(H.basis_l)
-    U = generate_unitary(H,dt,order)
-    nsteps = min(get_nsteps(H.basis_l),round(Int,times_eval[end]/dt)+1)
-    out = copy(psi)
-    tmp = copy(psi)
-    if (times_eval[2]-times_eval[1]) < dt
-        @warn "Timestep of evaluation points is smaller than photon time binning dt. Dafaulting to sampling at every dt instead."
-    end
-    savefreq = round(Int,(times_eval[2]-times_eval[1])/dt)
-    if fout === nothing
-        for i in 1:nsteps
-            set_waveguidetimeindex!(U,i)
-            mul!(out,U,tmp,1,1)
-            tmp.data .= out.data
-        end
-        return out
-    else
-        for i in 1:nsteps
-            set_waveguidetimeindex!(U,i)
-            mul!(out,U,tmp,1,1)
-            tmp.data .= out.data
-            if i%savefreq == 1
-                output_container[i÷savefreq + 1] = fout(i*dt,out)
-            end
-        end
-        return out,0:dt/savefreq:times_eval[end],output_container
-    end
-end
-
-function generate_unitary(H,dt,order)
-    U = (-im*dt)*H
-    for i in 2:order
-        U += (-im*dt)^i/factorial(i)*H^i
-    end
-    U
+function fast_unitary(times,psi,H;order=2,fout=nothing)
+    Base.depwarn("`fast_unitary` is deprecated, use `waveguide_evolution` instead.", :fast_unitary)
+    waveguide_evolution(times,psi,H;fout=fout)
 end

@@ -62,6 +62,7 @@ end
     @test length(states_e) == length(states_r) == length(times) + 1
     @test all(isapprox(a.data, b.data; atol=1e-9) for (a, b) in zip(states_e, states_r))
     @test_logs (:warn, r"ignores the keyword arguments") waveguide_evolution(times, ψ0, H; abstol=1e-8)
+    @test (@test_deprecated fast_unitary(times, ψ0, H; order=3)).data ≈ ψe.data
     if Base.get_extension(WaveguideQED, :WaveguideQEDQuantumOpticsExt) === nothing
         err = try
             waveguide_montecarlo(times, ψ0, H, [n])

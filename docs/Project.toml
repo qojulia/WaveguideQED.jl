@@ -8,4 +8,4 @@ StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 WaveguideQED = "c4555495-0e8d-488d-8e6a-965ecefe9055"
 
 [sources]
-WaveguideQED = {path = "C:\\Users\\mabun\\OneDrive - Danmarks Tekniske Universitet\\Projects\\WaveguideQED\\scripts\\open_quantum_optics\\WaveguideQED"}
+WaveguideQED = {path = ".."}

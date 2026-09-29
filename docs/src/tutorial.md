@@ -3,7 +3,7 @@ In this section, we show simple examples that illustrate how to use **WaveguideQ
 
 ## [Combining with QuantumOptics.jl](@id combining)
 
-Basises, states, and operators defined in `WaveguideQED.jl` can be effortlessly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). These live in [`QuantumOpticsBase.jl`](https://github.com/qojulia/QuantumOpticsBase.jl), the core package of QuantumOptics.jl, so loading it is all that is needed here (`using QuantumOptics` works as well and also loads its solvers). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
+Basises, states, and operators defined in `WaveguideQED.jl` can be effortlessly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
 
 ![alt text](./illustrations/inputoutput_onewaveguide.png)
 

@@ -90,10 +90,8 @@ function _evolution_output(ψ, fvals)
     (ψ, [[f[j] for f in fvals] for j in eachindex(first(fvals))]...)
 end
 
-"""
-Workspace for Krylov propagation ψ ↦ exp(-iHτ)ψ. Krylov vectors are allocated on first use, so memory
-grows only to the subspace dimension that is actually needed.
-"""
+# Workspace for Krylov propagation ψ ↦ exp(-iHτ)ψ. Krylov vectors are allocated on first use, so memory
+# grows only to the subspace dimension that is actually needed.
 mutable struct KrylovCache{K,T}
     V::Vector{K}              # Krylov basis
     w::K                      # H*v_j
@@ -133,11 +131,9 @@ function _expT_e1(α, β, j, τ)
     F.vectors * (cis.(-τ .* F.values) .* F.vectors[1, :])
 end
 
-"""
-Krylov approximation of exp(-iHτ)ψ, written to `out`. The iteration stops when Saad's a-posteriori
-error estimate `β_j |eⱼᵀexp(-iτT)e₁|` drops below `tol` (relative to `norm(ψ)`). Returns `false` if
-that did not happen within `c.maxiter` iterations.
-"""
+# Krylov approximation of exp(-iHτ)ψ, written to `out`. The iteration stops when Saad's a-posteriori
+# error estimate `β_j |eⱼᵀexp(-iτT)e₁|` drops below `tol` (relative to `norm(ψ)`). Returns `false` if
+# that did not happen within `c.maxiter` iterations.
 function _krylov_expv!(out::Ket, H, ψ::Ket, τ::Real, c::KrylovCache{K,T}, tol) where {K,T}
     R = real(T)
     β0 = norm(ψ.data)

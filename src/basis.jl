@@ -31,9 +31,9 @@ mutable struct WaveguideBasis{Np,Nw} <: QuantumOpticsBase.Basis
         new{Np,Nw}([dim+1], dim, 0,N,times[2]-times[1], lengths)
     end
 end
-function WaveguideBasis(Np::Int,times;lengths=fill(length(times),1))
-    @warn  "Note that for only one waveguide the lengths keyword is not needed since the length of the waveguidebins will be set to the length of the times vector."
-    WaveguideBasis(Np,1,times;lengths=lengths)
+function WaveguideBasis(Np::Int,times;lengths=nothing)
+    lengths === nothing || @warn  "Note that for only one waveguide the lengths keyword is not needed since the length of the waveguidebins will be set to the length of the times vector."
+    WaveguideBasis(Np,1,times;lengths=something(lengths,[length(times)]))
 end
 
 

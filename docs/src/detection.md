@@ -34,7 +34,7 @@ In `WaveguideQED.jl` we create the two incoming photons in each of their respect
 
 ```@example detection
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.1:20
 bw = WaveguideBasis(1,times)
 ξfun(t,σ,t0) = complex(sqrt(2/σ)* (log(2)/pi)^(1/4)*exp(-2*log(2)*(t-t0)^2/σ^2))

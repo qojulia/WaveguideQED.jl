@@ -26,6 +26,8 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 
 @doset "operators"
 @doset "singlecavity"
+@doset "solver"
+@doset "montecarlo"   # loads QuantumOptics, so keep it after the tests that run without it
 # TODO doctests need fixing
 #VERSION == v"1.8" && @doset "doctests"
 get(ENV,"QUANTUMOPTICS_JET_TEST","")=="true" && @doset "jet"

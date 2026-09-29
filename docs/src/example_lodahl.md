@@ -13,7 +13,7 @@ A way to model this scenario is to have two waveguides: a waveguide to the left 
 
 ```@example lodahl
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.1:10
 dt = times[2] - times[1]
 bw = WaveguideBasis(2,2,times)

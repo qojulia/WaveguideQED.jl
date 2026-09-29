@@ -1,7 +1,7 @@
 using Test
 using WaveguideQED
 using LinearAlgebra
-using QuantumOptics
+using QuantumOpticsBase
 include("helper_functions.jl")
 
 @testset "Waveguide annihilation" begin
@@ -347,8 +347,8 @@ end
                 c1  = o1*o2
                 c2 = LazyProduct([o1,o2])
                 
-                QuantumOptics.mul!(temp1,c1,input)
-                QuantumOptics.mul!(temp2,c2,input)
+                mul!(temp1,c1,input)
+                mul!(temp2,c2,input)
 
                 @test isapprox(temp1.data,temp2.data)
             end
@@ -395,8 +395,8 @@ end
         # Test Case 1
         psi_out1 = copy(psi_in)
         psi_ref1 = copy(psi_in)
-        QuantumOptics.mul!(psi_out1, H1, psi_in)
-        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        mul!(psi_out1, H1, psi_in)
+        mul!(psi_ref1, original_op1, psi_in)
         @test isapprox(psi_out1.data, psi_ref1.data)
 
 
@@ -417,8 +417,8 @@ end
         # Test Case 1
         psi_out1 = copy(psi_in)
         psi_ref1 = copy(psi_in)
-        QuantumOptics.mul!(psi_out1, H1, psi_in)
-        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        mul!(psi_out1, H1, psi_in)
+        mul!(psi_ref1, original_op1, psi_in)
         @test isapprox(psi_out1.data, psi_ref1.data)
     end
 
@@ -463,15 +463,15 @@ end
         # Test Case 1
         psi_out1 = copy(psi_in)
         psi_ref1 = copy(psi_in)
-        QuantumOptics.mul!(psi_out1, H1, psi_in)
-        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        mul!(psi_out1, H1, psi_in)
+        mul!(psi_ref1, original_op1, psi_in)
         @test isapprox(psi_out1.data, psi_ref1.data)
         
         # Test Case 2
         psi_out2 = copy(psi_in)
         psi_ref2 = copy(psi_in)
-        QuantumOptics.mul!(psi_out2, H2, psi_in)
-        QuantumOptics.mul!(psi_ref2, original_op2, psi_in)
+        mul!(psi_out2, H2, psi_in)
+        mul!(psi_ref2, original_op2, psi_in)
         @test isapprox(psi_out2.data, psi_ref2.data)
         
         # Test Case 3
@@ -479,8 +479,8 @@ end
         psi_in.data .= 1.0
         psi_out3 = copy(psi_in)
         psi_ref3 = copy(psi_in)
-        QuantumOptics.mul!(psi_out3, H3, psi_in)
-        QuantumOptics.mul!(psi_ref3, original_op3, psi_in)
+        mul!(psi_out3, H3, psi_in)
+        mul!(psi_ref3, original_op3, psi_in)
         @test isapprox(psi_out3.data, psi_ref3.data)
     end
     
@@ -520,8 +520,8 @@ end
         # Test Case 1
         psi_out1 = copy(psi_in)
         psi_ref1 = copy(psi_in)
-        QuantumOptics.mul!(psi_out1, H1, psi_in)
-        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        mul!(psi_out1, H1, psi_in)
+        mul!(psi_ref1, original_op1, psi_in)
         @test isapprox(psi_out1.data, psi_ref1.data)
         
 
@@ -540,8 +540,8 @@ end
         # Test Case 1
         psi_out1 = copy(psi_in)
         psi_ref1 = copy(psi_in)
-        QuantumOptics.mul!(psi_out1, H1, psi_in)
-        QuantumOptics.mul!(psi_ref1, original_op1, psi_in)
+        mul!(psi_out1, H1, psi_in)
+        mul!(psi_ref1, original_op1, psi_in)
         @test isapprox(psi_out1.data, psi_ref1.data)
 
     end

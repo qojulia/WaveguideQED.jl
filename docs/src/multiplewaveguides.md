@@ -10,7 +10,7 @@ In the previous examples, we have only considered cases with a single waveguide.
 
 ```@example multiple
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.1:10
 dt = times[2] - times[1]
 NPhotons = 2

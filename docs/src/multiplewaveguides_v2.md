@@ -5,7 +5,7 @@ In the [tutorial](@ref tutorial), we considered one waveguide containing one or 
 
 ```@example multiple
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.1:10
 dt = times[2] - times[1]
 NPhotons = 2
@@ -188,7 +188,7 @@ As an example, consider a system consisting of two cavities connected through a 
 We begin by defining the waveguide basis with two waveguides of different lengths. Here the first waveguide contains the full number of time bins, while the second waveguide contains only half as many:
 
 ```@example differentlengths
-using QuantumOptics
+using QuantumOpticsBase
 using WaveguideQED
 
 N_ROUND_TRIPS = 5

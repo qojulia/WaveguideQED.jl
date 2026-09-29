@@ -3,7 +3,7 @@ In this section, we show simple examples that illustrate how to use **WaveguideQ
 
 ## [Combining with QuantumOptics.jl](@id combining)
 
-Basises, states, and operators defined in `WaveguideQED.jl` can be effortlessly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
+Basises, states, and operators defined in `WaveguideQED.jl` can be effortlessly combined with operators from [`QuantumOptics.jl`](https://qojulia.org/). These live in [`QuantumOpticsBase.jl`](https://github.com/qojulia/QuantumOpticsBase.jl), the core package of QuantumOptics.jl, so loading it is all that is needed here (`using QuantumOptics` works as well and also loads its solvers). As an example, we are going to consider a waveguide with a single photon pulse impinging on an empty onesided cavity. A sketch of the system can be seen here:
 
 ![alt text](./illustrations/inputoutput_onewaveguide.png)
 
@@ -11,7 +11,7 @@ We start by defining the basis of the cavity and waveguide:
 
 ```@example tutorial
 using WaveguideQED
-using QuantumOptics
+using QuantumOpticsBase
 times = 0:0.1:10
 bw = WaveguideBasis(1,times)
 bc = FockBasis(1)
@@ -55,6 +55,9 @@ With the initial state, we can then call the solver the get the wavefunction aft
 ψ_out = waveguide_evolution(times,ψ_in,H)
 nothing #hide
 ```
+
+!!! info "Time evolution"
+    Within a time bin, the Hamiltonian is constant, so [`waveguide_evolution`](@ref) applies $$\exp(-i H \Delta t)$$ to the state bin by bin with a Krylov method. The accuracy is set by the keyword `tol` (error per time bin, default `1e-8`).
 
 Plotting the wavefunction and its norm square gives:
 

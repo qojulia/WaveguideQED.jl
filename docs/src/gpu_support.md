@@ -58,4 +58,4 @@ H_gpu =  sqrt(γ/dt)*(wda_gpu+ adw_gpu)
 ψ_out = waveguide_evolution(times,ψ_gpu,H_gpu)
 ```
 
-The above simulation takes around 30s using an Nvidia 3060Ti GPU compared to around 900s using a regular CPU. More gains could be expected with a more high-performance GPU and for larger systems. 
+The above simulation takes around 5s using an Nvidia 3060Ti GPU compared to around 60s using a regular CPU (with the ODE solver used by earlier versions, it took around 40s on the GPU and 900s on the CPU). More gains could be expected with a more high-performance GPU and for larger systems. Note that single precision (`ComplexF32`) limits the accuracy: the Krylov tolerance is raised to at least `100*eps(Float32)` per time bin, which here gives an error of around `4e-6` in the final state. 

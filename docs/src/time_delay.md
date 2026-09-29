@@ -24,7 +24,7 @@ This type of Hamiltonian is easily described in the **WaveguideQED** framework. 
 
 ```@example timedelay
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.1:11
 dt = times[2]-times[1]
 bw = WaveguideBasis(1,times)
@@ -135,7 +135,7 @@ We can create such a loop by using delayed operators. This way, the two emitters
 Here, the looping mechanism is illustrated as "portals" that move the waveguide state's last box to the waveguide's beginning whenever the end is reached due to the progression of time. We thus create a waveguide basis with a length of $2 \tau$ and a set of waveguide operators which are delayed by $\tau$:
 
 ```@example twoemitters
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 using WaveguideQED #hide
 using LinearAlgebra #hide
 using PyPlot #hide

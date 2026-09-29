@@ -6,7 +6,7 @@ We start by introducing how a beamsplitter can be implemented using two waveguid
 
 ```@example bs
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.1:10
 dt = times[2] - times[1]
 NPhotons = 2

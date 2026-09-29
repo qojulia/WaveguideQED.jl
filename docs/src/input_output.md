@@ -97,7 +97,7 @@ As mentioned above, we can capture the dynamics of the system by renormalizing t
 
 ```@example input
 using WaveguideQED #hide
-using QuantumOptics #hide
+using QuantumOpticsBase #hide
 times = 0:0.05:50
 dt = times[2] - times[1]
 

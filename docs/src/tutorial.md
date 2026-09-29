@@ -11,7 +11,7 @@ We start by defining the basis of the cavity and waveguide:
 
 ```@example tutorial
 using WaveguideQED
-using QuantumOptics
+using QuantumOpticsBase
 times = 0:0.1:10
 bw = WaveguideBasis(1,times)
 bc = FockBasis(1)
@@ -55,6 +55,9 @@ With the initial state, we can then call the solver the get the wavefunction aft
 ψ_out = waveguide_evolution(times,ψ_in,H)
 nothing #hide
 ```
+
+!!! info "Time evolution"
+    Within a time bin, the Hamiltonian is constant, so [`waveguide_evolution`](@ref) applies $$\exp(-i H \Delta t)$$ to the state bin by bin with a Krylov method. The accuracy is set by the keyword `tol` (error per time bin, default `1e-8`).
 
 Plotting the wavefunction and its norm square gives:
 

@@ -1,10 +1,10 @@
 module WaveguideQED
 
-using QuantumOptics
+using QuantumOpticsBase
 using Strided
 using UnsafeArrays
 using FFTW
-import LinearAlgebra: axpy!, dot, mul!, rmul!,I
+import LinearAlgebra: axpy!, dot, mul!, rmul!,I, eigen, SymTridiagonal
 import QuantumOpticsBase: create, dagger, destroy, expect, identityoperator, tensor,set_time!
 
 export TwoPhotonTimestepView,TwoWaveguideTimestepView,OnePhotonView,TwoPhotonView,TwoWaveguideView,
@@ -32,4 +32,13 @@ include("detection.jl")
 include("plotting.jl")
 include("InputOutput.jl")
 include("precompile.jl")
+
+function __init__()
+    # waveguide_montecarlo is implemented in the QuantumOptics extension
+    Base.Experimental.register_error_hint(MethodError) do io, exc, _, _
+        if exc.f === waveguide_montecarlo && Base.get_extension(@__MODULE__, :WaveguideQEDQuantumOpticsExt) === nothing
+            print(io, "\nwaveguide_montecarlo uses the Monte Carlo solver of QuantumOptics.jl; run `using QuantumOptics` first.")
+        end
+    end
+end
 end

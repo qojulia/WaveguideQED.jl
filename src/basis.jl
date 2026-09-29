@@ -31,9 +31,9 @@ mutable struct WaveguideBasis{Np,Nw} <: QuantumOpticsBase.Basis
         new{Np,Nw}([dim+1], dim, 0,N,times[2]-times[1], lengths)
     end
 end
-function WaveguideBasis(Np::Int,times;lengths=fill(length(times),1))
-    @warn  "Note that for only one waveguide the lengths keyword is not needed since the length of the waveguidebins will be set to the length of the times vector."
-    WaveguideBasis(Np,1,times;lengths=lengths)
+function WaveguideBasis(Np::Int,times;lengths=nothing)
+    lengths === nothing || @warn  "Note that for only one waveguide the lengths keyword is not needed since the length of the waveguidebins will be set to the length of the times vector."
+    WaveguideBasis(Np,1,times;lengths=something(lengths,[length(times)]))
 end
 
 
@@ -54,7 +54,7 @@ View the Waveguide state given a state ψ containing a WaveguideBasis by returni
 The index provided should be of the form `[:,i,j]` where `(:)` is at the location of the WaveguideBasis and i and j are indeces of other basises. See example: 
 
 ```@example vw
-using QuantumOptics;
+using QuantumOpticsBase;
 times=0:1:10;
 bw = WaveguideBasis(1,times);
 bc = FockBasis(2);
@@ -100,7 +100,7 @@ See [`onephoton`](@ref) on how to create onephoton wavepackets and [`view_wavegu
 
 # Examples 
 ```@example onephotonview
-using QuantumOptics;
+using QuantumOpticsBase;
 times = 0:1:10;
 bw = WaveguideBasis(1,times);
 ψ1 = onephoton(bw,x->1,norm=false);
@@ -313,7 +313,7 @@ bw = WaveguideBasis(2,times);
 
 Viewing state combined with other basis:
 ```@example twophotview
-using QuantumOptics;
+using QuantumOpticsBase;
 bc = FockBasis(2);
 ψcombined = fockstate(bc,2) ⊗ ψ;
 ψview = TwoPhotonView(ψcombined,[3,:]);

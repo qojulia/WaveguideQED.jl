@@ -1,6 +1,6 @@
 using Test
 using WaveguideQED
-using QuantumOptics
+using QuantumOpticsBase
 include("helper_functions.jl")
 
 @testset "Singlephoton with cavity" begin

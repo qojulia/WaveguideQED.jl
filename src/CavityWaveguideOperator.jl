@@ -495,7 +495,7 @@ _is_transition(a,b) = 0, 0, 0,1.0
 _is_transition(a::Operator,i,j) = _is_transition(a.data,basis(a),i,j)
 function _is_transition(a::AbstractArray,b::NLevelBasis,i,j) 
     # Get the transition operator
-    trans_op = QuantumOptics.transition(b,i,j).data
+    trans_op = transition(b,i,j).data
     
     # Find non-zero elements in both operators
     non_zero_a = findall(!iszero, a)
